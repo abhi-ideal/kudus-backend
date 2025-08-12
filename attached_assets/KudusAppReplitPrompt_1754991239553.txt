@@ -1,0 +1,72 @@
+You are an expert Node.js backend architect. Create a complete backend API stack for a modern Netflix-style OTT app using the following tech stack and requirements:
+
+**Tech Stack:**
+- Node.js (Express)
+- Sequelize ORM
+- MySQL
+- RESTful APIs with microservice architecture
+- Firebase Authentication (email/password + social login via Google, Facebook, Apple)
+- AWS MediaConvert for video transcoding
+- AWS S3 for video storage
+- AWS CloudFront for CDN delivery
+- AWS RDS for MySQL database
+- AWS Elastic Transcoder/MediaConvert job handling via Lambda if needed
+- Docker for containerization
+- Swagger (OpenAPI) documentation
+
+**Microservices Required:**
+1. **Auth Service**
+   - Integrate Firebase Auth for all authentication and social login.
+   - REST endpoints for login, logout, refresh token.
+   - Middleware to validate Firebase ID tokens.
+   
+2. **User Service**
+   - CRUD for user profiles.
+   - User watch history, favorites, and personalized settings.
+   - Connect to Auth service for secure access.
+   
+3. **Content Service**
+   - CRUD for movies, shows, seasons, episodes.
+   - Metadata management: title, description, genre, cast, duration, release date.
+   - Store poster and thumbnail URLs (stored in S3).
+   - Integration with AWS MediaConvert for transcoding and storing multiple resolutions in S3.
+   - API to retrieve streaming URLs via CloudFront.
+   
+4. **Streaming Service**
+   - Generates signed CloudFront URLs for secure streaming.
+   - Tracks playback sessions.
+   
+5. **Recommendation Service**
+   - Simple recommendation API (initially rule-based, can extend to ML later).
+   
+6. **Admin Service**
+   - Content ingestion and management endpoints.
+   - Manage MediaConvert jobs.
+   - Analytics dashboard APIs (views, watch time, etc.).
+   
+**Core Requirements:**
+- Follow RESTful conventions for endpoints.
+- Use Sequelize with MySQL for persistence.
+- Implement input validation (Joi or express-validator).
+- Use environment variables for all keys (dotenv).
+- Use Docker to containerize each microservice with its own Dockerfile.
+- Include a docker-compose.yml to run all services with MySQL and a localstack (for AWS services in dev).
+- Centralized logging (Winston or Pino).
+- Swagger docs for all endpoints.
+
+**Example API Endpoints:**
+- Auth: POST /auth/login, POST /auth/register, POST /auth/social-login, POST /auth/refresh
+- User: GET /users/:id, PUT /users/:id, GET /users/:id/history
+- Content: GET /content, POST /content, GET /content/:id, GET /content/:id/stream
+- Admin: POST /admin/content, GET /admin/stats
+
+**Deliverables:**
+- Folder structure per microservice.
+- Sequelize models and migrations.
+- Example MediaConvert job creation code.
+- Example CloudFront signed URL generation code.
+- Swagger docs.
+- Dockerfiles and docker-compose.yml.
+- README with setup instructions.
+
+Generate the full codebase with realistic example models, controllers, services, and routes for each microservice.
