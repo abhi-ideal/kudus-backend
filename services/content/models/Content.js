@@ -1,6 +1,6 @@
 
 const { DataTypes } = require('sequelize');
-const sequelize = require('../../../shared/config/database');
+const sequelize = require('../config/database');
 
 const Content = sequelize.define('Content', {
   id: {
@@ -13,76 +13,68 @@ const Content = sequelize.define('Content', {
     allowNull: false
   },
   description: {
-    type: DataTypes.TEXT
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   type: {
-    type: DataTypes.ENUM('movie', 'series', 'episode'),
+    type: DataTypes.ENUM('movie', 'series', 'documentary', 'short'),
     allowNull: false
   },
   genre: {
     type: DataTypes.JSON,
     defaultValue: []
   },
-  releaseDate: {
-    type: DataTypes.DATE
-  },
   duration: {
     type: DataTypes.INTEGER,
-    comment: 'Duration in minutes'
+    allowNull: true
+  },
+  releaseYear: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
   rating: {
-    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
+    type: DataTypes.DECIMAL(2,1),
+    defaultValue: 0.0
+  },
+  ageRating: {
+    type: DataTypes.STRING,
     defaultValue: 'PG'
   },
-  cast: {
+  language: {
+    type: DataTypes.STRING,
+    defaultValue: 'English'
+  },
+  subtitles: {
     type: DataTypes.JSON,
     defaultValue: []
   },
-  director: {
-    type: DataTypes.STRING
-  },
-  poster: {
-    type: DataTypes.STRING,
-    validate: {
-      isUrl: true
-    }
-  },
-  thumbnail: {
-    type: DataTypes.STRING,
-    validate: {
-      isUrl: true
-    }
+  thumbnailUrl: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   trailerUrl: {
-    type: DataTypes.STRING,
-    validate: {
-      isUrl: true
-    }
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  videoUrl: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   s3Key: {
     type: DataTypes.STRING,
-    comment: 'S3 object key for the video file'
+    allowNull: true
   },
-  videoQualities: {
-    type: DataTypes.JSON,
-    defaultValue: {},
-    comment: 'Available video qualities and their S3 keys'
+  status: {
+    type: DataTypes.ENUM('draft', 'processing', 'published', 'archived'),
+    defaultValue: 'draft'
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
-  },
-  views: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  averageRating: {
-    type: DataTypes.DECIMAL(2, 1),
-    defaultValue: 0.0
   }
 }, {
-  timestamps: true,
-  tableName: 'content'
+  tableName: 'content',
+  timestamps: true
 });
 
 module.exports = Content;

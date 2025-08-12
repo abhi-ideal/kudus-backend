@@ -1,6 +1,6 @@
 
 const { DataTypes } = require('sequelize');
-const sequelize = require('../../../shared/config/database');
+const sequelize = require('../config/database');
 
 const WatchHistory = sequelize.define('WatchHistory', {
   id: {
@@ -20,26 +20,29 @@ const WatchHistory = sequelize.define('WatchHistory', {
     type: DataTypes.UUID,
     allowNull: false
   },
-  watchedAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  },
-  position: {
+  watchedDuration: {
     type: DataTypes.INTEGER,
-    defaultValue: 0,
-    comment: 'Current playback position in seconds'
+    defaultValue: 0
   },
-  duration: {
+  totalDuration: {
     type: DataTypes.INTEGER,
-    comment: 'Total duration in seconds'
+    allowNull: false
+  },
+  watchedPercentage: {
+    type: DataTypes.DECIMAL(5,2),
+    defaultValue: 0.00
   },
   completed: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  lastWatchedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
-  timestamps: true,
-  tableName: 'watch_history'
+  tableName: 'watch_history',
+  timestamps: true
 });
 
 module.exports = WatchHistory;

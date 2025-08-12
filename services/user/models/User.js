@@ -1,6 +1,6 @@
 
 const { DataTypes } = require('sequelize');
-const sequelize = require('../../../shared/config/database');
+const sequelize = require('../config/database');
 
 const User = sequelize.define('User', {
   id: {
@@ -23,36 +23,31 @@ const User = sequelize.define('User', {
   },
   displayName: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
-  avatar: {
-    type: DataTypes.STRING,
-    validate: {
-      isUrl: true
-    }
+  photoURL: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  subscriptionType: {
+    type: DataTypes.ENUM('free', 'premium', 'family'),
+    defaultValue: 'free'
+  },
+  subscriptionStatus: {
+    type: DataTypes.ENUM('active', 'cancelled', 'expired'),
+    defaultValue: 'active'
+  },
+  preferences: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
-  },
-  subscription: {
-    type: DataTypes.ENUM('free', 'premium', 'family'),
-    defaultValue: 'free'
-  },
-  preferences: {
-    type: DataTypes.JSON,
-    defaultValue: {
-      language: 'en',
-      genres: [],
-      adultContent: false
-    }
-  },
-  lastLoginAt: {
-    type: DataTypes.DATE
   }
 }, {
-  timestamps: true,
-  tableName: 'users'
+  tableName: 'users',
+  timestamps: true
 });
 
 module.exports = User;
