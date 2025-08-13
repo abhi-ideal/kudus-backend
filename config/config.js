@@ -33,5 +33,21 @@ module.exports = {
     host: process.env.RECOMMENDATION_DB_HOST || process.env.DB_HOST || 'localhost',
     port: process.env.RECOMMENDATION_DB_PORT || process.env.DB_PORT || 3306,
     dialect: 'mysql'
+  },
+  streaming: {
+    username: process.env.STREAMING_DB_USER || process.env.DB_USER || 'root',
+    password: process.env.STREAMING_DB_PASSWORD || process.env.DB_PASSWORD || 'password',
+    database: process.env.STREAMING_DB_NAME || 'ott_streaming',
+    host: process.env.STREAMING_DB_HOST || process.env.DB_HOST || 'localhost',
+    port: process.env.STREAMING_DB_PORT || process.env.DB_PORT || 3306,
+    dialect: 'mysql'
+  },
+  admin: {
+    username: process.env.ADMIN_DB_USER || process.env.DB_USER || 'root',
+    password: process.env.ADMIN_DB_PASSWORD || process.env.DB_PASSWORD || 'password',
+    database: process.env.ADMIN_DB_NAME || 'ott_admin',
+    host: process.env.ADMIN_DB_HOST || process.env.DB_HOST || 'localhost',
+    port: process.env.ADMIN_DB_PORT || process.env.DB_PORT || 3306,
+    dialect: 'mysql'
   }
 };

@@ -6,7 +6,9 @@ const databases = [
   'ott_auth',
   'ott_users', 
   'ott_content',
-  'ott_recommendations'
+  'ott_recommendations',
+  'ott_streaming',
+  'ott_admin'
 ];
 
 async function setupDatabases() {
