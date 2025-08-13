@@ -8,7 +8,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
-const logger = require('../shared/utils/logger');
+// Using console for logging
 
 const app = express();
 const PORT = process.env.GATEWAY_PORT || 5000;
@@ -67,7 +67,7 @@ Object.keys(services).forEach(service => {
     changeOrigin: true,
     pathRewrite: serviceConfig.pathRewrite,
     onError: (err, req, res) => {
-      logger.error(`Proxy error for ${service} service:`, err.message);
+      console.error(`Proxy error for ${service} service:`, err.message);
       res.status(503).json({
         error: 'Service Unavailable',
         message: `${service} service is currently unavailable`
@@ -147,11 +147,11 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🌐 API Gateway running on port ${PORT}`);
-  logger.info(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
-  logger.info('🔗 Routing requests to microservices:');
+  console.log(`🌐 API Gateway running on port ${PORT}`);
+  console.log(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
+  console.log('🔗 Routing requests to microservices:');
   Object.keys(services).forEach(service => {
-    logger.info(`  - /${service} -> ${services[service].target}`);
+    console.log(`  - /${service} -> ${services[service].target}`);
   });
 });
 
