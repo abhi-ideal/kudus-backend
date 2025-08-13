@@ -19,7 +19,8 @@
     "mysql2": "^3.11.4",
     "sequelize": "^6.37.5",
     "serverless-http": "^3.2.0",
-    "aws-sdk": "^2.1691.0"
+    "@aws-sdk/client-s3": "^3.682.0",
+    "@aws-sdk/client-cloudfront": "^3.682.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
