@@ -13,6 +13,7 @@ const contentRoutes = require('./services/content/routes');
 const streamingRoutes = require('./services/streaming/routes');
 const recommendationRoutes = require('./services/recommendation/routes');
 const adminRoutes = require('./services/admin/routes');
+const commonRoutes = require('./services/common/routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -82,6 +83,7 @@ app.use('/api/content', contentRoutes);
 app.use('/api/streaming', streamingRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/common', commonRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

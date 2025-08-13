@@ -1,15 +1,15 @@
-
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const databases = [
-  'ott_auth',
-  'ott_users', 
-  'ott_content',
-  'ott_recommendations',
-  'ott_streaming',
-  'ott_admin'
-];
+    'ott_auth',
+    'ott_users', 
+    'ott_content',
+    'ott_recommendations',
+    'ott_streaming',
+    'ott_admin',
+    'ott_common'
+  ];
 
 async function setupDatabases() {
   try {
@@ -31,7 +31,7 @@ async function setupDatabases() {
 
     await connection.end();
     console.log('🎉 All databases setup completed!');
-    
+
   } catch (error) {
     console.error('❌ Error setting up databases:', error.message);
     process.exit(1);
