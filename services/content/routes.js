@@ -1,8 +1,8 @@
 
 const express = require('express');
 const contentController = require('./controller');
-const { verifyFirebaseToken } = require('../../shared/middleware/auth');
-const { validate, schemas } = require('../../shared/utils/validation');
+const { verifyFirebaseToken } = require('./middleware/auth');
+const { validate, schemas } = require('./utils/validation');
 
 const router = express.Router();
 
