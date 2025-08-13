@@ -1,0 +1,78 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  labels:
+    app: ott-platform
+    service: recommendation
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3005
+      targetPort: 3005
+      protocol: TCP
+  selector:
+    app: recommendation-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  labels:
+    app: ott-platform
+    service: recommendation
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: recommendation-service
+  template:
+    metadata:
+      labels:
+        app: recommendation-service
+    spec:
+      containers:
+      - name: recommendation-service
+        image: ott-platform/recommendation-service:latest
+        ports:
+        - containerPort: 3005
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: RECOMMENDATION_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-host
+        - name: RECOMMENDATION_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-user
+        - name: RECOMMENDATION_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-password
+        - name: RECOMMENDATION_DB_NAME
+          value: "ott_recommendations"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3005
+          initialDelaySeconds: 5
+          periodSeconds: 5

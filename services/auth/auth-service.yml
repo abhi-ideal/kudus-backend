@@ -1,0 +1,83 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  labels:
+    app: ott-platform
+    service: auth
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3001
+      targetPort: 3001
+      protocol: TCP
+  selector:
+    app: auth-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  labels:
+    app: ott-platform
+    service: auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: ott-platform/auth-service:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: AUTH_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-host
+        - name: AUTH_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-user
+        - name: AUTH_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-password
+        - name: AUTH_DB_NAME
+          value: "ott_auth"
+        - name: FIREBASE_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: firebase-project-id
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 5

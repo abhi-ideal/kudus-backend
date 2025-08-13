@@ -1,0 +1,140 @@
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  gateway:
+    build: 
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - GATEWAY_PORT=5000
+    depends_on:
+      - auth-service
+      - user-service
+      - content-service
+      - streaming-service
+      - recommendation-service
+      - admin-service
+    restart: always
+
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - AUTH_DB_HOST=mysql
+      - AUTH_DB_USER=${DB_USER}
+      - AUTH_DB_PASSWORD=${DB_PASSWORD}
+      - AUTH_DB_NAME=ott_auth
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  user-service:
+    build:
+      context: ./services/user
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - USER_DB_HOST=mysql
+      - USER_DB_USER=${DB_USER}
+      - USER_DB_PASSWORD=${DB_PASSWORD}
+      - USER_DB_NAME=ott_users
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  content-service:
+    build:
+      context: ./services/content
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - CONTENT_DB_HOST=mysql
+      - CONTENT_DB_USER=${DB_USER}
+      - CONTENT_DB_PASSWORD=${DB_PASSWORD}
+      - CONTENT_DB_NAME=ott_content
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  streaming-service:
+    build:
+      context: ./services/streaming
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    restart: always
+
+  recommendation-service:
+    build:
+      context: ./services/recommendation
+      dockerfile: Dockerfile
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - RECOMMENDATION_DB_HOST=mysql
+      - RECOMMENDATION_DB_USER=${DB_USER}
+      - RECOMMENDATION_DB_PASSWORD=${DB_PASSWORD}
+      - RECOMMENDATION_DB_NAME=ott_recommendations
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  admin-service:
+    build:
+      context: ./services/admin
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - AUTH_DB_HOST=mysql
+      - AUTH_DB_USER=${DB_USER}
+      - AUTH_DB_PASSWORD=${DB_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  mysql_data:

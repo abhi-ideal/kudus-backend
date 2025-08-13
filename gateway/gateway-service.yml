@@ -1,0 +1,75 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    app: ott-platform
+    service: gateway
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: gateway-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  labels:
+    app: ott-platform
+    service: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+      - name: gateway-service
+        image: ott-platform/gateway-service:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: GATEWAY_PORT
+          value: "5000"
+        - name: AUTH_SERVICE_PORT
+          value: "3001"
+        - name: USER_SERVICE_PORT
+          value: "3002"
+        - name: CONTENT_SERVICE_PORT
+          value: "3003"
+        - name: STREAMING_SERVICE_PORT
+          value: "3004"
+        - name: RECOMMENDATION_SERVICE_PORT
+          value: "3005"
+        - name: ADMIN_SERVICE_PORT
+          value: "3006"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5

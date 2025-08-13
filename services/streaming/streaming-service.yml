@@ -1,0 +1,86 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: streaming-service
+  labels:
+    app: ott-platform
+    service: streaming
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3004
+      targetPort: 3004
+      protocol: TCP
+  selector:
+    app: streaming-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-service
+  labels:
+    app: ott-platform
+    service: streaming
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: streaming-service
+  template:
+    metadata:
+      labels:
+        app: streaming-service
+    spec:
+      containers:
+      - name: streaming-service
+        image: ott-platform/streaming-service:latest
+        ports:
+        - containerPort: 3004
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: aws-secret-access-key
+        - name: AWS_CLOUDFRONT_DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: aws-cloudfront-domain
+        - name: AWS_CLOUDFRONT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: aws-cloudfront-private-key
+        - name: AWS_CLOUDFRONT_KEY_PAIR_ID
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: aws-cloudfront-key-pair-id
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3004
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3004
+          initialDelaySeconds: 5
+          periodSeconds: 5

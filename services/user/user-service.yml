@@ -1,0 +1,78 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  labels:
+    app: ott-platform
+    service: user
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3002
+      targetPort: 3002
+      protocol: TCP
+  selector:
+    app: user-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels:
+    app: ott-platform
+    service: user
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: ott-platform/user-service:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: USER_DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-host
+        - name: USER_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-user
+        - name: USER_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ott-secrets
+              key: db-password
+        - name: USER_DB_NAME
+          value: "ott_users"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 5
+          periodSeconds: 5
