@@ -1,7 +1,7 @@
 
 const express = require('express');
 const authController = require('./controller');
-const { validate, schemas } = require('../../shared/utils/validation');
+const { validate, schemas } = require('./utils/validation');
 
 const router = express.Router();
 
