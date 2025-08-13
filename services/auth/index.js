@@ -5,7 +5,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const logger = require('../../shared/utils/logger');
 const authRoutes = require('./routes');
 
 const app = express();
@@ -43,7 +42,7 @@ app.use('/api/auth', authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error('Auth Service Error:', err);
+  console.error('Auth Service Error:', err);
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -65,6 +64,6 @@ module.exports.handler = serverless(app);
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.AUTH_SERVICE_PORT || 3001;
   app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`🔐 Auth Service running on port ${PORT}`);
+    console.log(`🔐 Auth Service running on port ${PORT}`);
   });
 }
