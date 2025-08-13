@@ -1,4 +1,4 @@
-
+const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,7 +9,6 @@ const logger = require('../../shared/utils/logger');
 const authRoutes = require('./routes');
 
 const app = express();
-const PORT = process.env.AUTH_SERVICE_PORT || 3001;
 
 // Security middleware
 app.use(helmet());
@@ -59,8 +58,13 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🔐 Auth Service running on port ${PORT}`);
-});
+// Lambda handler
+module.exports.handler = serverless(app);
 
-module.exports = app;
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.AUTH_SERVICE_PORT || 3001;
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🔐 Auth Service running on port ${PORT}`);
+  });
+}

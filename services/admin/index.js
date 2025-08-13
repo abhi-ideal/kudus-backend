@@ -1,4 +1,4 @@
-
+const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,7 +9,6 @@ const logger = require('../../shared/utils/logger');
 const adminRoutes = require('./routes');
 
 const app = express();
-const PORT = process.env.ADMIN_SERVICE_PORT || 3006;
 
 // Security middleware
 app.use(helmet());
@@ -34,8 +33,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     service: 'Admin Service',
     status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -59,8 +57,15 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`⚙️ Admin Service running on port ${PORT}`);
-});
+// Lambda handler
+module.exports.handler = serverless(app);
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.ADMIN_SERVICE_PORT || 3006;
+  app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`⚙️ Admin Service running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
