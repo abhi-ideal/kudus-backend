@@ -9,7 +9,7 @@ const getPassword = (password) => {
 };
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'ott_auth',
+  process.env.DB_NAME || 'ott_users',
   process.env.DB_USER || 'root',
   getPassword(process.env.DB_PASSWORD),
   {

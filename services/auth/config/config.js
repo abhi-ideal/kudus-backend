@@ -9,7 +9,7 @@ const getPassword = (password) => {
 const baseConfig = {
   username: process.env.DB_USER || 'root',
   password: getPassword(process.env.DB_PASSWORD),
-  database: process.env.DB_NAME || 'ott_auth',
+  database: process.env.DB_NAME || 'ott_users',
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
   dialect: 'mysql'
@@ -22,7 +22,7 @@ module.exports = {
   },
   test: {
     ...baseConfig,
-    database: (process.env.DB_NAME || 'ott_auth') + '_test',
+    database: (process.env.DB_NAME || 'ott_users') + '_test',
     logging: false
   },
   production: {
