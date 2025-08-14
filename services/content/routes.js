@@ -3,7 +3,7 @@ const contentController = require('./controller');
 const { verifyFirebaseToken } = require('./middleware/auth');
 const { detectCountry, applyGeoFilter } = require('./middleware/geoRestriction');
 const { validate, schemas } = require('./utils/validation');
-const { profileAuth, childProfileFilter } = require('../../user/middleware/profileAuth');
+const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
 
 const router = express.Router();
 

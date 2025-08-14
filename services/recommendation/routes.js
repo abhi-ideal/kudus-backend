@@ -1,7 +1,7 @@
 const express = require('express');
 const recommendationController = require('./controller');
-const { verifyFirebaseToken } = require('../auth/middleware/auth');
-const { profileAuth, childProfileFilter } = require('../user/middleware/profileAuth');
+const { verifyFirebaseToken } = require('./middleware/auth');
+const { profileAuth, childRecommendationFilter } = require('./middleware/profileAuth');
 
 const router = express.Router();
 
@@ -26,7 +26,7 @@ const router = express.Router();
  *       200:
  *         description: Trending content retrieved successfully
  */
-router.get('/trending', profileAuth, childProfileFilter, recommendationController.getTrending);
+router.get('/trending', profileAuth, childRecommendationFilter, recommendationController.getTrending);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.get('/trending', profileAuth, childProfileFilter, recommendationControlle
  *       200:
  *         description: Popular content retrieved successfully
  */
-router.get('/popular', profileAuth, childProfileFilter, recommendationController.getPopular);
+router.get('/popular', profileAuth, childRecommendationFilter, recommendationController.getPopular);
 
 // Authenticated routes
 router.use(verifyFirebaseToken);
@@ -82,7 +82,7 @@ router.use(verifyFirebaseToken);
  *       200:
  *         description: Personalized recommendations retrieved successfully
  */
-router.get('/personalized', profileAuth, childProfileFilter, recommendationController.getPersonalized);
+router.get('/personalized', profileAuth, childRecommendationFilter, recommendationController.getPersonalized);
 
 /**
  * @swagger
@@ -112,6 +112,6 @@ router.get('/personalized', profileAuth, childProfileFilter, recommendationContr
  *       200:
  *         description: Similar content retrieved successfully
  */
-router.get('/similar/:contentId', profileAuth, childProfileFilter, recommendationController.getSimilar);
+router.get('/similar/:contentId', profileAuth, childRecommendationFilter, recommendationController.getSimilar);
 
 module.exports = router;
