@@ -87,7 +87,12 @@ module.exports = {
     await queryInterface.addIndex('auth_sessions', ['firebaseUid']);
     await queryInterface.addIndex('auth_sessions', ['email']);
     await queryInterface.addIndex('auth_tokens', ['userId']);
-    await queryInterface.addIndex('auth_tokens', ['token']);
+    await queryInterface.addIndex('auth_tokens', [{
+      name: 'token',
+      length: 255
+    }], {
+      name: 'auth_tokens_token_prefix'
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
