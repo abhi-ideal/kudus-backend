@@ -55,7 +55,15 @@ router.use(verifyFirebaseToken);
  *       201:
  *         description: Content uploaded and transcoding started
  */
-router.post('/content', upload.single('video'), validate(schemas.content), adminController.uploadContent);
+// Content management APIs
+const contentRoutes = require('./routes/content');
+const userRoutes = require('./routes/users');
+
+router.use('/content', contentRoutes);
+router.use('/users', userRoutes);
+
+// Legacy upload endpoint for video content
+router.post('/upload-content', upload.single('video'), validate(schemas.content), adminController.uploadContent);
 
 /**
  * @swagger
