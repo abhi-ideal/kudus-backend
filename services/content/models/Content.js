@@ -33,8 +33,8 @@ const Content = sequelize.define('Content', {
     allowNull: true
   },
   rating: {
-    type: DataTypes.DECIMAL(2,1),
-    defaultValue: 0.0
+    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17', 'U', '12A', '15', '18'),
+    defaultValue: 'PG'
   },
   ageRating: {
     type: DataTypes.STRING,
@@ -48,8 +48,25 @@ const Content = sequelize.define('Content', {
     type: DataTypes.JSON,
     defaultValue: []
   },
+  characters: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
   thumbnailUrl: {
     type: DataTypes.TEXT,
+    allowNull: true
+  },
+  posterImages: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      thumbnail: null,
+      medium: null,
+      hd: null,
+      original: null
+    }
+  },
+  items: {
+    type: DataTypes.ENUM('drama-delights', 'sparks-your-digital-superstars', 'documentary-shows', 'action-adventures', 'comedy-classics', 'thriller-zone'),
     allowNull: true
   },
   trailerUrl: {

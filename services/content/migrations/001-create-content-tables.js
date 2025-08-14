@@ -35,8 +35,8 @@ module.exports = {
         allowNull: true
       },
       rating: {
-        type: Sequelize.DECIMAL(2,1),
-        defaultValue: 0.0
+        type: Sequelize.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17', 'U', '12A', '15', '18'),
+        defaultValue: 'PG'
       },
       ageRating: {
         type: Sequelize.STRING,
@@ -54,6 +54,10 @@ module.exports = {
         type: Sequelize.JSON,
         defaultValue: []
       },
+      characters: {
+        type: Sequelize.JSON,
+        defaultValue: []
+      },
       director: {
         type: Sequelize.STRING,
         allowNull: true
@@ -64,6 +68,19 @@ module.exports = {
       },
       thumbnailUrl: {
         type: Sequelize.TEXT,
+        allowNull: true
+      },
+      posterImages: {
+        type: Sequelize.JSON,
+        defaultValue: {
+          thumbnail: null,
+          medium: null,
+          hd: null,
+          original: null
+        }
+      },
+      items: {
+        type: Sequelize.ENUM('drama-delights', 'sparks-your-digital-superstars', 'documentary-shows', 'action-adventures', 'comedy-classics', 'thriller-zone'),
         allowNull: true
       },
       trailerUrl: {
