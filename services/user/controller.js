@@ -1,4 +1,3 @@
-
 const logger = require('./utils/logger');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
@@ -9,9 +8,9 @@ const controller = {
   async getProfile(req, res) {
     try {
       const { uid } = req.user;
-      
+
       let user = await User.findOne({ where: { firebaseUid: uid } });
-      
+
       if (!user) {
         // Create user if doesn't exist
         user = await User.create({
@@ -49,7 +48,7 @@ const controller = {
       const { displayName, avatar, preferences } = req.body;
 
       let user = await User.findOne({ where: { firebaseUid: uid } });
-      
+
       if (!user) {
         user = await User.create({
           firebaseUid: uid,
@@ -401,11 +400,11 @@ const controller = {
 
       const preferences = user.preferences || {};
       const favorites = preferences.favorites || [];
-      
+
       if (!favorites.includes(contentId)) {
         favorites.push(contentId);
         preferences.favorites = favorites;
-        
+
         await user.update({ preferences });
       }
 
@@ -436,12 +435,12 @@ const controller = {
 
       const preferences = user.preferences || {};
       const favorites = preferences.favorites || [];
-      
+
       const index = favorites.indexOf(contentId);
       if (index > -1) {
         favorites.splice(index, 1);
         preferences.favorites = favorites;
-        
+
         await user.update({ preferences });
       }
 
