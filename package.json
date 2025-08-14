@@ -20,7 +20,7 @@
     "setup-dbs": "node scripts/setup-databases.js",
     "install-all": "npm install && npm run install-services",
     "install-services": "cd gateway && npm install && cd ../services/auth && npm install && cd ../user && npm install && cd ../content && npm install && cd ../streaming && npm install && cd ../recommendation && npm install && cd ../admin && npm install",
-    "migrate": "cd services/auth && npm run migrate && cd ../user && npm run migrate && cd ../content && npm run migrate && cd ../recommendation && npm run migrate && cd ../streaming && npm run migrate && cd ../admin && npm run migrate",
+    "migrate": "cd services/user && npm run migrate && cd ../content && npm run migrate && cd ../recommendation && npm run migrate && cd ../streaming && npm run migrate && cd ../admin && npm run migrate",
     "seed": "cd services/auth && npm run seed && cd ../user && npm run seed && cd ../content && npm run seed && cd ../recommendation && npm run seed && cd ../streaming && npm run seed && cd ../admin && npm run seed",
     "setup-env": "node scripts/setup-env.js"
   },
