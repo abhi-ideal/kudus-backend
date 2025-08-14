@@ -1,0 +1,28 @@
+/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/express/lib/router/route.js:216
+[2]         throw new Error(msg);
+[2]         ^
+[2] 
+[2] Error: Route.post() requires a callback function but got a [object Undefined]
+[2]     at Route.<computed> [as post] (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/express/lib/router/route.js:216:15)
+[2]     at proto.<computed> [as post] (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/express/lib/router/index.js:521:19)
+[2]     at Object.<anonymous> (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/user/routes.js:35:8)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1369:14)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1427:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1206:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1022:12)
+[2]     at Module.require (node:internal/modules/cjs/loader:1231:19)
+[2]     at require (node:internal/modules/helpers:179:18)
+[2]     at Object.<anonymous> (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/user/index.js:8:20)
+[2] 
+[2] Node.js v20.12.2
+[2] npm ERR! Lifecycle script `start` failed with error: 
+[2] npm ERR! Error: command failed 
+[2] npm ERR!   in workspace: ott-user-service@1.0.0 
+[2] npm ERR!   at location: /home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/user 
+[2] npm run user exited with code 1
+[5] Executing (default): SELECT 1+1 AS result
+[3] Executing (default): SELECT 1+1 AS result
+[5] 2025-08-14T10:42:44.391Z [recommendation-service] info: Recommendation Service: Database connected successfully
+[3] 2025-08-14T10:42:44.391Z [content-service] info: Content Service: Database connected successfully
+[3] 2025-08-14T10:42:44.397Z [content-service] info: 🎬 Content Service running on port 3003
+[5] 2025-08-14T10:42:44.397Z [recommendation-service] info: 🎯 Recommendation Service running on port 3005
