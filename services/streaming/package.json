@@ -20,7 +20,9 @@
     "serverless-http": "^3.2.0",
     "@aws-sdk/client-s3": "^3.682.0",
     "@aws-sdk/client-cloudfront": "^3.682.0",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "joi": "^17.13.3",
+    "firebase-admin": "^12.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
