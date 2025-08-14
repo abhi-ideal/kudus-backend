@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const logger = require('./utils/logger');
 require('dotenv').config();
 
 const authRoutes = require('./services/auth/routes');
@@ -87,7 +88,7 @@ app.use('/api/common', commonRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
+  logger.error('Unhandled error:', err);
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -103,8 +104,8 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 OTT Platform API Gateway running on port ${PORT}`);
-  console.log(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
+  logger.info(`🚀 OTT Platform API Gateway running on port ${PORT}`);
+  logger.info(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
 });
 
 module.exports = app;
