@@ -2,6 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from root .env file
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 // Service-specific environment variables
 const serviceEnvs = {
   auth: {
