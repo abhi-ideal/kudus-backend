@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -113,33 +112,32 @@ module.exports = {
         type: Sequelize.ENUM('draft', 'processing', 'published', 'archived'),
         defaultValue: 'draft'
       },
+      availableCountries: {
+        type: Sequelize.JSON,
+        defaultValue: [],
+        comment: 'List of country codes where content is available. Empty array means available globally'
+      },
+      restrictedCountries: {
+        type: Sequelize.JSON,
+        defaultValue: [],
+        comment: 'List of country codes where content is restricted'
+      },
+      isGloballyAvailable: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
+        comment: 'If true, content is available globally unless restricted'
+      },
       isActive: {
         type: Sequelize.BOOLEAN,
         defaultValue: true
       },
-      views: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      likes: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      averageRating: {
-        type: Sequelize.DECIMAL(2,1),
-        defaultValue: 0.0
-      },
-      totalRatings: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
       createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
+        type: Sequelize.DATE
       },
       updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false
+        allowNull: false,
+        type: Sequelize.DATE
       }
     });
 

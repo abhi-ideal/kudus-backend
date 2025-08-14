@@ -89,6 +89,21 @@ const Content = sequelize.define('Content', {
     type: DataTypes.ENUM('draft', 'processing', 'published', 'archived'),
     defaultValue: 'draft'
   },
+  availableCountries: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'List of country codes where content is available. Empty array means available globally'
+  },
+  restrictedCountries: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'List of country codes where content is restricted'
+  },
+  isGloballyAvailable: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    comment: 'If true, content is available globally unless restricted'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

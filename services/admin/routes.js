@@ -117,6 +117,7 @@ router.get('/stats', adminController.getStats);
 router.get('/content/:id/status', adminController.getContentStatus);
 
 router.get('/jobs', adminController.getTranscodingJobs);
+router.put('/content/:id/geo-restrictions', adminController.updateContentGeoRestrictions);
 router.delete('/content/:id', adminController.deleteContent);
 
 module.exports = router;

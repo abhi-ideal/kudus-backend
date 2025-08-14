@@ -44,6 +44,29 @@ const contentController = {
         }
       }
 
+      // Apply geo-restrictions
+      if (req.geoFilter && req.userCountry) {
+        const userCountry = req.userCountry;
+        whereClause[Op.or] = [
+          // Globally available content not restricted in user's country
+          {
+            isGloballyAvailable: true,
+            [Op.not]: {
+              restrictedCountries: {
+                [Op.contains]: [userCountry]
+              }
+            }
+          },
+          // Content specifically available in user's country
+          {
+            isGloballyAvailable: false,
+            availableCountries: {
+              [Op.contains]: [userCountry]
+            }
+          }
+        ];
+      }
+
       if (type) whereClause.type = type;
       if (genre && !req.contentFilter) whereClause.genre = { [Op.contains]: [genre] };
       if (language) whereClause.language = language;
@@ -200,6 +223,14 @@ const contentController = {
       if (!content || !content.isActive) {
         return res.status(404).json({
           error: 'Content not found'
+        });
+      }
+
+      // Check geo-restrictions for single content
+      if (req.geoFilter && !req.geoFilter.isContentAvailable(content)) {
+        return res.status(403).json({
+          error: 'Content not available in your region',
+          message: 'This content is geo-restricted and not available in your country'
         });
       }
 

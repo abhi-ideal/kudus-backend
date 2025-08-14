@@ -1,4 +1,3 @@
-
 'use strict';
 const { v4: uuidv4 } = require('uuid');
 
@@ -6,7 +5,7 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const movieId = uuidv4();
     const seriesId = uuidv4();
-    
+
     await queryInterface.bulkInsert('content', [
       {
         id: movieId,
@@ -34,10 +33,9 @@ module.exports = {
         trailerUrl: 'https://example.com/trailers/adventure-begins.mp4',
         status: 'published',
         isActive: true,
-        views: 15420,
-        likes: 1205,
-        averageRating: 4.2,
-        totalRatings: 3420,
+        availableCountries: JSON.stringify(['US', 'CA', 'GB', 'AU']),
+        restrictedCountries: JSON.stringify([]),
+        isGloballyAvailable: false,
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -67,10 +65,9 @@ module.exports = {
         trailerUrl: 'https://example.com/trailers/lost-city.mp4',
         status: 'published',
         isActive: true,
-        views: 28350,
-        likes: 2840,
-        averageRating: 4.7,
-        totalRatings: 5420,
+        availableCountries: JSON.stringify([]),
+        restrictedCountries: JSON.stringify(['CN', 'RU']),
+        isGloballyAvailable: true,
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -91,10 +88,9 @@ module.exports = {
         thumbnailUrl: 'https://example.com/thumbnails/nature-doc.jpg',
         status: 'published',
         isActive: true,
-        views: 8420,
-        likes: 720,
-        averageRating: 4.5,
-        totalRatings: 1420,
+        availableCountries: JSON.stringify(['US', 'CA', 'GB', 'AU']),
+        restrictedCountries: JSON.stringify([]),
+        isGloballyAvailable: false,
         createdAt: new Date(),
         updatedAt: new Date()
       }

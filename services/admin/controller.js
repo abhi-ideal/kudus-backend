@@ -236,3 +236,59 @@ const adminController = {
 };
 
 module.exports = adminController;
+async updateContentGeoRestrictions(req, res) {
+    try {
+      const { id } = req.params;
+      const { 
+        availableCountries = [], 
+        restrictedCountries = [], 
+        isGloballyAvailable = true 
+      } = req.body;
+
+      const content = await Content.findByPk(id);
+      
+      if (!content) {
+        return res.status(404).json({
+          error: 'Content not found'
+        });
+      }
+
+      // Validate country codes (basic validation)
+      const allCountries = [...availableCountries, ...restrictedCountries];
+      const invalidCountries = allCountries.filter(country => 
+        !country.match(/^[A-Z]{2}$/)
+      );
+
+      if (invalidCountries.length > 0) {
+        return res.status(400).json({
+          error: 'Invalid country codes',
+          invalidCountries
+        });
+      }
+
+      await content.update({
+        availableCountries,
+        restrictedCountries,
+        isGloballyAvailable
+      });
+
+      logger.info(`Content geo-restrictions updated: ${id}`);
+
+      res.json({
+        message: 'Geo-restrictions updated successfully',
+        content: {
+          id: content.id,
+          title: content.title,
+          availableCountries: content.availableCountries,
+          restrictedCountries: content.restrictedCountries,
+          isGloballyAvailable: content.isGloballyAvailable
+        }
+      });
+    } catch (error) {
+      logger.error('Update geo-restrictions error:', error);
+      res.status(500).json({
+        error: 'Failed to update geo-restrictions',
+        message: error.message
+      });
+    }
+  },
