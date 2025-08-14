@@ -156,6 +156,96 @@ router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, ch
 
 /**
  * @swagger
+ * /api/content/watchlist:
+ *   get:
+ *     summary: Get user's watchlist
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Watchlist retrieved successfully
+ */
+router.get('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.getWatchlist);
+
+/**
+ * @swagger
+ * /api/content/watchlist:
+ *   post:
+ *     summary: Add content to watchlist
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contentId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Content added to watchlist successfully
+ */
+router.post('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.addToWatchlist);
+
+/**
+ * @swagger
+ * /api/content/watchlist/{contentId}:
+ *   delete:
+ *     summary: Remove content from watchlist
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content removed from watchlist successfully
+ */
+router.delete('/watchlist/:contentId', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.removeFromWatchlist);
+
+/**
+ * @swagger
+ * /api/content/{contentId}/watchlist-status:
+ *   get:
+ *     summary: Check if content is in watchlist
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Watchlist status retrieved successfully
+ */
+router.get('/:contentId/watchlist-status', verifyFirebaseToken, profileAuth, contentController.checkWatchlistStatus);
+
+/**
+ * @swagger
  * /api/content/{id}/stream:
  *   get:
  *     summary: Get streaming URL for content

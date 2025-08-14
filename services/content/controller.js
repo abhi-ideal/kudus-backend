@@ -1,4 +1,5 @@
 const Content = require('./models/Content');
+const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
 const logger = require('../../shared/utils/logger');
 const { Op } = require('sequelize');
@@ -546,6 +547,247 @@ const contentController = {
       res.status(500).json({
         success: false,
         error: 'Failed to fetch episode details'
+      });
+    }
+  },
+
+  async addToWatchlist(req, res) {
+    try {
+      const { contentId } = req.body;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required',
+          message: 'Please select a profile to add to watchlist'
+        });
+      }
+
+      if (!contentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content ID required'
+        });
+      }
+
+      // Check if content exists and is active
+      const content = await Content.findOne({
+        where: { 
+          id: contentId, 
+          isActive: true 
+        }
+      });
+
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content not found'
+        });
+      }
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedRatings = ['G', 'PG', 'PG-13'];
+        if (!allowedRatings.includes(content.ageRating)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content not available for child profiles'
+          });
+        }
+      }
+
+      // Check if already in watchlist
+      const existingEntry = await Watchlist.findOne({
+        where: { 
+          profileId, 
+          contentId 
+        }
+      });
+
+      if (existingEntry) {
+        return res.status(409).json({
+          success: false,
+          error: 'Content already in watchlist'
+        });
+      }
+
+      // Add to watchlist
+      const watchlistEntry = await Watchlist.create({
+        profileId,
+        contentId
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Content added to watchlist successfully',
+        data: {
+          watchlistId: watchlistEntry.id,
+          contentId,
+          contentTitle: content.title,
+          addedAt: watchlistEntry.addedAt
+        }
+      });
+    } catch (error) {
+      console.error('Add to watchlist error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add content to watchlist'
+      });
+    }
+  },
+
+  async removeFromWatchlist(req, res) {
+    try {
+      const { contentId } = req.params;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const deletedRows = await Watchlist.destroy({
+        where: { 
+          profileId, 
+          contentId 
+        }
+      });
+
+      if (deletedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content not found in watchlist'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Content removed from watchlist successfully'
+      });
+    } catch (error) {
+      console.error('Remove from watchlist error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to remove content from watchlist'
+      });
+    }
+  },
+
+  async getWatchlist(req, res) {
+    try {
+      const profileId = req.activeProfile?.id;
+      const { 
+        page = 1, 
+        limit = 20, 
+        type,
+        sortBy = 'addedAt',
+        sortOrder = 'DESC' 
+      } = req.query;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const offset = (page - 1) * limit;
+      const whereClause = { isActive: true };
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        whereClause.ageRating = {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        };
+      }
+
+      if (type) whereClause.type = type;
+
+      const { count, rows: watchlistItems } = await Watchlist.findAndCountAll({
+        where: { profileId },
+        include: [
+          {
+            model: Content,
+            as: 'content',
+            where: whereClause,
+            attributes: [
+              'id', 'title', 'description', 'type', 'genre', 
+              'duration', 'releaseYear', 'rating', 'ageRating',
+              'language', 'thumbnailUrl', 'trailerUrl', 'status',
+              'views', 'likes', 'averageRating', 'totalRatings',
+              'posterImages', 'characters'
+            ]
+          }
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        distinct: true
+      });
+
+      res.json({
+        success: true,
+        data: {
+          watchlist: watchlistItems.map(item => ({
+            watchlistId: item.id,
+            addedAt: item.addedAt,
+            content: item.content
+          })),
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        },
+        profileContext: {
+          profileId: profileId,
+          isChildProfile: req.activeProfile?.isChild || false
+        }
+      });
+    } catch (error) {
+      console.error('Get watchlist error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch watchlist'
+      });
+    }
+  },
+
+  async checkWatchlistStatus(req, res) {
+    try {
+      const { contentId } = req.params;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const watchlistEntry = await Watchlist.findOne({
+        where: { 
+          profileId, 
+          contentId 
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          inWatchlist: !!watchlistEntry,
+          addedAt: watchlistEntry?.addedAt || null
+        }
+      });
+    } catch (error) {
+      console.error('Check watchlist status error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check watchlist status'
       });
     }
   }

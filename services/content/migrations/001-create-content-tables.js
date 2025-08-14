@@ -208,17 +208,55 @@ module.exports = {
       }
     });
 
+    // Create watchlist table
+    await queryInterface.createTable('watchlist', {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+      },
+      profileId: {
+        type: Sequelize.UUID,
+        allowNull: false
+      },
+      contentId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: 'content',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
+      addedAt: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      }
+    });
+
     // Add indexes
     await queryInterface.addIndex('content', ['type']);
     await queryInterface.addIndex('content', ['status']);
+    await queryInterface.addIndex('content', ['isActive']);
     await queryInterface.addIndex('content', ['releaseYear']);
-    await queryInterface.addIndex('content', ['rating']);
-    await queryInterface.addIndex('content_episodes', ['seriesId']);
-    await queryInterface.addIndex('content_episodes', ['seasonNumber', 'episodeNumber']);
+    await queryInterface.addIndex('watchlist', ['profileId']);
+    await queryInterface.addIndex('watchlist', ['contentId']);
+    await queryInterface.addIndex('watchlist', ['profileId', 'contentId'], { unique: true });
   },
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('content_episodes');
     await queryInterface.dropTable('content');
+    await queryInterface.dropTable('watchlist');
   }
 };

@@ -130,6 +130,12 @@ Content.associate = (models) => {
     foreignKey: 'seriesId',
     as: 'episodes'
   });
+
+  // Watchlist association
+  Content.hasMany(models.Watchlist, {
+    foreignKey: 'contentId',
+    as: 'watchlistEntries'
+  });
 };
 
 module.exports = Content;
