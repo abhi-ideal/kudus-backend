@@ -1,6 +1,9 @@
+const jwt = require('jsonwebtoken');
 const admin = require('firebase-admin');
 const logger = require('./utils/logger');
 const User = require('./models/User');
+const UserProfile = require('./models/UserProfile');
+const LoginHistory = require('./models/LoginHistory');
 
 // Initialize Firebase Admin if not already initialized
 const serviceAccount = {
@@ -14,6 +17,47 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(serviceAccount)
   });
 }
+
+// Helper functions for device detection
+function getDeviceType(userAgent) {
+  if (!userAgent) return 'unknown';
+
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+    return 'mobile';
+  } else if (ua.includes('tablet') || ua.includes('ipad')) {
+    return 'tablet';
+  } else if (ua.includes('smart-tv') || ua.includes('roku') || ua.includes('chromecast')) {
+    return 'tv';
+  } else {
+    return 'desktop';
+  }
+}
+
+function getBrowserInfo(userAgent) {
+  if (!userAgent) return 'unknown';
+
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('chrome')) return 'Chrome';
+  if (ua.includes('firefox')) return 'Firefox';
+  if (ua.includes('safari')) return 'Safari';
+  if (ua.includes('edge')) return 'Edge';
+  if (ua.includes('opera')) return 'Opera';
+  return 'Other';
+}
+
+function getOSInfo(userAgent) {
+  if (!userAgent) return 'unknown';
+
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('windows')) return 'Windows';
+  if (ua.includes('mac')) return 'macOS';
+  if (ua.includes('linux')) return 'Linux';
+  if (ua.includes('android')) return 'Android';
+  if (ua.includes('ios') || ua.includes('iphone') || ua.includes('ipad')) return 'iOS';
+  return 'Other';
+}
+
 
 const authController = {
   async login(req, res) {
@@ -42,20 +86,59 @@ const authController = {
         logger.info(`New user created: ${user.id}`);
       } else {
         // Update last login
-        await user.update({ lastLoginAt: new Date() });
+        await user.update({
+          lastLoginAt: new Date()
+        });
+
+        // Create login history entry
+        await LoginHistory.create({
+          userId: user.id,
+          loginAt: new Date(),
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.get('User-Agent'),
+          deviceType: getDeviceType(req.get('User-Agent')),
+          deviceInfo: {
+            browser: getBrowserInfo(req.get('User-Agent')),
+            os: getOSInfo(req.get('User-Agent'))
+          },
+          loginMethod: 'firebase',
+          isActive: true
+        });
+
+        // Generate tokens (not stored in DB)
+        const accessToken = jwt.sign(
+          {
+            userId: user.id,
+            firebaseUid: user.firebaseUid,
+            email: user.email,
+            profileIds: profiles.map(p => p.id)
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+        );
+
+        logger.info(`User logged in successfully: ${user.email}`);
+
+        res.json({
+          success: true,
+          message: 'Login successful',
+          user: {
+            id: user.id,
+            email: user.email,
+            displayName: user.displayName,
+            profilePicture: user.profilePicture,
+            subscriptionType: user.subscriptionType,
+            subscriptionStatus: user.subscriptionStatus,
+            profiles: profiles.map(profile => ({
+              id: profile.id,
+              name: profile.name,
+              avatar: profile.avatar,
+              isKidsProfile: profile.isKidsProfile
+            }))
+          },
+          accessToken
+        });
       }
-
-      logger.info(`User ${decodedToken.uid} logged in successfully`);
-
-      res.json({
-        message: 'Login successful',
-        user: {
-          uid: decodedToken.uid,
-          email: decodedToken.email,
-          emailVerified: decodedToken.email_verified,
-          id: user.id
-        }
-      });
     } catch (error) {
       logger.error('Login error:', error);
       res.status(401).json({ error: 'Invalid ID token' });
@@ -171,21 +254,41 @@ const authController = {
 
   async logout(req, res) {
     try {
-      const { uid } = req.user;
+      const { userId } = req.user;
 
-      // Revoke refresh tokens for the user
-      await admin.auth().revokeRefreshTokens(uid);
+      // Find the most recent active login session and mark it as inactive
+      const recentLogin = await LoginHistory.findOne({
+        where: {
+          userId: userId,
+          isActive: true,
+          logoutAt: null
+        },
+        order: [['loginAt', 'DESC']]
+      });
 
-      console.log(`User logged out: ${uid}`);
+      if (recentLogin) {
+        const logoutTime = new Date();
+        const sessionDuration = Math.floor((logoutTime - recentLogin.loginAt) / 1000); // in seconds
 
-      res.status(200).json({
+        await recentLogin.update({
+          logoutAt: logoutTime,
+          sessionDuration: sessionDuration,
+          isActive: false
+        });
+      }
+
+      logger.info('User logged out successfully');
+
+      res.json({
+        success: true,
         message: 'Logout successful'
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       res.status(500).json({
-        error: 'Logout failed',
-        message: error.message
+        success: false,
+        message: 'Logout failed',
+        error: error.message
       });
     }
   },
@@ -342,4 +445,10 @@ const authController = {
   }
 };
 
-module.exports = authController;
+module.exports = {
+  login: authController.login,
+  register: authController.register,
+  logout: authController.logout,
+  verifyToken: authController.verifyToken, // Assuming verifyToken exists in the original context or will be added
+  refreshToken: authController.refreshToken
+};

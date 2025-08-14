@@ -1,93 +1,9 @@
+
 'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Create auth_sessions table for token management
-    await queryInterface.createTable('auth_sessions', {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
-      },
-      userId: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        index: true
-      },
-      firebaseUid: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-      },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      refreshToken: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      lastLoginAt: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      }
-    });
-
-    // Create auth_tokens table for JWT management
-    await queryInterface.createTable('auth_tokens', {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
-      },
-      userId: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      token: {
-        type: Sequelize.TEXT,
-        allowNull: false
-      },
-      type: {
-        type: Sequelize.ENUM('access', 'refresh'),
-        allowNull: false
-      },
-      expiresAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      isRevoked: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      }
-    });
-
-    // Add indexes for better performance
-    await queryInterface.addIndex('refresh_tokens', ['userId']);
-    await queryInterface.addIndex('refresh_tokens', ['token']);
-    await queryInterface.addIndex('refresh_tokens', ['expiresAt']);
-
-    // Create users table for profile management
+    // Create users table for both authentication and profile management
     await queryInterface.createTable('users', {
       id: {
         type: Sequelize.UUID,
@@ -159,6 +75,74 @@ module.exports = {
       emailVerified: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      }
+    });
+
+    // Create login_history table for tracking login sessions
+    await queryInterface.createTable('login_history', {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+      },
+      userId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
+      loginAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      logoutAt: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      ipAddress: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      userAgent: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
+      deviceType: {
+        type: Sequelize.ENUM('web', 'mobile', 'tv', 'tablet', 'desktop'),
+        allowNull: true
+      },
+      deviceInfo: {
+        type: Sequelize.JSON,
+        allowNull: true
+      },
+      location: {
+        type: Sequelize.JSON,
+        allowNull: true
+      },
+      sessionDuration: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        comment: 'Session duration in seconds'
+      },
+      loginMethod: {
+        type: Sequelize.ENUM('firebase', 'google', 'facebook', 'email'),
+        defaultValue: 'firebase'
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -311,6 +295,12 @@ module.exports = {
     await queryInterface.addIndex('users', ['subscriptionStatus']);
     await queryInterface.addIndex('users', ['isActive']);
 
+    // Add indexes for login_history table
+    await queryInterface.addIndex('login_history', ['userId']);
+    await queryInterface.addIndex('login_history', ['loginAt']);
+    await queryInterface.addIndex('login_history', ['isActive']);
+    await queryInterface.addIndex('login_history', ['deviceType']);
+
     // Add indexes for user_profiles table
     await queryInterface.addIndex('user_profiles', ['userId']);
     await queryInterface.addIndex('user_profiles', ['isKidsProfile']);
@@ -324,10 +314,9 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('auth_tokens');
-    await queryInterface.dropTable('auth_sessions');
     await queryInterface.dropTable('watch_history');
     await queryInterface.dropTable('user_profiles');
+    await queryInterface.dropTable('login_history');
     await queryInterface.dropTable('users');
   }
 };
