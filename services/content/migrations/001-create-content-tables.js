@@ -238,6 +238,65 @@ module.exports = {
       }
     });
 
+    // Create watch_history table
+    await queryInterface.createTable('watch_history', {
+      id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true
+      },
+      profileId: {
+        type: Sequelize.UUID,
+        allowNull: false
+      },
+      contentId: {
+        type: Sequelize.UUID,
+        allowNull: false,
+        references: {
+          model: 'content',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
+      episodeId: {
+        type: Sequelize.UUID,
+        allowNull: true
+      },
+      watchedAt: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW
+      },
+      watchDuration: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0
+      },
+      totalDuration: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+      },
+      progressPercentage: {
+        type: Sequelize.DECIMAL(5,2),
+        defaultValue: 0.00
+      },
+      isCompleted: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
+      deviceType: {
+        type: Sequelize.ENUM('web', 'mobile', 'tv', 'tablet'),
+        allowNull: true
+      },
+      createdAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      },
+      updatedAt: {
+        type: Sequelize.DATE,
+        allowNull: false
+      }
+    });
+
     // Add indexes
     await queryInterface.addIndex('content', ['type']);
     await queryInterface.addIndex('content', ['status']);
@@ -246,11 +305,16 @@ module.exports = {
     await queryInterface.addIndex('watchlist', ['profileId']);
     await queryInterface.addIndex('watchlist', ['contentId']);
     await queryInterface.addIndex('watchlist', ['profileId', 'contentId'], { unique: true });
+    await queryInterface.addIndex('watch_history', ['profileId']);
+    await queryInterface.addIndex('watch_history', ['contentId']);
+    await queryInterface.addIndex('watch_history', ['watchedAt']);
+    await queryInterface.addIndex('watch_history', ['isCompleted']);
   },
 
   down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable('watch_history');
+    await queryInterface.dropTable('watchlist');
     await queryInterface.dropTable('content_episodes');
     await queryInterface.dropTable('content');
-    await queryInterface.dropTable('watchlist');
   }
 };

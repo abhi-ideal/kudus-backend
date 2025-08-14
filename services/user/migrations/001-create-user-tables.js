@@ -1,8 +1,9 @@
+
 'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Create users table for both authentication and profile management
+    // Create users table
     await queryInterface.createTable('users', {
       id: {
         type: Sequelize.UUID,
@@ -74,68 +75,6 @@ module.exports = {
       emailVerified: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      }
-    });
-
-    // Create login_history table for tracking login sessions
-    await queryInterface.createTable('login_history', {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
-      },
-      userId: {
-        type: Sequelize.UUID,
-        allowNull: false
-      },
-      loginAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      logoutAt: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      ipAddress: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      userAgent: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      deviceType: {
-        type: Sequelize.ENUM('web', 'mobile', 'tv', 'tablet', 'desktop'),
-        allowNull: true
-      },
-      deviceInfo: {
-        type: Sequelize.JSON,
-        allowNull: true
-      },
-      location: {
-        type: Sequelize.JSON,
-        allowNull: true
-      },
-      sessionDuration: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        comment: 'Session duration in seconds'
-      },
-      loginMethod: {
-        type: Sequelize.ENUM('firebase', 'google', 'facebook', 'email'),
-        defaultValue: 'firebase'
-      },
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -222,65 +161,6 @@ module.exports = {
       }
     });
 
-    // Create watch_history table
-    await queryInterface.createTable('watch_history', {
-      id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
-        primaryKey: true
-      },
-      profileId: {
-        type: Sequelize.UUID,
-        allowNull: false,
-        references: {
-          model: 'user_profiles',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
-      },
-      contentId: {
-        type: Sequelize.UUID,
-        allowNull: false
-      },
-      episodeId: {
-        type: Sequelize.UUID,
-        allowNull: true
-      },
-      watchedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW
-      },
-      watchDuration: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      totalDuration: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-      },
-      progressPercentage: {
-        type: Sequelize.DECIMAL(5,2),
-        defaultValue: 0.00
-      },
-      isCompleted: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      deviceType: {
-        type: Sequelize.ENUM('web', 'mobile', 'tv', 'tablet'),
-        allowNull: true
-      },
-      createdAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      },
-      updatedAt: {
-        type: Sequelize.DATE,
-        allowNull: false
-      }
-    });
-
     // Add indexes for users table
     await queryInterface.addIndex('users', ['firebaseUid']);
     await queryInterface.addIndex('users', ['email']);
@@ -288,28 +168,14 @@ module.exports = {
     await queryInterface.addIndex('users', ['subscriptionStatus']);
     await queryInterface.addIndex('users', ['isActive']);
 
-    // Add indexes for login_history table
-    await queryInterface.addIndex('login_history', ['userId']);
-    await queryInterface.addIndex('login_history', ['loginAt']);
-    await queryInterface.addIndex('login_history', ['isActive']);
-    await queryInterface.addIndex('login_history', ['deviceType']);
-
     // Add indexes for user_profiles table
     await queryInterface.addIndex('user_profiles', ['userId']);
     await queryInterface.addIndex('user_profiles', ['isKidsProfile']);
     await queryInterface.addIndex('user_profiles', ['isActive']);
-
-    // Add indexes for watch_history table
-    await queryInterface.addIndex('watch_history', ['profileId']);
-    await queryInterface.addIndex('watch_history', ['contentId']);
-    await queryInterface.addIndex('watch_history', ['watchedAt']);
-    await queryInterface.addIndex('watch_history', ['isCompleted']);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('watch_history');
     await queryInterface.dropTable('user_profiles');
-    await queryInterface.dropTable('login_history');
     await queryInterface.dropTable('users');
   }
 };
