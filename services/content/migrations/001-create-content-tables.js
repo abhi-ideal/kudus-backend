@@ -79,9 +79,15 @@ module.exports = {
           original: null
         }
       },
-      items: {
-        type: Sequelize.ENUM('drama-delights', 'sparks-your-digital-superstars', 'documentary-shows', 'action-adventures', 'comedy-classics', 'thriller-zone'),
-        allowNull: true
+      itemId: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: 'content_items',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
       trailerUrl: {
         type: Sequelize.TEXT,

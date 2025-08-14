@@ -65,9 +65,13 @@ const Content = sequelize.define('Content', {
       original: null
     }
   },
-  items: {
-    type: DataTypes.ENUM('drama-delights', 'sparks-your-digital-superstars', 'documentary-shows', 'action-adventures', 'comedy-classics', 'thriller-zone'),
-    allowNull: true
+  itemId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'content_items',
+      key: 'id'
+    }
   },
   trailerUrl: {
     type: DataTypes.TEXT,
@@ -93,5 +97,13 @@ const Content = sequelize.define('Content', {
   tableName: 'content',
   timestamps: true
 });
+
+// Define associations
+Content.associate = (models) => {
+  Content.belongsTo(models.ContentItem, {
+    foreignKey: 'itemId',
+    as: 'item'
+  });
+};
 
 module.exports = Content;

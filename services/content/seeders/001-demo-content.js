@@ -30,7 +30,7 @@ module.exports = {
           hd: 'https://example.com/posters/adventure-begins-hd.jpg',
           original: 'https://example.com/posters/adventure-begins-orig.jpg'
         }),
-        items: 'action-adventures',
+        itemId: null, // Will be updated after content_items seeder runs
         trailerUrl: 'https://example.com/trailers/adventure-begins.mp4',
         status: 'published',
         isActive: true,
@@ -58,7 +58,7 @@ module.exports = {
           hd: 'https://example.com/posters/mystery-city-hd.jpg',
           original: 'https://example.com/posters/mystery-city-orig.jpg'
         }),
-        items: 'drama-delights',
+        itemId: null, // Will be updated after content_items seeder runs
         language: 'English',
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
         cast: JSON.stringify(['Alice Cooper', 'David Wilson', 'Emma Brown']),
