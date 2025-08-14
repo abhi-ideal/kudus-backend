@@ -292,43 +292,6 @@ const authController = {
     }
   },
 
-  async setInitialProfile(req, res) {
-    try {
-      const { profileId } = req.body;
-      const uid = req.user.uid;
-
-      if (!profileId) {
-        return res.status(400).json({
-          error: 'Profile ID required',
-          message: 'profileId is required to set initial profile'
-        });
-      }
-
-      // Set both profile_id and default_profile_id for new users
-      const customClaims = {
-        profile_id: profileId,
-        default_profile_id: profileId,
-        initial_profile_set_at: Math.floor(Date.now() / 1000)
-      };
-
-      await admin.auth().setCustomUserClaims(uid, customClaims);
-
-      console.log(`Initial profile set for user ${uid}: ${profileId}`);
-
-      res.status(200).json({
-        message: 'Initial profile set successfully',
-        profileId: profileId,
-        note: 'Profile is now active and set as default'
-      });
-    } catch (error) {
-      console.error('Set initial profile error:', error);
-      res.status(500).json({
-        error: 'Failed to set initial profile',
-        message: error.message
-      });
-    }
-  },
-
   /**
    * Generate a default username from display name or email
    */

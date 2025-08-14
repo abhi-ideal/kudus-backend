@@ -159,27 +159,4 @@ router.post('/switch-profile', require('./middleware/auth').verifyFirebaseToken,
  */
 router.post('/set-default-profile', require('./middleware/auth').verifyFirebaseToken, authController.setDefaultProfile);
 
-/**
- * @swagger
- * /api/auth/set-initial-profile:
- *   post:
- *     summary: Set initial profile for new user
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               profileId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Initial profile set successfully
- */
-router.post('/set-initial-profile', require('./middleware/auth').verifyFirebaseToken, authController.setInitialProfile);
-
 module.exports = router;
