@@ -6,8 +6,20 @@ class ProfileService {
   /**
    * Create a new profile for a user
    */
-  async createProfile(userId, profileData) {
+  async createProfile(userIdOrFirebaseUid, profileData) {
     const { profileName, isChild = false, avatarUrl, preferences = {} } = profileData;
+    
+    // If userIdOrFirebaseUid looks like Firebase UID, find the actual user ID
+    let userId = userIdOrFirebaseUid;
+    if (typeof userIdOrFirebaseUid === 'string' && userIdOrFirebaseUid.length > 20) {
+      const User = require('../models/User');
+      const user = await User.findOne({ where: { firebaseUid: userIdOrFirebaseUid } });
+      if (user) {
+        userId = user.id;
+      } else {
+        throw new Error('User not found');
+      }
+    }
 
     // Check if user already has 5 profiles (Netflix-style limit)
     const existingProfiles = await UserProfile.count({

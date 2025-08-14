@@ -102,22 +102,54 @@ const authController = {
         displayName
       });
 
-      // Set initial custom claims (profile will be created later by user service)
-      const initialClaims = {
-        created_at: Math.floor(Date.now() / 1000),
-        // profile_id will be set when user creates their first profile
-      };
-
-      await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
-
-      console.log(`User registered: ${userRecord.uid}`);
+      // Generate a default username from displayName or email
+      const defaultUsername = this.generateDefaultUsername(displayName || email);
       
-      res.status(201).json({
-        message: 'User registered successfully',
-        uid: userRecord.uid,
-        email: userRecord.email,
-        note: 'Profile can be set after account creation'
-      });
+      try {
+        // Create default profile in user service
+        const defaultProfile = await this.createDefaultProfile(userRecord.uid, defaultUsername);
+        
+        // Set custom claims with the default profile
+        const initialClaims = {
+          created_at: Math.floor(Date.now() / 1000),
+          profile_id: defaultProfile.id,
+          default_profile_id: defaultProfile.id,
+          username: defaultUsername
+        };
+
+        await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
+
+        console.log(`User registered: ${userRecord.uid} with default profile: ${defaultProfile.id}`);
+        
+        res.status(201).json({
+          message: 'User registered successfully',
+          uid: userRecord.uid,
+          email: userRecord.email,
+          defaultProfile: {
+            id: defaultProfile.id,
+            username: defaultUsername
+          },
+          note: 'Default profile created and set as active'
+        });
+      } catch (profileError) {
+        console.error('Failed to create default profile:', profileError);
+        
+        // If profile creation fails, still set basic claims
+        const initialClaims = {
+          created_at: Math.floor(Date.now() / 1000),
+          username: defaultUsername
+        };
+
+        await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
+        
+        res.status(201).json({
+          message: 'User registered successfully',
+          uid: userRecord.uid,
+          email: userRecord.email,
+          username: defaultUsername,
+          warning: 'Default profile creation failed, can be created later'
+        });
+      }
     } catch (error) {
       console.error('Registration error:', error);
       res.status(400).json({
@@ -294,6 +326,84 @@ const authController = {
         error: 'Failed to set initial profile',
         message: error.message
       });
+    }
+  },
+
+  /**
+   * Generate a default username from display name or email
+   */
+  generateDefaultUsername(input) {
+    if (!input) return 'user';
+    
+    // If it's an email, take the part before @
+    if (input.includes('@')) {
+      input = input.split('@')[0];
+    }
+    
+    // Clean the username: remove spaces, special chars, make lowercase
+    let username = input
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .substring(0, 20); // Limit to 20 characters
+    
+    // Ensure it's not empty
+    if (!username) {
+      username = 'user';
+    }
+    
+    // Add timestamp to make it unique
+    const timestamp = Date.now().toString().slice(-4);
+    return `${username}${timestamp}`;
+  },
+
+  /**
+   * Create default profile by calling user service
+   */
+  async createDefaultProfile(firebaseUid, username) {
+    try {
+      // First, create user record in user service if it doesn't exist
+      const axios = require('axios');
+      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000/api/users';
+      
+      // Create user record
+      const userResponse = await axios.post(`${userServiceUrl}/create-user`, {
+        firebaseUid: firebaseUid,
+        email: '', // Will be updated by user service
+        firstName: username,
+        lastName: '',
+        displayName: username
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Service': 'auth-service' // Internal service header
+        }
+      });
+
+      const userId = userResponse.data.user.id;
+
+      // Create default profile
+      const profileResponse = await axios.post(`${userServiceUrl}/profiles`, {
+        profileName: username,
+        isChild: false,
+        avatarUrl: null,
+        preferences: {
+          autoplay: true,
+          quality: 'HD',
+          subtitles: false,
+          preferredGenres: []
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId,
+          'X-Internal-Service': 'auth-service'
+        }
+      });
+
+      return profileResponse.data.profile;
+    } catch (error) {
+      console.error('Error creating default profile:', error.message);
+      throw new Error('Failed to create default profile');
     }
   }
 };

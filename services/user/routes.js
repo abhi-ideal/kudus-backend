@@ -5,8 +5,34 @@ const { validate, schemas } = require('../../shared/utils/validation');
 
 const router = express.Router();
 
-// Apply auth middleware to all user routes
-router.use(verifyFirebaseToken);
+/**
+ * @swagger
+ * /api/users/create-user:
+ *   post:
+ *     summary: Create user record (internal service only)
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firebaseUid:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               displayName:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ */
+router.post('/create-user', userController.createUser);
 
 /**
  * @swagger

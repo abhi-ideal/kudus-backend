@@ -160,27 +160,54 @@ const userController = {
   // Profile Management
   async createProfile(req, res) {
     try {
-      const userId = req.user.uid;
+      let userId;
+
+      // Handle internal service calls differently
+      if (req.headers['x-internal-service'] === 'auth-service') {
+        userId = req.headers['x-user-id'];
+      } else {
+        userId = req.user?.uid;
+      }
+
       const profileData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'User ID required'
+        });
+      }
 
       const profile = await profileService.createProfile(userId, profileData);
 
       res.status(201).json({
         success: true,
-        data: {
-          id: profile.id,
-          profileName: profile.profileName,
-          isChild: profile.isChild,
-          avatarUrl: profile.avatarUrl,
-          preferences: profile.preferences,
-          createdAt: profile.createdAt
-        }
+        profile,
+        message: 'Profile created successfully'
       });
     } catch (error) {
       console.error('Create profile error:', error);
-      res.status(400).json({
+
+      if (error.message.includes('Maximum number of profiles')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Profile limit reached',
+          message: error.message
+        });
+      }
+
+      if (error.message.includes('Profile name already exists')) {
+        return res.status(409).json({
+          success: false,
+          error: 'Profile name conflict',
+          message: error.message
+        });
+      }
+
+      res.status(500).json({
         success: false,
-        error: error.message || 'Failed to create profile'
+        error: 'Failed to create profile',
+        message: error.message
       });
     }
   },
