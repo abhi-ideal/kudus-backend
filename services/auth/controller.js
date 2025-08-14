@@ -1,5 +1,6 @@
-
 const admin = require('firebase-admin');
+const logger = require('./utils/logger');
+const User = require('./models/User');
 
 // Initialize Firebase Admin if not already initialized
 const serviceAccount = {
@@ -18,83 +19,53 @@ const authController = {
   async login(req, res) {
     try {
       const { idToken } = req.body;
-      
+
       if (!idToken) {
-        return res.status(400).json({
-          error: 'Missing required field',
-          message: 'idToken is required'
-        });
+        return res.status(400).json({ error: 'ID token is required' });
       }
 
-      // Verify the Firebase ID token
+      // Verify the ID token with Firebase
       const decodedToken = await admin.auth().verifyIdToken(idToken);
-      const uid = decodedToken.uid;
-      
-      // Get user record from Firebase
-      const userRecord = await admin.auth().getUser(uid);
-      
-      // Check if user has custom claims with profile_id
-      let customClaims = userRecord.customClaims || {};
-      
-      // If no profile_id in claims, try to get default profile
-      if (!customClaims.profile_id) {
-        // Here you would typically fetch the user's default profile from your user service
-        // For now, we'll check if there's a default_profile_id
-        if (!customClaims.default_profile_id) {
-          // If no default profile exists, you might want to create one or leave empty
-          console.log(`No default profile found for user ${uid}`);
-        } else {
-          // Set the default profile as active profile
-          customClaims.profile_id = customClaims.default_profile_id;
-          customClaims.login_at = Math.floor(Date.now() / 1000);
-          
-          // Update Firebase custom claims
-          await admin.auth().setCustomUserClaims(uid, customClaims);
-        }
+
+      // Find or create user in database
+      let user = await User.findOne({ where: { firebaseUid: decodedToken.uid } });
+
+      if (!user) {
+        // Create new user record
+        user = await User.create({
+          firebaseUid: decodedToken.uid,
+          email: decodedToken.email,
+          displayName: decodedToken.name,
+          emailVerified: decodedToken.email_verified,
+          lastLoginAt: new Date()
+        });
+        logger.info(`New user created: ${user.id}`);
+      } else {
+        // Update last login
+        await user.update({ lastLoginAt: new Date() });
       }
-      
-      console.log(`User logged in: ${uid} with profile: ${customClaims.profile_id || 'none'}`);
-      
-      res.status(200).json({
+
+      logger.info(`User ${decodedToken.uid} logged in successfully`);
+
+      res.json({
         message: 'Login successful',
         user: {
-          uid: userRecord.uid,
-          email: userRecord.email,
-          displayName: userRecord.displayName,
-          emailVerified: userRecord.emailVerified,
-          disabled: userRecord.disabled,
-          customClaims: customClaims
-        },
-        activeProfile: customClaims.profile_id || null
+          uid: decodedToken.uid,
+          email: decodedToken.email,
+          emailVerified: decodedToken.email_verified,
+          id: user.id
+        }
       });
     } catch (error) {
-      console.error('Login error:', error);
-      
-      if (error.code === 'auth/id-token-expired') {
-        return res.status(401).json({
-          error: 'Token expired',
-          message: 'Please refresh your token and try again'
-        });
-      }
-      
-      if (error.code === 'auth/invalid-id-token') {
-        return res.status(401).json({
-          error: 'Invalid token',
-          message: 'The provided token is invalid'
-        });
-      }
-      
-      res.status(500).json({
-        error: 'Login failed',
-        message: error.message
-      });
+      logger.error('Login error:', error);
+      res.status(401).json({ error: 'Invalid ID token' });
     }
   },
 
   async register(req, res) {
     try {
       const { email, password, displayName } = req.body;
-      
+
       // Create user in Firebase Auth
       const userRecord = await admin.auth().createUser({
         email,
@@ -104,11 +75,11 @@ const authController = {
 
       // Generate a default username from displayName or email
       const defaultUsername = this.generateDefaultUsername(displayName || email);
-      
+
       try {
         // Create default profile in user service
         const defaultProfile = await this.createDefaultProfile(userRecord.uid, defaultUsername);
-        
+
         // Set custom claims with the default profile
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
@@ -120,7 +91,7 @@ const authController = {
         await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
 
         console.log(`User registered: ${userRecord.uid} with default profile: ${defaultProfile.id}`);
-        
+
         res.status(201).json({
           message: 'User registered successfully',
           uid: userRecord.uid,
@@ -133,7 +104,7 @@ const authController = {
         });
       } catch (profileError) {
         console.error('Failed to create default profile:', profileError);
-        
+
         // If profile creation fails, still set basic claims
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
@@ -141,7 +112,7 @@ const authController = {
         };
 
         await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
-        
+
         res.status(201).json({
           message: 'User registered successfully',
           uid: userRecord.uid,
@@ -162,10 +133,10 @@ const authController = {
   async socialLogin(req, res) {
     try {
       const { provider, token } = req.body;
-      
+
       // Verify the social provider token
       const decodedToken = await admin.auth().verifyIdToken(token);
-      
+
       res.status(200).json({
         message: 'Social login successful',
         uid: decodedToken.uid,
@@ -183,7 +154,7 @@ const authController = {
   async refreshToken(req, res) {
     try {
       const { refreshToken } = req.body;
-      
+
       // Firebase handles token refresh on client side
       res.status(200).json({
         message: 'Use Firebase Auth SDK for token refresh',
@@ -201,12 +172,12 @@ const authController = {
   async logout(req, res) {
     try {
       const { uid } = req.user;
-      
+
       // Revoke refresh tokens for the user
       await admin.auth().revokeRefreshTokens(uid);
-      
+
       console.log(`User logged out: ${uid}`);
-      
+
       res.status(200).json({
         message: 'Logout successful'
       });
@@ -297,23 +268,23 @@ const authController = {
    */
   generateDefaultUsername(input) {
     if (!input) return 'user';
-    
+
     // If it's an email, take the part before @
     if (input.includes('@')) {
       input = input.split('@')[0];
     }
-    
+
     // Clean the username: remove spaces, special chars, make lowercase
     let username = input
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '')
       .substring(0, 20); // Limit to 20 characters
-    
+
     // Ensure it's not empty
     if (!username) {
       username = 'user';
     }
-    
+
     // Add timestamp to make it unique
     const timestamp = Date.now().toString().slice(-4);
     return `${username}${timestamp}`;
@@ -327,7 +298,7 @@ const authController = {
       // First, create user record in user service if it doesn't exist
       const axios = require('axios');
       const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000/api/users';
-      
+
       // Create user record
       const userResponse = await axios.post(`${userServiceUrl}/create-user`, {
         firebaseUid: firebaseUid,

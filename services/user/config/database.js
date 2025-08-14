@@ -2,13 +2,20 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// Remove quotes from password if present
+const getPassword = (password) => {
+  if (!password) return 'password';
+  return password.replace(/^['"]|['"]$/g, '');
+};
+
+// Use shared database with auth service
 const sequelize = new Sequelize(
-  process.env.USER_DB_NAME || 'ott_users',
-  process.env.USER_DB_USER || process.env.DB_USER,
-  process.env.USER_DB_PASSWORD || process.env.DB_PASSWORD,
+  process.env.DB_NAME || 'ott_auth',
+  process.env.DB_USER || 'root',
+  getPassword(process.env.DB_PASSWORD),
   {
-    host: process.env.USER_DB_HOST || process.env.DB_HOST,
-    port: process.env.USER_DB_PORT || process.env.DB_PORT,
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {

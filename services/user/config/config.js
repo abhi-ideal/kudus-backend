@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const getPassword = (password) => {
@@ -6,10 +5,11 @@ const getPassword = (password) => {
   return password.replace(/^['"]|['"]$/g, '');
 };
 
+// Use shared database with auth service
 const baseConfig = {
   username: process.env.DB_USER || 'root',
   password: getPassword(process.env.DB_PASSWORD),
-  database: process.env.DB_NAME || 'ott_users',
+  database: process.env.DB_NAME || 'ott_auth',
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
   dialect: 'mysql'
@@ -22,7 +22,7 @@ module.exports = {
   },
   test: {
     ...baseConfig,
-    database: (process.env.DB_NAME || 'ott_users') + '_test',
+    database: (process.env.DB_NAME || 'ott_auth') + '_test',
     logging: false
   },
   production: {

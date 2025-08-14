@@ -3,7 +3,6 @@ require('dotenv').config();
 
 const databases = [
     'ott_auth',
-    'ott_users',
     'ott_content',
     'ott_recommendations',
     'ott_streaming',
