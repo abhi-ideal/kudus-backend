@@ -1,0 +1,962 @@
+
+{
+  "info": {
+    "name": "OTT Platform API",
+    "description": "Complete API collection for Netflix-style OTT Platform",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set Content-Type for JSON requests",
+          "if (pm.request.body && pm.request.body.mode === 'raw') {",
+          "    pm.request.headers.add({",
+          "        key: 'Content-Type',",
+          "        value: 'application/json'",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set('authToken', responseJson.token);",
+                  "        console.log('Auth token saved:', responseJson.token);",
+                  "    }",
+                  "    if (responseJson.user && responseJson.user.uid) {",
+                  "        pm.environment.set('userId', responseJson.user.uid);",
+                  "    }",
+                  "    if (responseJson.defaultProfile && responseJson.defaultProfile.id) {",
+                  "        pm.environment.set('profileId', responseJson.defaultProfile.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\",\n    \"displayName\": \"{{displayName}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set('authToken', responseJson.token);",
+                  "        console.log('Auth token saved:', responseJson.token);",
+                  "    }",
+                  "    if (responseJson.user && responseJson.user.uid) {",
+                  "        pm.environment.set('userId', responseJson.user.uid);",
+                  "    }",
+                  "    if (responseJson.user && responseJson.user.profile_id) {",
+                  "        pm.environment.set('profileId', responseJson.user.profile_id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{userEmail}}\",\n    \"password\": \"{{userPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Switch Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set('authToken', responseJson.token);",
+                  "        console.log('Auth token updated with new profile:', responseJson.token);",
+                  "    }",
+                  "    if (responseJson.profileId) {",
+                  "        pm.environment.set('profileId', responseJson.profileId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"profileId\": \"{{profileId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/switch-profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "switch-profile"]
+            }
+          }
+        },
+        {
+          "name": "Set Default Profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"profileId\": \"{{profileId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/set-default-profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "set-default-profile"]
+            }
+          }
+        },
+        {
+          "name": "Social Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"provider\": \"google\",\n    \"token\": \"social_provider_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/social-login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "social-login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 User Management",
+      "item": [
+        {
+          "name": "Get User Profiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profiles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profiles"]
+            }
+          }
+        },
+        {
+          "name": "Create Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.profile && responseJson.profile.id) {",
+                  "        pm.environment.set('newProfileId', responseJson.profile.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"profileName\": \"Kids Profile\",\n    \"isChild\": true,\n    \"avatarUrl\": \"https://example.com/avatar.jpg\",\n    \"preferences\": {\n        \"language\": \"en\",\n        \"autoplay\": false\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profiles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profiles"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"profileName\": \"Updated Profile Name\",\n    \"avatarUrl\": \"https://example.com/new-avatar.jpg\",\n    \"preferences\": {\n        \"language\": \"en\",\n        \"autoplay\": true\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profiles/{{profileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profiles", "{{profileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profiles/{{newProfileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profiles", "{{newProfileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/feed?profile_id={{profileId}}&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "feed"],
+              "query": [
+                {
+                  "key": "profile_id",
+                  "value": "{{profileId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generate Feed",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"profile_id\": \"{{profileId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/feed/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "feed", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Mark Feed Item Viewed",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/feed/{{feedItemId}}/viewed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "feed", "{{feedItemId}}", "viewed"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎬 Content Management",
+      "item": [
+        {
+          "name": "Get All Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content?page=1&limit=20&type=movie&genre=action",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "type",
+                  "value": "movie"
+                },
+                {
+                  "key": "genre",
+                  "value": "action"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Kids Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/kids?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "kids"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Content by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.content && responseJson.content.id) {",
+                  "        pm.environment.set('contentId', responseJson.content.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Series Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/series/{{seriesId}}/details?includeEpisodes=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "series", "{{seriesId}}", "details"],
+              "query": [
+                {
+                  "key": "includeEpisodes",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Season Episodes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/series/{{seriesId}}/season/1/episodes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "series", "{{seriesId}}", "season", "1", "episodes"]
+            }
+          }
+        },
+        {
+          "name": "Get Episode Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/episode/{{episodeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "episode", "{{episodeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Streaming URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}/stream?quality=720p",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}", "stream"],
+              "query": [
+                {
+                  "key": "quality",
+                  "value": "720p"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Watchlist",
+          "item": [
+            {
+              "name": "Get Watchlist",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/content/watchlist?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "content", "watchlist"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Add to Watchlist",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"contentId\": \"{{contentId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/content/watchlist",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "content", "watchlist"]
+                }
+              }
+            },
+            {
+              "name": "Remove from Watchlist",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/content/watchlist/{{contentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "content", "watchlist", "{{contentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Check Watchlist Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/content/{{contentId}}/watchlist-status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "content", "{{contentId}}", "watchlist-status"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin - Create Content",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"New Movie\",\n    \"description\": \"A great new movie\",\n    \"type\": \"movie\",\n    \"genre\": [\"action\", \"thriller\"],\n    \"ageRating\": \"PG-13\",\n    \"duration\": 120,\n    \"releaseYear\": 2024,\n    \"director\": \"John Director\",\n    \"cast\": [\"Actor One\", \"Actor Two\"],\n    \"language\": \"en\",\n    \"availableCountries\": [\"US\", \"CA\", \"UK\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Update Content",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated Movie Title\",\n    \"description\": \"Updated description\",\n    \"genre\": [\"action\", \"adventure\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Delete Content",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/content/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "content", "{{contentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📺 Streaming",
+      "item": [
+        {
+          "name": "Start Streaming Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.sessionId) {",
+                  "        pm.environment.set('sessionId', responseJson.sessionId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contentId\": \"{{contentId}}\",\n    \"quality\": \"720p\",\n    \"deviceInfo\": {\n        \"type\": \"web\",\n        \"os\": \"Windows\",\n        \"browser\": \"Chrome\"\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/streaming/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "streaming", "start"]
+            }
+          }
+        },
+        {
+          "name": "Update Progress",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"sessionId\": \"{{sessionId}}\",\n    \"currentTime\": 1800,\n    \"watchedPercentage\": 45.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/streaming/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "streaming", "progress"]
+            }
+          }
+        },
+        {
+          "name": "End Streaming Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"sessionId\": \"{{sessionId}}\",\n    \"watchedDuration\": 3600,\n    \"completed\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/streaming/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "streaming", "end"]
+            }
+          }
+        },
+        {
+          "name": "Heartbeat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"sessionId\": \"{{sessionId}}\",\n    \"currentTime\": 2100,\n    \"quality\": \"720p\",\n    \"bufferHealth\": 5.2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/streaming/heartbeat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "streaming", "heartbeat"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/streaming/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "streaming", "sessions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Recommendations",
+      "item": [
+        {
+          "name": "Get Trending Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/trending?profile_id={{profileId}}&limit=15",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "trending"],
+              "query": [
+                {
+                  "key": "profile_id",
+                  "value": "{{profileId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Popular Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/popular?genre=action&profile_id={{profileId}}&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "popular"],
+              "query": [
+                {
+                  "key": "genre",
+                  "value": "action"
+                },
+                {
+                  "key": "profile_id",
+                  "value": "{{profileId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Personalized Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/personalized?profile_id={{profileId}}&limit=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "personalized"],
+              "query": [
+                {
+                  "key": "profile_id",
+                  "value": "{{profileId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "25"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Similar Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/similar/{{contentId}}?profile_id={{profileId}}&limit=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "similar", "{{contentId}}"],
+              "query": [
+                {
+                  "key": "profile_id",
+                  "value": "{{profileId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "12"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Common Services",
+      "item": [
+        {
+          "name": "Get Genres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/common/genres",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "common", "genres"]
+            }
+          }
+        },
+        {
+          "name": "Create Genre",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Sci-Fi\",\n    \"description\": \"Science Fiction movies and shows\",\n    \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/common/genres",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "common", "genres"]
+            }
+          }
+        },
+        {
+          "name": "Update Genre",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Science Fiction\",\n    \"description\": \"Updated description for Science Fiction genre\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/common/genres/{{genreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "common", "genres", "{{genreId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Genre",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/common/genres/{{genreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "common", "genres", "{{genreId}}"]
+            }
+          }
+        },
+        {
+          "name": "Generate S3 Upload URL",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fileName\": \"movie-poster.jpg\",\n    \"fileType\": \"image/jpeg\",\n    \"folder\": \"posters\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/common/upload-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "common", "upload-url"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚙️ Admin",
+      "item": [
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/analytics?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "analytics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Content Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/content/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "content", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get User Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Update Content Geo Availability",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contentId\": \"{{contentId}}\",\n    \"countries\": [\"US\", \"CA\", \"UK\", \"AU\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/content/geo-availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "content", "geo-availability"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{baseUrl}}",
+      "type": "string"
+    }
+  ]
+}
