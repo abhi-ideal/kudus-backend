@@ -250,6 +250,84 @@ const contentController = {
         message: error.message
       });
     }
+  },
+
+  async getKidsContent(req, res) {
+    try {
+      const { 
+        page = 1, 
+        limit = 20, 
+        type, 
+        genre,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC' 
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const whereClause = { 
+        isActive: true,
+        // Only kid-friendly age ratings
+        ageRating: {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        },
+        // Only kid-friendly genres
+        genre: {
+          [Op.overlap]: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy']
+        }
+      };
+
+      if (type) whereClause.type = type;
+      if (genre) {
+        // Ensure requested genre is kid-friendly
+        const kidFriendlyGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        if (kidFriendlyGenres.includes(genre)) {
+          whereClause.genre = { [Op.contains]: [genre] };
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: 'Requested genre is not available for kids content'
+          });
+        }
+      }
+
+      const { count, rows: content } = await Content.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre', 
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'subtitles', 'cast', 'director',
+          'thumbnailUrl', 'trailerUrl', 'status', 'views',
+          'likes', 'averageRating', 'totalRatings', 'createdAt'
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          content,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        },
+        contentType: 'kids-only',
+        appliedFilters: {
+          ageRatings: ['G', 'PG', 'PG-13'],
+          allowedGenres: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy']
+        }
+      });
+    } catch (error) {
+      console.error('Get kids content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch kids content'
+      });
+    }
   }
 };
 

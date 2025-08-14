@@ -38,6 +38,35 @@ router.get('/', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, 
 
 /**
  * @swagger
+ * /api/content/kids:
+ *   get:
+ *     summary: Get kids-only content
+ *     tags: [Content]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Kids content retrieved successfully
+ */
+router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsContent);
+
+/**
+ * @swagger
  * /api/content/{id}:
  *   get:
  *     summary: Get content by ID
