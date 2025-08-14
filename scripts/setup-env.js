@@ -10,7 +10,7 @@ const serviceEnvs = {
   auth: {
     SERVICE_NAME: 'auth-service',
     SERVICE_PORT: '3001',
-    DB_NAME: 'ott_auth',
+    DB_NAME: 'ott_users',
     SERVICE_URL: 'http://localhost:3001',
     FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || 'your-firebase-project-id',
     FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY || 'your-firebase-private-key',
