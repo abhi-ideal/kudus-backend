@@ -2,7 +2,6 @@ const logger = require('./utils/logger');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
 const WatchHistory = require('./models/WatchHistory');
-const WatchHistory = require('./models/WatchHistory');
 
 const controller = {
   // Get user profile
