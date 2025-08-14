@@ -5,6 +5,19 @@ const awsService = require('../content/services/awsService');
 // In-memory session storage (use Redis in production)
 const activeSessions = new Map();
 
+// Clean up inactive sessions every 5 minutes
+setInterval(() => {
+  const now = new Date();
+  const inactiveThreshold = 5 * 60 * 1000; // 5 minutes
+  
+  for (const [sessionId, session] of activeSessions.entries()) {
+    if (now - session.lastHeartbeat > inactiveThreshold) {
+      logger.info(`Cleaning up inactive session: ${sessionId}`);
+      activeSessions.delete(sessionId);
+    }
+  }
+}, 5 * 60 * 1000);
+
 const streamingController = {
   async startSession(req, res) {
     try {
@@ -23,7 +36,13 @@ const streamingController = {
         quality,
         startTime: new Date(),
         currentPosition: 0,
-        streamingUrl
+        streamingUrl,
+        lastHeartbeat: new Date(),
+        isActive: true,
+        totalWatchTime: 0,
+        bufferHealth: 100,
+        networkSpeed: null,
+        deviceInfo: null
       };
       
       activeSessions.set(sessionId, session);
@@ -115,6 +134,75 @@ const streamingController = {
       logger.error('End session error:', error);
       res.status(500).json({
         error: 'Failed to end session',
+        message: error.message
+      });
+    }
+  },
+
+  async heartbeat(req, res) {
+    try {
+      const { sessionId } = req.params;
+      const { currentPosition, bufferHealth, networkSpeed, deviceInfo } = req.body;
+      const userId = req.user.uid;
+      
+      const session = activeSessions.get(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({
+          error: 'Session not found',
+          message: 'Invalid session ID or session has expired'
+        });
+      }
+      
+      // Verify session belongs to the requesting user
+      if (session.userId !== userId) {
+        return res.status(403).json({
+          error: 'Access denied',
+          message: 'Session does not belong to this user'
+        });
+      }
+      
+      // Update session with heartbeat data
+      session.lastHeartbeat = new Date();
+      session.currentPosition = currentPosition || session.currentPosition;
+      session.isActive = true;
+      
+      // Track additional metrics if provided
+      if (bufferHealth !== undefined) {
+        session.bufferHealth = bufferHealth;
+      }
+      
+      if (networkSpeed !== undefined) {
+        session.networkSpeed = networkSpeed;
+      }
+      
+      if (deviceInfo) {
+        session.deviceInfo = deviceInfo;
+      }
+      
+      // Calculate watch time for this heartbeat interval
+      const now = new Date();
+      const lastUpdate = session.lastPositionUpdate || session.startTime;
+      const timeDiff = Math.floor((now - lastUpdate) / 1000); // seconds
+      
+      session.totalWatchTime = (session.totalWatchTime || 0) + Math.min(timeDiff, 120); // Cap at 2 minutes
+      session.lastPositionUpdate = now;
+      
+      activeSessions.set(sessionId, session);
+      
+      logger.info(`Heartbeat received for session: ${sessionId}, position: ${currentPosition}`);
+      
+      res.json({
+        message: 'Heartbeat received successfully',
+        sessionId: sessionId,
+        serverTime: now.toISOString(),
+        sessionActive: true,
+        recommendedNextHeartbeat: 120 // 2 minutes in seconds
+      });
+    } catch (error) {
+      logger.error('Heartbeat error:', error);
+      res.status(500).json({
+        error: 'Failed to process heartbeat',
         message: error.message
       });
     }

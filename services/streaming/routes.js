@@ -85,6 +85,65 @@ router.put('/session/:sessionId', validate(schemas.playbackSession), streamingCo
  */
 router.post('/session/:sessionId/end', streamingController.endSession);
 
+/**
+ * @swagger
+ * /api/streaming/session/{sessionId}/heartbeat:
+ *   post:
+ *     summary: Send heartbeat to maintain session and update playback status
+ *     tags: [Streaming]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The streaming session ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPosition:
+ *                 type: number
+ *                 description: Current playback position in seconds
+ *               bufferHealth:
+ *                 type: number
+ *                 description: Buffer health percentage (0-100)
+ *               networkSpeed:
+ *                 type: number
+ *                 description: Current network speed in kbps
+ *               deviceInfo:
+ *                 type: object
+ *                 description: Device information
+ *     responses:
+ *       200:
+ *         description: Heartbeat processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 sessionId:
+ *                   type: string
+ *                 serverTime:
+ *                   type: string
+ *                 sessionActive:
+ *                   type: boolean
+ *                 recommendedNextHeartbeat:
+ *                   type: number
+ *       404:
+ *         description: Session not found
+ *       403:
+ *         description: Access denied
+ */
+router.post('/session/:sessionId/heartbeat', streamingController.heartbeat);
+
 router.get('/analytics', streamingController.getAnalytics);
 
 module.exports = router;
