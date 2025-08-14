@@ -27,28 +27,40 @@ const profileAuth = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    // For content service, we'll make a simple validation
-    // In production, you might want to call user service API or cache profile data
+    // Check if profile_id is provided in query/body or use the one from Firebase claims
+    let activeProfileId = profile_id;
     
-    // Basic profile validation - ensure profile_id format is valid
-    if (!profile_id.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid profile ID format'
-      });
+    // If no profile_id provided, try to get from Firebase custom claims
+    if (!activeProfileId && decodedToken.profile_id) {
+      activeProfileId = decodedToken.profile_id;
+    }
+    
+    // If still no profile_id, check for default_profile_id in claims
+    if (!activeProfileId && decodedToken.default_profile_id) {
+      activeProfileId = decodedToken.default_profile_id;
     }
 
-    // Mock profile data - in production, fetch from user service
-    // For now, we'll assume child profiles have 'child' in their ID
-    const isChildProfile = profile_id.toLowerCase().includes('child');
+    if (activeProfileId) {
+      // Basic profile validation - ensure profile_id format is valid
+      if (!activeProfileId.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid profile ID format'
+        });
+      }
+
+      // Check if it's a child profile
+      const isChildProfile = activeProfileId.toLowerCase().includes('child');
     
     // Add profile context to request
-    req.activeProfile = {
-      id: profile_id,
-      userId: userId,
-      isChild: isChildProfile,
-      preferences: {}
-    };
+      req.activeProfile = {
+        id: activeProfileId,
+        userId: userId,
+        isChild: isChildProfile,
+        preferences: {},
+        fromClaims: !profile_id // Indicates if profile came from Firebase claims
+      };
+    }
 
     req.user = decodedToken;
     next();

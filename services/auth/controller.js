@@ -42,7 +42,8 @@ const authController = {
           email: userRecord.email,
           displayName: userRecord.displayName,
           emailVerified: userRecord.emailVerified,
-          disabled: userRecord.disabled
+          disabled: userRecord.disabled,
+          customClaims: userRecord.customClaims || {}
         }
       });
     } catch (error) {
@@ -151,6 +152,79 @@ const authController = {
       console.error('Logout error:', error);
       res.status(500).json({
         error: 'Logout failed',
+        message: error.message
+      });
+    }
+  },
+
+  async switchProfile(req, res) {
+    try {
+      const { profileId } = req.body;
+      const uid = req.user.uid;
+
+      if (!profileId) {
+        return res.status(400).json({
+          error: 'Profile ID required',
+          message: 'profileId is required to switch profile'
+        });
+      }
+
+      // Validate profile belongs to user (basic validation)
+      if (!profileId.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
+        return res.status(400).json({
+          error: 'Invalid profile ID format'
+        });
+      }
+
+      // Set custom claims with profile_id
+      const customClaims = {
+        profile_id: profileId,
+        switched_at: Math.floor(Date.now() / 1000)
+      };
+
+      await admin.auth().setCustomUserClaims(uid, customClaims);
+
+      // Revoke existing tokens to force refresh
+      await admin.auth().revokeRefreshTokens(uid);
+
+      console.log(`Profile switched for user ${uid} to profile ${profileId}`);
+
+      res.status(200).json({
+        message: 'Profile switched successfully',
+        profileId: profileId,
+        note: 'Please refresh your token to get updated claims'
+      });
+    } catch (error) {
+      console.error('Switch profile error:', error);
+      res.status(500).json({
+        error: 'Failed to switch profile',
+        message: error.message
+      });
+    }
+  },
+
+  async setDefaultProfile(req, res) {
+    try {
+      const { profileId } = req.body;
+      const uid = req.user.uid;
+
+      // Set default profile as custom claim
+      const customClaims = {
+        default_profile_id: profileId,
+        profile_id: profileId,
+        updated_at: Math.floor(Date.now() / 1000)
+      };
+
+      await admin.auth().setCustomUserClaims(uid, customClaims);
+
+      res.status(200).json({
+        message: 'Default profile set successfully',
+        profileId: profileId
+      });
+    } catch (error) {
+      console.error('Set default profile error:', error);
+      res.status(500).json({
+        error: 'Failed to set default profile',
         message: error.message
       });
     }

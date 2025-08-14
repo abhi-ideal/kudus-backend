@@ -113,4 +113,50 @@ router.post('/refresh', authController.refreshToken);
  */
 router.post('/logout', authController.logout);
 
+/**
+ * @swagger
+ * /api/auth/switch-profile:
+ *   post:
+ *     summary: Switch active profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile switched successfully
+ */
+router.post('/switch-profile', require('./middleware/auth').verifyFirebaseToken, authController.switchProfile);
+
+/**
+ * @swagger
+ * /api/auth/set-default-profile:
+ *   post:
+ *     summary: Set default profile for user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Default profile set successfully
+ */
+router.post('/set-default-profile', require('./middleware/auth').verifyFirebaseToken, authController.setDefaultProfile);
+
 module.exports = router;
