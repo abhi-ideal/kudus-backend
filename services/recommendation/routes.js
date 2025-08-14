@@ -1,7 +1,7 @@
-
 const express = require('express');
 const recommendationController = require('./controller');
 const { verifyFirebaseToken } = require('../../shared/middleware/auth');
+const { profileAuth, childProfileFilter } = require('../../user/middleware/profileAuth');
 
 const router = express.Router();
 
@@ -11,11 +11,13 @@ const router = express.Router();
  *   get:
  *     summary: Get trending content
  *     tags: [Recommendations]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Trending content retrieved successfully
  */
-router.get('/trending', recommendationController.getTrending);
+router.get('/trending', profileAuth, childProfileFilter, recommendationController.getTrending);
 
 /**
  * @swagger
@@ -28,11 +30,13 @@ router.get('/trending', recommendationController.getTrending);
  *         name: genre
  *         schema:
  *           type: string
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Popular content retrieved successfully
  */
-router.get('/popular', recommendationController.getPopular);
+router.get('/popular', profileAuth, childProfileFilter, recommendationController.getPopular);
 
 // Authenticated routes
 router.use(verifyFirebaseToken);
@@ -49,7 +53,7 @@ router.use(verifyFirebaseToken);
  *       200:
  *         description: Personalized recommendations retrieved successfully
  */
-router.get('/personalized', recommendationController.getPersonalized);
+router.get('/personalized', auth, profileAuth, childProfileFilter, recommendationController.getPersonalized);
 
 /**
  * @swagger
@@ -69,6 +73,6 @@ router.get('/personalized', recommendationController.getPersonalized);
  *       200:
  *         description: Similar content retrieved successfully
  */
-router.get('/similar/:contentId', recommendationController.getSimilar);
+router.get('/similar/:contentId', profileAuth, childProfileFilter, recommendationController.getSimilar);
 
 module.exports = router;

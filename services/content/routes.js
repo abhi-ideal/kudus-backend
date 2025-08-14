@@ -1,8 +1,8 @@
-
 const express = require('express');
 const contentController = require('./controller');
 const { verifyFirebaseToken } = require('./middleware/auth');
 const { validate, schemas } = require('./utils/validation');
+const { profileAuth, childProfileFilter } = require('../../user/middleware/profileAuth');
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ const router = express.Router();
  *       200:
  *         description: Content list retrieved successfully
  */
-router.get('/', contentController.getAllContent);
+router.get('/', profileAuth, childProfileFilter, contentController.getAllContent);
 
 /**
  * @swagger
@@ -51,7 +51,7 @@ router.get('/', contentController.getAllContent);
  *       200:
  *         description: Content retrieved successfully
  */
-router.get('/:id', contentController.getContentById);
+router.get('/:id', profileAuth, childProfileFilter, contentController.getContentById);
 
 /**
  * @swagger
@@ -75,7 +75,7 @@ router.get('/:id', contentController.getContentById);
  *       200:
  *         description: Streaming URL generated successfully
  */
-router.get('/:id/stream', verifyFirebaseToken, contentController.getStreamingUrl);
+router.get('/:id/stream', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.getStreamingUrl);
 
 // Admin routes (require authentication)
 router.use(verifyFirebaseToken);

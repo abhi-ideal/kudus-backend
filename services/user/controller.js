@@ -1,6 +1,8 @@
 
 const User = require('./models/User');
 const WatchHistory = require('./models/WatchHistory');
+const UserProfile = require('./models/UserProfile');
+const profileService = require('./services/profileService');
 const logger = require('../../shared/utils/logger');
 
 const userController = {
@@ -150,6 +152,100 @@ const userController = {
       res.status(500).json({
         error: 'Failed to remove from favorites',
         message: error.message
+      });
+    }
+  },
+
+  // Profile Management
+  async createProfile(req, res) {
+    try {
+      const userId = req.user.uid;
+      const profileData = req.body;
+
+      const profile = await profileService.createProfile(userId, profileData);
+
+      res.status(201).json({
+        success: true,
+        data: {
+          id: profile.id,
+          profileName: profile.profileName,
+          isChild: profile.isChild,
+          avatarUrl: profile.avatarUrl,
+          preferences: profile.preferences,
+          createdAt: profile.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Create profile error:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to create profile'
+      });
+    }
+  },
+
+  async getProfiles(req, res) {
+    try {
+      const userId = req.user.uid;
+      const profiles = await profileService.getUserProfiles(userId);
+
+      res.json({
+        success: true,
+        data: profiles
+      });
+    } catch (error) {
+      console.error('Get profiles error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch profiles'
+      });
+    }
+  },
+
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user.uid;
+      const { profileId } = req.params;
+      const updateData = req.body;
+
+      const profile = await profileService.updateProfile(profileId, userId, updateData);
+
+      res.json({
+        success: true,
+        data: {
+          id: profile.id,
+          profileName: profile.profileName,
+          isChild: profile.isChild,
+          avatarUrl: profile.avatarUrl,
+          preferences: profile.preferences,
+          updatedAt: profile.updatedAt
+        }
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to update profile'
+      });
+    }
+  },
+
+  async deleteProfile(req, res) {
+    try {
+      const userId = req.user.uid;
+      const { profileId } = req.params;
+
+      const result = await profileService.deleteProfile(profileId, userId);
+
+      res.json({
+        success: true,
+        message: result.message
+      });
+    } catch (error) {
+      console.error('Delete profile error:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to delete profile'
       });
     }
   }

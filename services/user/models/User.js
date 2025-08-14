@@ -50,4 +50,12 @@ const User = sequelize.define('User', {
   timestamps: true
 });
 
+// Define associations
+User.associate = function(models) {
+  User.hasMany(models.UserProfile, {
+    foreignKey: 'userId',
+    as: 'profiles'
+  });
+};
+
 module.exports = User;

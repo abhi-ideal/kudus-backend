@@ -1,4 +1,3 @@
-
 const Content = require('./models/Content');
 const awsService = require('./services/awsService');
 const logger = require('../../shared/utils/logger');
@@ -12,53 +11,78 @@ const contentController = {
         limit = 20, 
         type, 
         genre, 
-        search,
+        language,
         sortBy = 'createdAt',
-        sortOrder = 'DESC'
+        sortOrder = 'DESC' 
       } = req.query;
-      
+
       const offset = (page - 1) * limit;
-      const where = { isActive: true };
-      
-      if (type) {
-        where.type = type;
+      const whereClause = { isActive: true };
+
+      // Apply profile-based content filtering
+      if (req.contentFilter) {
+        if (req.contentFilter.excludeAdultContent) {
+          whereClause.ageRating = {
+            [Op.in]: ['G', 'PG', 'PG-13']
+          };
+        }
+
+        if (req.contentFilter.allowedGenres) {
+          if (genre) {
+            // Check if requested genre is allowed for child profiles
+            if (!req.contentFilter.allowedGenres.includes(genre)) {
+              return res.status(403).json({
+                success: false,
+                error: 'Content type not allowed for child profile'
+              });
+            }
+          }
+          // Filter to only show child-appropriate genres
+          whereClause.genre = {
+            [Op.overlap]: req.contentFilter.allowedGenres
+          };
+        }
       }
-      
-      if (genre) {
-        where.genre = {
-          [Op.contains]: [genre]
-        };
-      }
-      
-      if (search) {
-        where[Op.or] = [
-          { title: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } }
-        ];
-      }
-      
-      const content = await Content.findAndCountAll({
-        where,
-        order: [[sortBy, sortOrder]],
+
+      if (type) whereClause.type = type;
+      if (genre && !req.contentFilter) whereClause.genre = { [Op.contains]: [genre] };
+      if (language) whereClause.language = language;
+
+      const { count, rows: content } = await Content.findAndCountAll({
+        where: whereClause,
         limit: parseInt(limit),
-        offset,
-        attributes: { exclude: ['s3Key', 'videoQualities'] }
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre', 
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'subtitles', 'cast', 'director',
+          'thumbnailUrl', 'trailerUrl', 'status', 'views',
+          'likes', 'averageRating', 'totalRatings', 'createdAt'
+        ]
       });
 
       res.json({
-        content: content.rows,
-        pagination: {
-          total: content.count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(content.count / limit)
-        }
+        success: true,
+        data: {
+          content,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        },
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild
+        } : null
       });
     } catch (error) {
-      logger.error('Get all content error:', error);
+      console.error('Get all content error:', error);
       res.status(500).json({
-        error: 'Failed to retrieve content',
-        message: error.message
+        success: false,
+        error: 'Failed to fetch content'
       });
     }
   },
@@ -69,7 +93,7 @@ const contentController = {
       const content = await Content.findByPk(id, {
         attributes: { exclude: ['s3Key', 'videoQualities'] }
       });
-      
+
       if (!content || !content.isActive) {
         return res.status(404).json({
           error: 'Content not found'
@@ -93,9 +117,9 @@ const contentController = {
     try {
       const contentData = req.body;
       const content = await Content.create(contentData);
-      
+
       logger.info(`Content created: ${content.id}`);
-      
+
       res.status(201).json({
         message: 'Content created successfully',
         content
@@ -125,7 +149,7 @@ const contentController = {
       }
 
       const updatedContent = await Content.findByPk(id);
-      
+
       res.json({
         message: 'Content updated successfully',
         content: updatedContent
@@ -142,7 +166,7 @@ const contentController = {
   async deleteContent(req, res) {
     try {
       const { id } = req.params;
-      
+
       const deletedRows = await Content.update(
         { isActive: false },
         { where: { id } }
@@ -170,9 +194,9 @@ const contentController = {
     try {
       const { id } = req.params;
       const { quality = '720p' } = req.query;
-      
+
       const content = await Content.findByPk(id);
-      
+
       if (!content || !content.isActive) {
         return res.status(404).json({
           error: 'Content not found'
@@ -181,7 +205,7 @@ const contentController = {
 
       // Generate signed CloudFront URL
       const streamingUrl = await awsService.generateSignedUrl(content.s3Key, quality);
-      
+
       res.json({
         streamingUrl,
         quality,
