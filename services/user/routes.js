@@ -1,9 +1,63 @@
 const express = require('express');
-const userController = require('./controller');
 const { verifyFirebaseToken } = require('../../shared/middleware/auth');
 const { validate, schemas } = require('../../shared/utils/validation');
+const controller = require('./controller');
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         email:
+ *           type: string
+ *         displayName:
+ *           type: string
+ *         photoURL:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   get:
+ *     summary: Get user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ */
+router.get('/profile', verifyFirebaseToken, controller.getProfile);
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   post:
+ *     summary: Create or update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ */
+router.post('/profile', verifyFirebaseToken, validate(schemas.userProfile), controller.updateProfile);
 
 /**
  * @swagger
@@ -32,13 +86,13 @@ const router = express.Router();
  *       201:
  *         description: User created successfully
  */
-router.post('/create-user', userController.createUser);
+router.post('/create-user', controller.createUser);
 
 /**
  * @swagger
  * /api/users/{id}:
  *   get:
- *     summary: Get user profile
+ *     summary: Get user profile by ID
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -52,13 +106,13 @@ router.post('/create-user', userController.createUser);
  *       200:
  *         description: User profile retrieved successfully
  */
-router.get('/:id', userController.getProfile);
+router.get('/:id', controller.getProfileById); // Renamed to getProfileById for clarity
 
 /**
  * @swagger
  * /api/users/{id}:
  *   put:
- *     summary: Update user profile
+ *     summary: Update user profile by ID
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -85,13 +139,13 @@ router.get('/:id', userController.getProfile);
  *       200:
  *         description: Profile updated successfully
  */
-router.put('/:id', validate(schemas.userProfile), userController.updateProfile);
+router.put('/:id', validate(schemas.userProfile), controller.updateProfileById); // Renamed to updateProfileById for clarity
 
 /**
  * @swagger
  * /api/users/{id}/history:
  *   get:
- *     summary: Get user watch history
+ *     summary: Get user watch history by ID
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -105,13 +159,13 @@ router.put('/:id', validate(schemas.userProfile), userController.updateProfile);
  *       200:
  *         description: Watch history retrieved successfully
  */
-router.get('/:id/history', userController.getWatchHistory);
+router.get('/:id/history', controller.getWatchHistoryById); // Renamed to getWatchHistoryById for clarity
 
 /**
  * @swagger
  * /api/users/{id}/favorites:
  *   get:
- *     summary: Get user favorites
+ *     summary: Get user favorites by ID
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -125,10 +179,10 @@ router.get('/:id/history', userController.getWatchHistory);
  *       200:
  *         description: Favorites retrieved successfully
  */
-router.get('/:id/favorites', userController.getFavorites);
+router.get('/:id/favorites', controller.getFavoritesById); // Renamed to getFavoritesById for clarity
 
-router.post('/:id/favorites/:contentId', userController.addToFavorites);
-router.delete('/:id/favorites/:contentId', userController.removeFromFavorites);
+router.post('/:id/favorites/:contentId', controller.addToFavorites);
+router.delete('/:id/favorites/:contentId', controller.removeFromFavorites);
 
 // Profile Management Routes
 /**
@@ -143,7 +197,7 @@ router.delete('/:id/favorites/:contentId', userController.removeFromFavorites);
  *       200:
  *         description: User profiles retrieved successfully
  */
-router.get('/profiles', verifyFirebaseToken, userController.getProfiles);
+router.get('/profiles', verifyFirebaseToken, controller.getProfiles);
 
 /**
  * @swagger
@@ -172,7 +226,7 @@ router.get('/profiles', verifyFirebaseToken, userController.getProfiles);
  *       201:
  *         description: Profile created successfully
  */
-router.post('/profiles', verifyFirebaseToken, userController.createProfile);
+router.post('/profiles', verifyFirebaseToken, controller.createProfile);
 
 /**
  * @swagger
@@ -192,7 +246,7 @@ router.post('/profiles', verifyFirebaseToken, userController.createProfile);
  *       200:
  *         description: Profile updated successfully
  */
-router.put('/profiles/:profileId', verifyFirebaseToken, userController.updateProfile);
+router.put('/profiles/:profileId', verifyFirebaseToken, controller.updateProfile);
 
 /**
  * @swagger
@@ -212,7 +266,7 @@ router.put('/profiles/:profileId', verifyFirebaseToken, userController.updatePro
  *       200:
  *         description: Profile deleted successfully
  */
-router.delete('/profiles/:profileId', verifyFirebaseToken, userController.deleteProfile);
+router.delete('/profiles/:profileId', verifyFirebaseToken, controller.deleteProfile);
 
 /**
  * @swagger
@@ -242,7 +296,7 @@ router.delete('/profiles/:profileId', verifyFirebaseToken, userController.delete
  *       403:
  *         description: Access denied
  */
-router.get('/feed', verifyFirebaseToken, userController.getFeed);
+router.get('/feed', verifyFirebaseToken, controller.getFeed);
 
 /**
  * @swagger
@@ -266,7 +320,7 @@ router.get('/feed', verifyFirebaseToken, userController.getFeed);
  *       200:
  *         description: Feed generated successfully
  */
-router.post('/feed/generate', verifyFirebaseToken, userController.generateFeed);
+router.post('/feed/generate', verifyFirebaseToken, controller.generateFeed);
 
 /**
  * @swagger
@@ -287,6 +341,6 @@ router.post('/feed/generate', verifyFirebaseToken, userController.generateFeed);
  *       200:
  *         description: Feed item marked as viewed
  */
-router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, userController.markFeedViewed);
+router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, controller.markFeedViewed);
 
 module.exports = router;

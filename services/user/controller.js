@@ -1,337 +1,232 @@
-const User = require('./models/User');
-const WatchHistory = require('./models/WatchHistory');
-const UserProfile = require('./models/UserProfile');
-const UserFeed = require('./models/UserFeed');
-const profileService = require('./services/profileService');
-const feedService = require('./services/feedService');
-const logger = require('../../shared/utils/logger');
 
-const userController = {
+const logger = require('./utils/logger');
+const User = require('./models/User');
+const UserProfile = require('./models/UserProfile');
+const WatchHistory = require('./models/WatchHistory');
+
+const controller = {
+  // Get user profile
   async getProfile(req, res) {
     try {
-      const { id } = req.params;
-      const user = await User.findByPk(id);
+      const { uid } = req.user;
+      
+      let user = await User.findOne({ where: { firebaseUid: uid } });
+      
+      if (!user) {
+        // Create user if doesn't exist
+        user = await User.create({
+          firebaseUid: uid,
+          email: req.user.email,
+          displayName: req.user.name || req.user.email,
+          photoURL: req.user.picture
+        });
+      }
 
+      const profiles = await UserProfile.findAll({ 
+        where: { userId: user.id } 
+      });
+
+      res.json({
+        success: true,
+        data: {
+          user,
+          profiles
+        }
+      });
+    } catch (error) {
+      logger.error('Get profile error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get user profile'
+      });
+    }
+  },
+
+  // Update user profile
+  async updateProfile(req, res) {
+    try {
+      const { uid } = req.user;
+      const { displayName, avatar, preferences } = req.body;
+
+      let user = await User.findOne({ where: { firebaseUid: uid } });
+      
+      if (!user) {
+        user = await User.create({
+          firebaseUid: uid,
+          email: req.user.email,
+          displayName: displayName || req.user.email,
+          photoURL: avatar
+        });
+      } else {
+        await user.update({
+          displayName: displayName || user.displayName,
+          photoURL: avatar || user.photoURL,
+          preferences: preferences || user.preferences
+        });
+      }
+
+      res.json({
+        success: true,
+        data: user,
+        message: 'Profile updated successfully'
+      });
+    } catch (error) {
+      logger.error('Update profile error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to update profile'
+      });
+    }
+  },
+
+  // Create user profile
+  async createProfile(req, res) {
+    try {
+      const { uid } = req.user;
+      const { profileName, isChild, avatarUrl, preferences } = req.body;
+
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'Please create user account first'
+        });
+      }
+
+      const profile = await UserProfile.create({
+        userId: user.id,
+        profileName,
+        isChild: isChild || false,
+        avatarUrl,
+        preferences: preferences || {}
+      });
+
+      res.status(201).json({
+        success: true,
+        data: profile,
+        message: 'Profile created successfully'
+      });
+    } catch (error) {
+      logger.error('Create profile error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to create profile'
+      });
+    }
+  },
+
+  // Get user profiles
+  async getProfiles(req, res) {
+    try {
+      const { uid } = req.user;
+
+      const user = await User.findOne({ where: { firebaseUid: uid } });
       if (!user) {
         return res.status(404).json({
           error: 'User not found'
         });
       }
 
-      res.json({
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        avatar: user.avatar,
-        subscription: user.subscription,
-        preferences: user.preferences,
-        lastLoginAt: user.lastLoginAt
+      const profiles = await UserProfile.findAll({ 
+        where: { userId: user.id } 
       });
-    } catch (error) {
-      logger.error('Get profile error:', error);
-      res.status(500).json({
-        error: 'Failed to retrieve profile',
-        message: error.message
-      });
-    }
-  },
-
-  async updateProfile(req, res) {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-
-      const [updatedRows] = await User.update(updates, {
-        where: { id },
-        returning: true
-      });
-
-      if (updatedRows === 0) {
-        return res.status(404).json({
-          error: 'User not found'
-        });
-      }
-
-      const updatedUser = await User.findByPk(id);
-
-      res.json({
-        message: 'Profile updated successfully',
-        user: {
-          id: updatedUser.id,
-          displayName: updatedUser.displayName,
-          avatar: updatedUser.avatar,
-          preferences: updatedUser.preferences
-        }
-      });
-    } catch (error) {
-      logger.error('Update profile error:', error);
-      res.status(500).json({
-        error: 'Failed to update profile',
-        message: error.message
-      });
-    }
-  },
-
-  async getWatchHistory(req, res) {
-    try {
-      const { id } = req.params;
-      const { page = 1, limit = 20 } = req.query;
-
-      const offset = (page - 1) * limit;
-
-      const watchHistory = await WatchHistory.findAndCountAll({
-        where: { userId: id },
-        order: [['watchedAt', 'DESC']],
-        limit: parseInt(limit),
-        offset
-      });
-
-      res.json({
-        watchHistory: watchHistory.rows,
-        pagination: {
-          total: watchHistory.count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(watchHistory.count / limit)
-        }
-      });
-    } catch (error) {
-      logger.error('Get watch history error:', error);
-      res.status(500).json({
-        error: 'Failed to retrieve watch history',
-        message: error.message
-      });
-    }
-  },
-
-  async getFavorites(req, res) {
-    try {
-      const { id } = req.params;
-
-      // This would typically join with content table
-      // For now, returning placeholder structure
-      res.json({
-        favorites: [],
-        message: 'Favorites functionality - integrate with Content service'
-      });
-    } catch (error) {
-      logger.error('Get favorites error:', error);
-      res.status(500).json({
-        error: 'Failed to retrieve favorites',
-        message: error.message
-      });
-    }
-  },
-
-  async addToFavorites(req, res) {
-    try {
-      const { id, contentId } = req.params;
-
-      // Implementation would add content to user's favorites
-      res.json({
-        message: `Added content ${contentId} to favorites for user ${id}`
-      });
-    } catch (error) {
-      logger.error('Add to favorites error:', error);
-      res.status(500).json({
-        error: 'Failed to add to favorites',
-        message: error.message
-      });
-    }
-  },
-
-  async removeFromFavorites(req, res) {
-    try {
-      const { id, contentId } = req.params;
-
-      // Implementation would remove content from user's favorites
-      res.json({
-        message: `Removed content ${contentId} from favorites for user ${id}`
-      });
-    } catch (error) {
-      logger.error('Remove from favorites error:', error);
-      res.status(500).json({
-        error: 'Failed to remove from favorites',
-        message: error.message
-      });
-    }
-  },
-
-  // Profile Management
-  async createProfile(req, res) {
-    try {
-      let userId;
-
-      // Handle internal service calls differently
-      if (req.headers['x-internal-service'] === 'auth-service') {
-        userId = req.headers['x-user-id'];
-      } else {
-        userId = req.user?.uid;
-      }
-
-      const profileData = req.body;
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          error: 'User ID required'
-        });
-      }
-
-      const profile = await profileService.createProfile(userId, profileData);
-
-      res.status(201).json({
-        success: true,
-        profile,
-        message: 'Profile created successfully'
-      });
-    } catch (error) {
-      console.error('Create profile error:', error);
-
-      if (error.message.includes('Maximum number of profiles')) {
-        return res.status(400).json({
-          success: false,
-          error: 'Profile limit reached',
-          message: error.message
-        });
-      }
-
-      if (error.message.includes('Profile name already exists')) {
-        return res.status(409).json({
-          success: false,
-          error: 'Profile name conflict',
-          message: error.message
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        error: 'Failed to create profile',
-        message: error.message
-      });
-    }
-  },
-
-  async getProfiles(req, res) {
-    try {
-      const userId = req.user.uid;
-      const profiles = await profileService.getUserProfiles(userId);
 
       res.json({
         success: true,
         data: profiles
       });
     } catch (error) {
-      console.error('Get profiles error:', error);
+      logger.error('Get profiles error:', error);
       res.status(500).json({
-        success: false,
-        error: 'Failed to fetch profiles'
+        error: 'Internal server error',
+        message: 'Failed to get profiles'
       });
     }
   },
 
-  async updateProfile(req, res) {
+  // Get watch history
+  async getWatchHistory(req, res) {
     try {
-      const userId = req.user.uid;
+      const { uid } = req.user;
       const { profileId } = req.params;
-      const updateData = req.body;
 
-      const profile = await profileService.updateProfile(profileId, userId, updateData);
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      const watchHistory = await WatchHistory.findAll({
+        where: { 
+          userId: user.id,
+          profileId: profileId || null
+        },
+        order: [['updatedAt', 'DESC']],
+        limit: 50
+      });
 
       res.json({
         success: true,
-        data: {
-          id: profile.id,
-          profileName: profile.profileName,
-          isChild: profile.isChild,
-          avatarUrl: profile.avatarUrl,
-          preferences: profile.preferences,
-          updatedAt: profile.updatedAt
+        data: watchHistory
+      });
+    } catch (error) {
+      logger.error('Get watch history error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get watch history'
+      });
+    }
+  },
+
+  // Update watch progress
+  async updateWatchProgress(req, res) {
+    try {
+      const { uid } = req.user;
+      const { contentId, watchTime, totalDuration, completed } = req.body;
+
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      const [watchRecord, created] = await WatchHistory.findOrCreate({
+        where: { 
+          userId: user.id, 
+          contentId 
+        },
+        defaults: {
+          userId: user.id,
+          contentId,
+          watchTime,
+          totalDuration,
+          completed: completed || false
         }
       });
-    } catch (error) {
-      console.error('Update profile error:', error);
-      res.status(400).json({
-        success: false,
-        error: error.message || 'Failed to update profile'
-      });
-    }
-  },
 
-  async deleteProfile(req, res) {
-    try {
-      const userId = req.user.uid;
-      const { profileId } = req.params;
-
-      const result = await profileService.deleteProfile(profileId, userId);
+      if (!created) {
+        await watchRecord.update({
+          watchTime,
+          totalDuration,
+          completed: completed || false
+        });
+      }
 
       res.json({
         success: true,
-        message: result.message
+        data: watchRecord,
+        message: 'Watch progress updated'
       });
     } catch (error) {
-      console.error('Delete profile error:', error);
-      res.status(400).json({
-        success: false,
-        error: error.message || 'Failed to delete profile'
-      });
-    }
-  },
-
-  // Feed Management
-  async getUserFeed(req, res) {
-    try {
-      const { profileId } = req.params;
-      const { page = 1, limit = 20 } = req.query;
-
-      const feedItems = await feedService.getFeedForProfile(profileId, { page, limit });
-
-      res.json({
-        success: true,
-        data: feedItems.rows,
-        pagination: {
-          total: feedItems.count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(feedItems.count / limit)
-        }
-      });
-    } catch (error) {
-      logger.error('Get user feed error:', error);
+      logger.error('Update watch progress error:', error);
       res.status(500).json({
-        success: false,
-        error: 'Failed to retrieve user feed',
-        message: error.message
-      });
-    }
-  },
-
-  async getRecommendations(req, res) {
-    try {
-      const { profileId } = req.params;
-      const { page = 1, limit = 20 } = req.query;
-
-      const recommendations = await feedService.getRecommendationsForProfile(profileId, { page, limit });
-
-      res.json({
-        success: true,
-        data: recommendations.rows,
-        pagination: {
-          total: recommendations.count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          totalPages: Math.ceil(recommendations.count / limit)
-        }
-      });
-    } catch (error) {
-      logger.error('Get recommendations error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to retrieve recommendations',
-        message: error.message
+        error: 'Internal server error',
+        message: 'Failed to update watch progress'
       });
     }
   }
 };
 
-module.exports = userController;
+module.exports = controller;
