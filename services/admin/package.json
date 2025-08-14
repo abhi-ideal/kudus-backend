@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "migrate": "npx sequelize-cli db:migrate --config config/database.js",
+    "migrate": "npx sequelize-cli db:migrate --config config/config.js",
     "seed": "npx sequelize-cli db:seed:all --config config/database.js"
   },
   "dependencies": {
