@@ -2,37 +2,105 @@
 #!/usr/bin/env node
 
 /**
- * Script to automatically update Postman collection when APIs change
- * Usage: node update-collection.js
+ * Script to automatically update Postman collection URLs for microservices
+ * Usage: node update-collection.js [--update-urls]
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Collection template with dynamic API discovery
-const updateCollection = () => {
-  console.log('🔄 Updating Postman collection...');
-  
-  // Read current collection
-  const collectionPath = path.join(__dirname, 'OTT-Platform-API.postman_collection.json');
-  const collection = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
-  
-  // Update timestamp
-  collection.info.version = `1.0.${Date.now()}`;
-  collection.info._postman_updated = new Date().toISOString();
-  
-  // Add update metadata
-  collection.info.description += `\n\nLast updated: ${new Date().toLocaleString()}`;
-  
-  // Write updated collection
-  fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
-  
-  console.log('✅ Postman collection updated successfully!');
-  console.log(`📁 Location: ${collectionPath}`);
-  console.log(`🕒 Version: ${collection.info.version}`);
+// Service URL mappings
+const serviceUrlMappings = {
+  '/api/auth': '{{authServiceUrl}}',
+  '/api/users': '{{userServiceUrl}}', 
+  '/api/content': '{{contentServiceUrl}}',
+  '/api/streaming': '{{streamingServiceUrl}}',
+  '/api/recommendations': '{{recommendationServiceUrl}}',
+  '/api/admin': '{{adminServiceUrl}}',
+  '/api/common': '{{commonServiceUrl}}'
 };
 
-// Auto-discovery of new endpoints from route files
+// Update URLs in collection items
+const updateItemUrls = (items) => {
+  let updatedCount = 0;
+  
+  items.forEach(item => {
+    if (item.item) {
+      // Recursively update folder items
+      updatedCount += updateItemUrls(item.item);
+    } else if (item.request && item.request.url) {
+      // Update individual request URLs
+      let url = item.request.url;
+      
+      if (typeof url === 'object' && url.raw) {
+        const oldUrl = url.raw;
+        
+        // Find matching service path and update
+        for (const [servicePath, serviceVar] of Object.entries(serviceUrlMappings)) {
+          if (oldUrl.includes(servicePath)) {
+            // Update raw URL
+            url.raw = url.raw.replace(/\{\{baseUrl\}\}|http:\/\/localhost:\d+/, serviceVar);
+            
+            // Update host array
+            if (url.host && Array.isArray(url.host)) {
+              url.host = [serviceVar];
+            }
+            
+            updatedCount++;
+            console.log(`✅ Updated: ${item.name} -> ${serviceVar}${servicePath}`);
+            break;
+          }
+        }
+      }
+    }
+  });
+  
+  return updatedCount;
+};
+
+// Main update function
+const updateCollection = () => {
+  console.log('🔄 Updating Postman collection for microservices...');
+  
+  try {
+    // Read current collection
+    const collectionPath = path.join(__dirname, 'OTT-Platform-API.postman_collection.json');
+    const collection = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
+    
+    // Update URLs if requested
+    if (process.argv.includes('--update-urls')) {
+      const updatedCount = updateItemUrls(collection.item);
+      console.log(`📡 Updated ${updatedCount} API endpoints with service-specific URLs`);
+    }
+    
+    // Update metadata
+    collection.info.version = `1.0.${Date.now()}`;
+    collection.info._postman_updated = new Date().toISOString();
+    collection.info.description = 'OTT Platform API Collection for Microservices Architecture\n\n' +
+      'This collection is organized by service and uses service-specific URLs:\n' +
+      '- Auth Service: http://localhost:3001\n' +
+      '- User Service: http://localhost:3002\n' +
+      '- Content Service: http://localhost:3003\n' +
+      '- Streaming Service: http://localhost:3004\n' +
+      '- Recommendation Service: http://localhost:3005\n' +
+      '- Admin Service: http://localhost:3006\n' +
+      '- Common Service: http://localhost:3007\n' +
+      `\nLast updated: ${new Date().toLocaleString()}`;
+    
+    // Write updated collection
+    fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
+    
+    console.log('✅ Postman collection updated successfully!');
+    console.log(`📁 Location: ${collectionPath}`);
+    console.log(`🕒 Version: ${collection.info.version}`);
+    
+  } catch (error) {
+    console.error('❌ Error updating collection:', error.message);
+    process.exit(1);
+  }
+};
+
+// Auto-discovery of endpoints from route files
 const discoverEndpoints = () => {
   console.log('🔍 Discovering API endpoints...');
   
@@ -58,7 +126,8 @@ const discoverEndpoints = () => {
             service,
             method: method.toUpperCase(),
             path: path,
-            fullPath: `/api/${service}${path}`
+            fullPath: `/api/${service}${path}`,
+            serviceUrl: serviceUrlMappings[`/api/${service}`] || '{{gatewayUrl}}'
           });
         });
       }
@@ -82,10 +151,16 @@ const generateCollectionItems = (endpoints) => {
       name: `${endpoint.method} ${endpoint.path}`,
       request: {
         method: endpoint.method,
-        header: [],
+        header: [
+          {
+            key: "Authorization",
+            value: "Bearer {{authToken}}",
+            type: "text"
+          }
+        ],
         url: {
-          raw: `{{baseUrl}}${endpoint.fullPath}`,
-          host: ['{{baseUrl}}'],
+          raw: `${endpoint.serviceUrl}${endpoint.fullPath}`,
+          host: [endpoint.serviceUrl],
           path: endpoint.fullPath.split('/').filter(p => p)
         }
       }
@@ -95,8 +170,18 @@ const generateCollectionItems = (endpoints) => {
     if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
       item.request.body = {
         mode: 'raw',
-        raw: '{\n    // Add request body here\n}'
+        raw: '{\n    // Add request body here\n}',
+        options: {
+          raw: {
+            language: 'json'
+          }
+        }
       };
+      item.request.header.push({
+        key: "Content-Type",
+        value: "application/json",
+        type: "text"
+      });
     }
     
     serviceGroups[endpoint.service].push(item);
