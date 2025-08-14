@@ -33,7 +33,27 @@ const authController = {
       // Get user record from Firebase
       const userRecord = await admin.auth().getUser(uid);
       
-      console.log(`User logged in: ${uid}`);
+      // Check if user has custom claims with profile_id
+      let customClaims = userRecord.customClaims || {};
+      
+      // If no profile_id in claims, try to get default profile
+      if (!customClaims.profile_id) {
+        // Here you would typically fetch the user's default profile from your user service
+        // For now, we'll check if there's a default_profile_id
+        if (!customClaims.default_profile_id) {
+          // If no default profile exists, you might want to create one or leave empty
+          console.log(`No default profile found for user ${uid}`);
+        } else {
+          // Set the default profile as active profile
+          customClaims.profile_id = customClaims.default_profile_id;
+          customClaims.login_at = Math.floor(Date.now() / 1000);
+          
+          // Update Firebase custom claims
+          await admin.auth().setCustomUserClaims(uid, customClaims);
+        }
+      }
+      
+      console.log(`User logged in: ${uid} with profile: ${customClaims.profile_id || 'none'}`);
       
       res.status(200).json({
         message: 'Login successful',
@@ -43,8 +63,9 @@ const authController = {
           displayName: userRecord.displayName,
           emailVerified: userRecord.emailVerified,
           disabled: userRecord.disabled,
-          customClaims: userRecord.customClaims || {}
-        }
+          customClaims: customClaims
+        },
+        activeProfile: customClaims.profile_id || null
       });
     } catch (error) {
       console.error('Login error:', error);
@@ -81,12 +102,21 @@ const authController = {
         displayName
       });
 
+      // Set initial custom claims (profile will be created later by user service)
+      const initialClaims = {
+        created_at: Math.floor(Date.now() / 1000),
+        // profile_id will be set when user creates their first profile
+      };
+
+      await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
+
       console.log(`User registered: ${userRecord.uid}`);
       
       res.status(201).json({
         message: 'User registered successfully',
         uid: userRecord.uid,
-        email: userRecord.email
+        email: userRecord.email,
+        note: 'Profile can be set after account creation'
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -225,6 +255,43 @@ const authController = {
       console.error('Set default profile error:', error);
       res.status(500).json({
         error: 'Failed to set default profile',
+        message: error.message
+      });
+    }
+  },
+
+  async setInitialProfile(req, res) {
+    try {
+      const { profileId } = req.body;
+      const uid = req.user.uid;
+
+      if (!profileId) {
+        return res.status(400).json({
+          error: 'Profile ID required',
+          message: 'profileId is required to set initial profile'
+        });
+      }
+
+      // Set both profile_id and default_profile_id for new users
+      const customClaims = {
+        profile_id: profileId,
+        default_profile_id: profileId,
+        initial_profile_set_at: Math.floor(Date.now() / 1000)
+      };
+
+      await admin.auth().setCustomUserClaims(uid, customClaims);
+
+      console.log(`Initial profile set for user ${uid}: ${profileId}`);
+
+      res.status(200).json({
+        message: 'Initial profile set successfully',
+        profileId: profileId,
+        note: 'Profile is now active and set as default'
+      });
+    } catch (error) {
+      console.error('Set initial profile error:', error);
+      res.status(500).json({
+        error: 'Failed to set initial profile',
         message: error.message
       });
     }
