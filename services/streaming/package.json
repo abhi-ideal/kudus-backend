@@ -19,7 +19,8 @@
     "sequelize": "^6.37.5",
     "serverless-http": "^3.2.0",
     "@aws-sdk/client-s3": "^3.682.0",
-    "@aws-sdk/client-cloudfront": "^3.682.0"
+    "@aws-sdk/client-cloudfront": "^3.682.0",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",

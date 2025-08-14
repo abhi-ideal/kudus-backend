@@ -23,7 +23,8 @@
     "@aws-sdk/client-cloudfront": "^3.682.0",
     "@aws-sdk/s3-request-presigner": "^3.682.0",
     "multer": "^1.4.5-lts.2",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
