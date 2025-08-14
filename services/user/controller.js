@@ -1,8 +1,9 @@
-
 const User = require('./models/User');
 const WatchHistory = require('./models/WatchHistory');
 const UserProfile = require('./models/UserProfile');
+const UserFeed = require('./models/UserFeed');
 const profileService = require('./services/profileService');
+const feedService = require('./services/feedService');
 const logger = require('../../shared/utils/logger');
 
 const userController = {
@@ -10,7 +11,7 @@ const userController = {
     try {
       const { id } = req.params;
       const user = await User.findByPk(id);
-      
+
       if (!user) {
         return res.status(404).json({
           error: 'User not found'
@@ -52,7 +53,7 @@ const userController = {
       }
 
       const updatedUser = await User.findByPk(id);
-      
+
       res.json({
         message: 'Profile updated successfully',
         user: {
@@ -75,9 +76,9 @@ const userController = {
     try {
       const { id } = req.params;
       const { page = 1, limit = 20 } = req.query;
-      
+
       const offset = (page - 1) * limit;
-      
+
       const watchHistory = await WatchHistory.findAndCountAll({
         where: { userId: id },
         order: [['watchedAt', 'DESC']],
@@ -106,7 +107,7 @@ const userController = {
   async getFavorites(req, res) {
     try {
       const { id } = req.params;
-      
+
       // This would typically join with content table
       // For now, returning placeholder structure
       res.json({
@@ -125,7 +126,7 @@ const userController = {
   async addToFavorites(req, res) {
     try {
       const { id, contentId } = req.params;
-      
+
       // Implementation would add content to user's favorites
       res.json({
         message: `Added content ${contentId} to favorites for user ${id}`
@@ -142,7 +143,7 @@ const userController = {
   async removeFromFavorites(req, res) {
     try {
       const { id, contentId } = req.params;
-      
+
       // Implementation would remove content from user's favorites
       res.json({
         message: `Removed content ${contentId} from favorites for user ${id}`
@@ -246,6 +247,61 @@ const userController = {
       res.status(400).json({
         success: false,
         error: error.message || 'Failed to delete profile'
+      });
+    }
+  },
+
+  // Feed Management
+  async getUserFeed(req, res) {
+    try {
+      const { profileId } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+
+      const feedItems = await feedService.getFeedForProfile(profileId, { page, limit });
+
+      res.json({
+        success: true,
+        data: feedItems.rows,
+        pagination: {
+          total: feedItems.count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(feedItems.count / limit)
+        }
+      });
+    } catch (error) {
+      logger.error('Get user feed error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve user feed',
+        message: error.message
+      });
+    }
+  },
+
+  async getRecommendations(req, res) {
+    try {
+      const { profileId } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+
+      const recommendations = await feedService.getRecommendationsForProfile(profileId, { page, limit });
+
+      res.json({
+        success: true,
+        data: recommendations.rows,
+        pagination: {
+          total: recommendations.count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(recommendations.count / limit)
+        }
+      });
+    } catch (error) {
+      logger.error('Get recommendations error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve recommendations',
+        message: error.message
       });
     }
   }

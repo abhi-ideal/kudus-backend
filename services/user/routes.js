@@ -188,4 +188,79 @@ router.put('/profiles/:profileId', verifyFirebaseToken, userController.updatePro
  */
 router.delete('/profiles/:profileId', verifyFirebaseToken, userController.deleteProfile);
 
+/**
+ * @swagger
+ * /api/users/feed:
+ *   get:
+ *     summary: Get user's personalized feed for a specific profile
+ *     tags: [User Feed]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: profile_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *     responses:
+ *       200:
+ *         description: Feed retrieved successfully
+ *       400:
+ *         description: Profile ID required
+ *       403:
+ *         description: Access denied
+ */
+router.get('/feed', verifyFirebaseToken, userController.getFeed);
+
+/**
+ * @swagger
+ * /api/users/feed/generate:
+ *   post:
+ *     summary: Generate new feed content for a profile
+ *     tags: [User Feed]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profile_id:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Feed generated successfully
+ */
+router.post('/feed/generate', verifyFirebaseToken, userController.generateFeed);
+
+/**
+ * @swagger
+ * /api/users/feed/{feedItemId}/viewed:
+ *   put:
+ *     summary: Mark a feed item as viewed
+ *     tags: [User Feed]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: feedItemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Feed item marked as viewed
+ */
+router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, userController.markFeedViewed);
+
 module.exports = router;

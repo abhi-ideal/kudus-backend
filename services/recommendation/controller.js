@@ -1,33 +1,47 @@
 
 const Content = require('../content/models/Content');
-const logger = require('../../shared/utils/logger');
 const { Op } = require('sequelize');
 
 const recommendationController = {
   async getTrending(req, res) {
     try {
-      const { limit = 10 } = req.query;
+      const { limit = 10, profile_id } = req.query;
       
-      // Get content with highest views in the last 30 days
+      let whereClause = {
+        isActive: true,
+        createdAt: {
+          [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }
+      };
+
+      // Apply child profile filters if applicable
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        whereClause.ageRating = {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        };
+        whereClause.genre = {
+          [Op.overlap]: req.contentFilter.allowedGenres
+        };
+      }
+      
       const trending = await Content.findAll({
-        where: {
-          isActive: true,
-          createdAt: {
-            [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          }
-        },
+        where: whereClause,
         order: [['views', 'DESC']],
         limit: parseInt(limit),
         attributes: { exclude: ['s3Key', 'videoQualities'] }
       });
 
       res.json({
+        success: true,
         trending,
+        profile_id,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false,
         count: trending.length
       });
     } catch (error) {
-      logger.error('Get trending error:', error);
+      console.error('Get trending error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to retrieve trending content',
         message: error.message
       });
@@ -36,13 +50,32 @@ const recommendationController = {
 
   async getPopular(req, res) {
     try {
-      const { genre, limit = 10 } = req.query;
-      const where = { isActive: true };
+      const { genre, limit = 10, profile_id } = req.query;
+      let where = { isActive: true };
       
       if (genre) {
         where.genre = {
           [Op.contains]: [genre]
         };
+      }
+
+      // Apply child profile filters if applicable
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        };
+        
+        // Filter genres for child profiles
+        if (req.contentFilter.allowedGenres) {
+          where.genre = where.genre ? {
+            [Op.and]: [
+              where.genre,
+              { [Op.overlap]: req.contentFilter.allowedGenres }
+            ]
+          } : {
+            [Op.overlap]: req.contentFilter.allowedGenres
+          };
+        }
       }
       
       const popular = await Content.findAll({
@@ -56,13 +89,18 @@ const recommendationController = {
       });
 
       res.json({
+        success: true,
         popular,
+        profile_id,
         genre,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false,
+        appliedFilters: req.contentFilter || null,
         count: popular.length
       });
     } catch (error) {
-      logger.error('Get popular error:', error);
+      console.error('Get popular error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to retrieve popular content',
         message: error.message
       });
@@ -72,20 +110,29 @@ const recommendationController = {
   async getPersonalized(req, res) {
     try {
       const userId = req.user.uid;
-      const { limit = 20 } = req.query;
+      const { limit = 20, profile_id } = req.query;
+      
+      let where = { isActive: true };
+
+      // Apply child profile filters if applicable
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        };
+        where.genre = {
+          [Op.overlap]: req.contentFilter.allowedGenres
+        };
+      }
       
       // Simple rule-based recommendations
       // In production, this would use ML algorithms
-      
-      // Get user's watch history and preferences
-      // For now, return popular content with some randomization
       const recommendations = await Content.findAll({
-        where: { isActive: true },
+        where,
         order: [
           ['averageRating', 'DESC'],
           ['views', 'DESC']
         ],
-        limit: parseInt(limit),
+        limit: parseInt(limit * 2), // Get more for shuffling
         attributes: { exclude: ['s3Key', 'videoQualities'] }
       });
       
@@ -95,15 +142,22 @@ const recommendationController = {
         [recommendations[i], recommendations[j]] = [recommendations[j], recommendations[i]];
       }
 
+      const finalRecommendations = recommendations.slice(0, limit);
+
       res.json({
-        recommendations: recommendations.slice(0, limit),
+        success: true,
+        recommendations: finalRecommendations,
         userId,
-        algorithm: 'rule-based-v1',
-        count: recommendations.length
+        profile_id,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false,
+        appliedFilters: req.contentFilter || null,
+        algorithm: req.activeProfile && req.activeProfile.isChild ? 'child-safe-v1' : 'rule-based-v1',
+        count: finalRecommendations.length
       });
     } catch (error) {
-      logger.error('Get personalized recommendations error:', error);
+      console.error('Get personalized recommendations error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to retrieve personalized recommendations',
         message: error.message
       });
@@ -113,34 +167,54 @@ const recommendationController = {
   async getSimilar(req, res) {
     try {
       const { contentId } = req.params;
-      const { limit = 10 } = req.query;
+      const { limit = 10, profile_id } = req.query;
       
       // Get the reference content
       const content = await Content.findByPk(contentId);
       
       if (!content) {
         return res.status(404).json({
+          success: false,
           error: 'Content not found'
         });
       }
       
+      let where = {
+        id: { [Op.ne]: contentId },
+        isActive: true,
+        type: content.type,
+        genre: {
+          [Op.overlap]: content.genre
+        }
+      };
+
+      // Apply child profile filters if applicable
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = {
+          [Op.in]: ['G', 'PG', 'PG-13']
+        };
+        where.genre = {
+          [Op.and]: [
+            where.genre,
+            { [Op.overlap]: req.contentFilter.allowedGenres }
+          ]
+        };
+      }
+      
       // Find similar content based on genre and type
       const similar = await Content.findAll({
-        where: {
-          id: { [Op.ne]: contentId },
-          isActive: true,
-          type: content.type,
-          genre: {
-            [Op.overlap]: content.genre
-          }
-        },
+        where,
         order: [['averageRating', 'DESC']],
         limit: parseInt(limit),
         attributes: { exclude: ['s3Key', 'videoQualities'] }
       });
 
       res.json({
+        success: true,
         similar,
+        profile_id,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false,
+        appliedFilters: req.contentFilter || null,
         referenceContent: {
           id: content.id,
           title: content.title,
@@ -150,8 +224,9 @@ const recommendationController = {
         count: similar.length
       });
     } catch (error) {
-      logger.error('Get similar content error:', error);
+      console.error('Get similar content error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to retrieve similar content',
         message: error.message
       });

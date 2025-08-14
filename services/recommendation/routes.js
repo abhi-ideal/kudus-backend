@@ -1,7 +1,7 @@
 const express = require('express');
 const recommendationController = require('./controller');
-const { verifyFirebaseToken } = require('../../shared/middleware/auth');
-const { profileAuth, childProfileFilter } = require('../../user/middleware/profileAuth');
+const { verifyFirebaseToken } = require('../auth/middleware/auth');
+const { profileAuth, childProfileFilter } = require('../user/middleware/profileAuth');
 
 const router = express.Router();
 
@@ -11,8 +11,17 @@ const router = express.Router();
  *   get:
  *     summary: Get trending content
  *     tags: [Recommendations]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: profile_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
  *         description: Trending content retrieved successfully
@@ -30,8 +39,16 @@ router.get('/trending', profileAuth, childProfileFilter, recommendationControlle
  *         name: genre
  *         schema:
  *           type: string
- *     security:
- *       - bearerAuth: []
+ *       - in: query
+ *         name: profile_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
  *         description: Popular content retrieved successfully
@@ -49,11 +66,23 @@ router.use(verifyFirebaseToken);
  *     tags: [Recommendations]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: profile_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
  *     responses:
  *       200:
  *         description: Personalized recommendations retrieved successfully
  */
-router.get('/personalized', auth, profileAuth, childProfileFilter, recommendationController.getPersonalized);
+router.get('/personalized', profileAuth, childProfileFilter, recommendationController.getPersonalized);
 
 /**
  * @swagger
@@ -69,6 +98,16 @@ router.get('/personalized', auth, profileAuth, childProfileFilter, recommendatio
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: profile_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
  *     responses:
  *       200:
  *         description: Similar content retrieved successfully
