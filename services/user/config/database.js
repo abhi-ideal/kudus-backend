@@ -10,7 +10,7 @@ const getPassword = (password) => {
 
 // Use shared database with auth service
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'ott_auth',
+  process.env.DB_NAME || 'ott_users',
   process.env.DB_USER || 'root',
   getPassword(process.env.DB_PASSWORD),
   {
