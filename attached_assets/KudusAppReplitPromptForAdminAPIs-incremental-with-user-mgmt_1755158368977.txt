@@ -1,0 +1,61 @@
+I need to add **Administrator-facing APIs** for content, metadata, and user management as a separate, non-breaking addition.
+
+🚫 Do NOT modify or overwrite:
+- `/models/` files for existing entities
+- `/controllers/user/` directory
+- `/routes/user/` directory
+- Any existing middleware except adding a new file
+
+✅ You MAY add new files here:
+- `/routes/admin/` → Admin API routes
+- `/controllers/admin/` → Admin controllers
+- `/middlewares/authAdmin.js` → Middleware for Firebase Admin SDK token verification & role check
+- `/docs/admin/` → Swagger/OpenAPI YAML or JSON for admin endpoints (optional)
+
+## Requirements:
+
+1. **Auth & Role Check**
+   - Create `/middlewares/authAdmin.js`:
+     - Verify Firebase ID token with Firebase Admin SDK.
+     - Fetch user role from DB.
+     - If role !== 'admin', return 403 Forbidden.
+
+2. **Admin Content Management APIs**
+   - Use existing Sequelize models: Movie, Series, Episode, Category, Genre, Collection, MediaAsset.
+   - CRUD for each:
+     - POST /admin/[entity]
+     - GET /admin/[entity] (with pagination & filters)
+     - GET /admin/[entity]/:id
+     - PUT /admin/[entity]/:id
+     - DELETE /admin/[entity]/:id (soft delete if model supports `is_deleted`)
+   - For collections: batch add/remove items & update dynamic rules JSON.
+
+3. **Admin User Management APIs**
+   - GET /admin/users → List users (filters: role, status, date range, with pagination)
+   - GET /admin/users/:id → Full user profile (basic info + watch history + subscriptions if available)
+   - PATCH /admin/users/:id/block → Set status to "blocked" in DB + disable in Firebase Auth
+   - PATCH /admin/users/:id/unblock → Set status to "active" in DB + enable in Firebase Auth
+   - GET /admin/users/:id/activity → Return recent activity logs from existing tracking tables
+
+4. **Swagger Documentation**
+   - Add new admin routes in `/docs/admin/admin.yaml` (or JSON).
+   - Group under "Admin APIs" in Swagger UI.
+
+5. **Implementation Notes**
+   - Reuse validation library already in use (express-validator or Joi).
+   - Use Sequelize transactions for batch operations.
+   - Keep same API response structure as existing project.
+   - Keep logging consistent with existing logger.
+   - Ensure all DB changes affecting users are mirrored in Firebase Auth if applicable.
+
+6. **Output Expected**
+   - Only create new files in allowed folders.
+   - Provide code snippets for:
+     - `/middlewares/authAdmin.js`
+     - Example route file: `/routes/admin/movies.js`
+     - Example controller: `/controllers/admin/movieController.js`
+     - Example Swagger doc for one entity.
+   - Show `.env` updates for Firebase Admin credentials.
+   - Leave integration instructions at the end.
+
+Follow clean code principles, DRY, and ensure zero regression risk for existing APIs.
