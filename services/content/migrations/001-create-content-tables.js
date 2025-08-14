@@ -80,13 +80,7 @@ module.exports = {
       },
       itemId: {
         type: Sequelize.UUID,
-        allowNull: true,
-        references: {
-          model: 'content_items',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
+        allowNull: true
       },
       trailerUrl: {
         type: Sequelize.TEXT,
