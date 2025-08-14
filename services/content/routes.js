@@ -85,6 +85,77 @@ router.get('/:id', detectCountry, applyGeoFilter, profileAuth, childProfileFilte
 
 /**
  * @swagger
+ * /api/content/series/{id}/details:
+ *   get:
+ *     summary: Get series details with seasons and episodes
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: includeEpisodes
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: Series details retrieved successfully
+ */
+router.get('/series/:id/details', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeriesDetails);
+
+/**
+ * @swagger
+ * /api/content/series/{seriesId}/season/{seasonNumber}/episodes:
+ *   get:
+ *     summary: Get episodes for a specific season
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: seriesId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: seasonNumber
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Season episodes retrieved successfully
+ */
+router.get('/series/:seriesId/season/:seasonNumber/episodes', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeasonEpisodes);
+
+/**
+ * @swagger
+ * /api/content/episode/{episodeId}:
+ *   get:
+ *     summary: Get episode details
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Episode details retrieved successfully
+ */
+router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getEpisodeDetails);
+
+/**
+ * @swagger
  * /api/content/{id}/stream:
  *   get:
  *     summary: Get streaming URL for content

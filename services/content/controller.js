@@ -328,6 +328,226 @@ const contentController = {
         error: 'Failed to fetch kids content'
       });
     }
+  },
+
+  async getSeriesDetails(req, res) {
+    try {
+      const { id } = req.params;
+      const { includeEpisodes = true } = req.query;
+
+      const Content = require('./models/Content');
+      const Season = require('./models/Season');
+      const Episode = require('./models/Episode');
+
+      const seriesData = await Content.findOne({
+        where: { 
+          id, 
+          type: 'series', 
+          isActive: true 
+        },
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            where: { isActive: true },
+            required: false,
+            order: [['seasonNumber', 'ASC']],
+            include: includeEpisodes === 'true' ? [
+              {
+                model: Episode,
+                as: 'episodes',
+                where: { isActive: true },
+                required: false,
+                order: [['episodeNumber', 'ASC']],
+                attributes: { exclude: ['s3Key'] }
+              }
+            ] : []
+          }
+        ]
+      });
+
+      if (!seriesData) {
+        return res.status(404).json({
+          success: false,
+          error: 'Series not found'
+        });
+      }
+
+      // Apply child profile filtering if needed
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedRatings = ['G', 'PG', 'PG-13'];
+        if (!allowedRatings.includes(seriesData.ageRating)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content not available for child profiles'
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: seriesData
+      });
+    } catch (error) {
+      console.error('Get series details error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch series details'
+      });
+    }
+  },
+
+  async getSeasonEpisodes(req, res) {
+    try {
+      const { seriesId, seasonNumber } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+
+      const Content = require('./models/Content');
+      const Season = require('./models/Season');
+      const Episode = require('./models/Episode');
+
+      const offset = (page - 1) * limit;
+
+      // Verify series exists and user has access
+      const series = await Content.findOne({
+        where: { 
+          id: seriesId, 
+          type: 'series', 
+          isActive: true 
+        }
+      });
+
+      if (!series) {
+        return res.status(404).json({
+          success: false,
+          error: 'Series not found'
+        });
+      }
+
+      // Apply child profile filtering
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedRatings = ['G', 'PG', 'PG-13'];
+        if (!allowedRatings.includes(series.ageRating)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content not available for child profiles'
+          });
+        }
+      }
+
+      const season = await Season.findOne({
+        where: { 
+          seriesId, 
+          seasonNumber: parseInt(seasonNumber), 
+          isActive: true 
+        },
+        include: [
+          {
+            model: Episode,
+            as: 'episodes',
+            where: { isActive: true },
+            required: false,
+            limit: parseInt(limit),
+            offset: offset,
+            order: [['episodeNumber', 'ASC']],
+            attributes: { exclude: ['s3Key'] }
+          }
+        ]
+      });
+
+      if (!season) {
+        return res.status(404).json({
+          success: false,
+          error: 'Season not found'
+        });
+      }
+
+      // Get total episodes count for pagination
+      const totalEpisodes = await Episode.count({
+        where: { 
+          seasonId: season.id, 
+          isActive: true 
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          season,
+          pagination: {
+            total: totalEpisodes,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(totalEpisodes / limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get season episodes error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch season episodes'
+      });
+    }
+  },
+
+  async getEpisodeDetails(req, res) {
+    try {
+      const { episodeId } = req.params;
+
+      const Episode = require('./models/Episode');
+      const Season = require('./models/Season');
+      const Content = require('./models/Content');
+
+      const episode = await Episode.findOne({
+        where: { 
+          id: episodeId, 
+          isActive: true 
+        },
+        include: [
+          {
+            model: Season,
+            as: 'season',
+            include: [
+              {
+                model: Content,
+                as: 'series'
+              }
+            ]
+          }
+        ],
+        attributes: { exclude: ['s3Key'] }
+      });
+
+      if (!episode) {
+        return res.status(404).json({
+          success: false,
+          error: 'Episode not found'
+        });
+      }
+
+      // Apply child profile filtering
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedRatings = ['G', 'PG', 'PG-13'];
+        if (!allowedRatings.includes(episode.season.series.ageRating)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content not available for child profiles'
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: episode
+      });
+    } catch (error) {
+      console.error('Get episode details error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch episode details'
+      });
+    }
   }
 };
 

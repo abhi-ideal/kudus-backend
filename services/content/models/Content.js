@@ -119,6 +119,17 @@ Content.associate = (models) => {
     foreignKey: 'itemId',
     as: 'item'
   });
+  
+  // Series associations
+  Content.hasMany(models.Season, {
+    foreignKey: 'seriesId',
+    as: 'seasons'
+  });
+  
+  Content.hasMany(models.Episode, {
+    foreignKey: 'seriesId',
+    as: 'episodes'
+  });
 };
 
 module.exports = Content;
