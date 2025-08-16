@@ -147,65 +147,97 @@ const authController = {
 
   async register(req, res) {
     try {
-      const { email, password, displayName } = req.body;
+      const { firebaseUid, email, displayName } = req.body;
 
-      // Create user in Firebase Auth
-      const userRecord = await admin.auth().createUser({
-        email,
-        password,
-        displayName
+      if (!firebaseUid) {
+        return res.status(400).json({
+          error: 'Firebase UID is required',
+          message: 'firebaseUid must be provided'
+        });
+      }
+
+      // Verify the Firebase user exists and is valid
+      const userRecord = await admin.auth().getUser(firebaseUid);
+      
+      if (!userRecord) {
+        return res.status(404).json({
+          error: 'Firebase user not found',
+          message: 'User does not exist in Firebase Auth'
+        });
+      }
+
+      // Check if user already exists in database
+      const existingUser = await User.findOne({ 
+        where: { firebaseUid: firebaseUid } 
       });
 
+      if (existingUser) {
+        return res.status(409).json({
+          error: 'User already registered',
+          message: 'User with this Firebase UID already exists in database'
+        });
+      }
+
       // Generate a default username from displayName or email
-      const defaultUsername = this.generateDefaultUsername(displayName || email);
+      const defaultUsername = this.generateDefaultUsername(displayName || userRecord.email);
 
       try {
         // Create default profile in user service
-        const defaultProfile = await this.createDefaultProfile(userRecord.uid, defaultUsername);
+        const defaultProfile = await this.createDefaultProfile(firebaseUid, defaultUsername);
 
         // Set custom claims with the default profile
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
           profile_id: defaultProfile.id,
           default_profile_id: defaultProfile.id,
-          username: defaultUsername
+          username: defaultUsername,
+          registered: true
         };
 
-        await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
+        await admin.auth().setCustomUserClaims(firebaseUid, initialClaims);
 
-        console.log(`User registered: ${userRecord.uid} with default profile: ${defaultProfile.id}`);
+        logger.info(`User registered: ${firebaseUid} with default profile: ${defaultProfile.id}`);
 
         res.status(201).json({
           message: 'User registered successfully',
-          uid: userRecord.uid,
+          uid: firebaseUid,
           email: userRecord.email,
           defaultProfile: {
             id: defaultProfile.id,
             username: defaultUsername
           },
-          note: 'Default profile created and set as active'
+          note: 'Default profile created and custom claims set'
         });
       } catch (profileError) {
-        console.error('Failed to create default profile:', profileError);
+        logger.error('Failed to create default profile:', profileError);
 
         // If profile creation fails, still set basic claims
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
-          username: defaultUsername
+          username: defaultUsername,
+          registered: true
         };
 
-        await admin.auth().setCustomUserClaims(userRecord.uid, initialClaims);
+        await admin.auth().setCustomUserClaims(firebaseUid, initialClaims);
 
         res.status(201).json({
           message: 'User registered successfully',
-          uid: userRecord.uid,
+          uid: firebaseUid,
           email: userRecord.email,
           username: defaultUsername,
           warning: 'Default profile creation failed, can be created later'
         });
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      logger.error('Registration error:', error);
+      
+      if (error.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          error: 'Firebase user not found',
+          message: 'User does not exist in Firebase Auth'
+        });
+      }
+      
       res.status(400).json({
         error: 'Registration failed',
         message: error.message
