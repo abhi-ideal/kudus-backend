@@ -448,81 +448,216 @@ const authController = {
   },
 
   /**
-   * Create default profile by calling user service
+   * Create default profile by directly inserting into database tables
    */
   async createDefaultProfile(firebaseUid, username) {
-    const axios = require('axios');
+    const { v4: uuidv4 } = require('uuid');
+    const { DataTypes } = require('sequelize');
+    const { sequelize } = require('./config/database');
     
     try {
       logger.info(`Starting profile creation for user: ${firebaseUid} with username: ${username}`);
-      
-      // Use internal service URL (same server different port)
-      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://0.0.0.0:5001/api/users';
-      
-      logger.info(`User service URL: ${userServiceUrl}`);
 
-      // First, create user record in user service if it doesn't exist
-      logger.info('Creating user record...');
-      const userResponse = await axios.post(`${userServiceUrl}/create-user`, {
-        firebaseUid: firebaseUid,
-        email: '', // Will be updated by user service
-        firstName: username,
-        lastName: '',
-        displayName: username
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Service': 'auth-service'
+      // Define User model directly (since auth and user services share same DB)
+      const UserModel = sequelize.define('User', {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true
         },
-        timeout: 10000 // 10 second timeout
-      });
-
-      logger.info(`User created with ID: ${userResponse.data.user.id}`);
-      const userId = userResponse.data.user.id;
-
-      // Create default profile
-      logger.info('Creating default profile...');
-      const profileResponse = await axios.post(`${userServiceUrl}/profiles`, {
-        profileName: username,
-        isChild: false,
-        avatarUrl: null,
-        preferences: {
-          autoplay: true,
-          quality: 'HD',
-          subtitles: false,
-          preferredGenres: []
+        firebaseUid: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true
+        },
+        email: {
+          type: DataTypes.STRING,
+          allowNull: true
+        },
+        firstName: {
+          type: DataTypes.STRING,
+          allowNull: true
+        },
+        lastName: {
+          type: DataTypes.STRING,
+          allowNull: true
+        },
+        displayName: {
+          type: DataTypes.STRING,
+          allowNull: true
+        },
+        profilePicture: {
+          type: DataTypes.TEXT,
+          allowNull: true
+        },
+        dateOfBirth: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
+        phoneNumber: {
+          type: DataTypes.STRING,
+          allowNull: true
+        },
+        subscriptionType: {
+          type: DataTypes.ENUM('free', 'basic', 'standard', 'premium'),
+          defaultValue: 'free'
+        },
+        subscriptionStatus: {
+          type: DataTypes.ENUM('active', 'inactive', 'cancelled', 'expired'),
+          defaultValue: 'active'
+        },
+        subscriptionStartDate: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
+        subscriptionEndDate: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
+        isActive: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true
+        },
+        emailVerified: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
+        },
+        lastLoginAt: {
+          type: DataTypes.DATE,
+          allowNull: true
         }
       }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-ID': userId,
-          'X-Internal-Service': 'auth-service'
-        },
-        timeout: 10000 // 10 second timeout
+        tableName: 'users',
+        timestamps: true
       });
 
-      logger.info(`Default profile created successfully: ${profileResponse.data.profile.id}`);
-      return profileResponse.data.profile;
+      // Define UserProfile model directly
+      const UserProfileModel = sequelize.define('UserProfile', {
+        id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true
+        },
+        userId: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: 'users',
+            key: 'id'
+          }
+        },
+        name: {
+          type: DataTypes.STRING,
+          allowNull: false
+        },
+        avatar: {
+          type: DataTypes.TEXT,
+          allowNull: true
+        },
+        isKidsProfile: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
+        },
+        ageRating: {
+          type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
+          defaultValue: 'R'
+        },
+        language: {
+          type: DataTypes.STRING,
+          defaultValue: 'en'
+        },
+        autoplayNext: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true
+        },
+        autoplayPreviews: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true
+        },
+        subtitles: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
+        },
+        subtitleLanguage: {
+          type: DataTypes.STRING,
+          defaultValue: 'en'
+        },
+        audioLanguage: {
+          type: DataTypes.STRING,
+          defaultValue: 'en'
+        },
+        maturityLevel: {
+          type: DataTypes.INTEGER,
+          defaultValue: 18
+        },
+        isActive: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: true
+        }
+      }, {
+        tableName: 'user_profiles',
+        timestamps: true
+      });
+
+      // Check if user already exists
+      let user = await UserModel.findOne({
+        where: { firebaseUid: firebaseUid }
+      });
+
+      // Create user if doesn't exist
+      if (!user) {
+        logger.info('Creating user record in database...');
+        user = await UserModel.create({
+          firebaseUid: firebaseUid,
+          email: '', // Will be updated later
+          firstName: username,
+          lastName: '',
+          displayName: username,
+          subscriptionType: 'free',
+          subscriptionStatus: 'active',
+          isActive: true,
+          emailVerified: false
+        });
+        logger.info(`User created with ID: ${user.id}`);
+      } else {
+        logger.info(`User already exists with ID: ${user.id}`);
+      }
+
+      // Create default profile
+      logger.info('Creating default profile in database...');
+      const defaultProfile = await UserProfileModel.create({
+        userId: user.id,
+        name: username,
+        avatar: null,
+        isKidsProfile: false,
+        ageRating: 'R',
+        language: 'en',
+        autoplayNext: true,
+        autoplayPreviews: true,
+        subtitles: false,
+        subtitleLanguage: 'en',
+        audioLanguage: 'en',
+        maturityLevel: 18,
+        isActive: true
+      });
+
+      logger.info(`Default profile created successfully: ${defaultProfile.id}`);
+      
+      return {
+        id: defaultProfile.id,
+        name: defaultProfile.name,
+        userId: user.id,
+        isKidsProfile: defaultProfile.isKidsProfile,
+        avatar: defaultProfile.avatar
+      };
       
     } catch (error) {
       logger.error('Error creating default profile:', {
         error: error.message,
         stack: error.stack,
-        response: error.response?.data,
-        status: error.response?.status,
         firebaseUid,
         username
       });
-      
-      if (error.code === 'ECONNREFUSED') {
-        logger.error('Cannot connect to user service - is it running?');
-        throw new Error('User service is not available');
-      }
-      
-      if (error.response) {
-        logger.error(`HTTP Error ${error.response.status}: ${JSON.stringify(error.response.data)}`);
-        throw new Error(`User service error: ${error.response.data.message || error.message}`);
-      }
       
       throw new Error(`Failed to create default profile: ${error.message}`);
     }
