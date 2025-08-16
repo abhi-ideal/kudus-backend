@@ -90,6 +90,14 @@ const authController = {
           lastLoginAt: new Date()
         });
 
+        // Fetch user profiles
+        const profiles = await UserProfile.findAll({
+          where: { 
+            userId: user.id,
+            isActive: true
+          }
+        });
+
         // Create login history entry
         await LoginHistory.create({
           userId: user.id,
