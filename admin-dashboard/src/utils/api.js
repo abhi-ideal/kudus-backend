@@ -94,6 +94,25 @@ export const adminEndpoints = {
 // Export individual service APIs for direct access if needed
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
 
+// Admin endpoints object with all admin API functions
+const adminEndpoints = {
+  // Users API
+  getUsers: (params) => adminAPI.get('/api/admin/users', { params }),
+  getUserById: (userId) => adminAPI.get(`/api/admin/users/${userId}`),
+  blockUser: (userId, reason) => adminAPI.post(`/api/admin/users/${userId}/block`, { reason }),
+  unblockUser: (userId) => adminAPI.post(`/api/admin/users/${userId}/unblock`),
+  updateUserSubscription: (userId, data) => adminAPI.put(`/api/admin/users/${userId}/subscription`, data),
+  getUserStatistics: () => adminAPI.get('/api/admin/users/statistics'),
+
+  // Content API
+  getContent: (params) => contentAPI.get('/api/admin/content', { params }),
+  getContentById: (contentId) => contentAPI.get(`/api/admin/content/${contentId}`),
+  createContent: (data) => contentAPI.post('/api/admin/content', data),
+  updateContent: (contentId, data) => contentAPI.put(`/api/admin/content/${contentId}`, data),
+  deleteContent: (contentId) => contentAPI.delete(`/api/admin/content/${contentId}`),
+  getContentStatistics: () => contentAPI.get('/api/admin/content/statistics'),
+};
+
 // Export adminAPI for backward compatibility
-export { adminEndpoints as adminAPI };
+export const adminAPI = adminEndpoints;
 export default adminEndpoints;
