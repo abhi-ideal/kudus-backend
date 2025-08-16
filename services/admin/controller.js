@@ -235,7 +235,6 @@ const adminController = {
   }
 };
 
-module.exports = adminController;
 async updateContentGeoRestrictions(req, res) {
     try {
       const { id } = req.params;
@@ -291,4 +290,7 @@ async updateContentGeoRestrictions(req, res) {
         message: error.message
       });
     }
-  },
+  }
+};
+
+module.exports = adminController;
