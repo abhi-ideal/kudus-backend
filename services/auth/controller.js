@@ -448,21 +448,170 @@ const authController = {
   },
 
   /**
-   * Create default profile by directly inserting into database tables
+   * Create default profile by directly inserting into database tables with transaction rollback
    */
   async createDefaultProfile(firebaseUid, username) {
+    const { sequelize } = require('./config/database');
+    const { DataTypes } = require('sequelize');
+    
+    // Define models directly with auth service's database connection
+    const UserModel = sequelize.define('User', {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+      },
+      firebaseUid: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      firstName: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      lastName: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      displayName: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      profilePicture: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      dateOfBirth: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      subscriptionType: {
+        type: DataTypes.ENUM('free', 'basic', 'standard', 'premium'),
+        defaultValue: 'free'
+      },
+      subscriptionStatus: {
+        type: DataTypes.ENUM('active', 'inactive', 'cancelled', 'expired'),
+        defaultValue: 'active'
+      },
+      subscriptionStartDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      subscriptionEndDate: {
+        type: DataTypes.DATE,
+        allowNull: true
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+      },
+      emailVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      lastLoginAt: {
+        type: DataTypes.DATE,
+        allowNull: true
+      }
+    }, {
+      tableName: 'users',
+      timestamps: true
+    });
+
+    const UserProfileModel = sequelize.define('UserProfile', {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+      },
+      userId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id'
+        }
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      avatar: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
+      isKidsProfile: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      ageRating: {
+        type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
+        defaultValue: 'R'
+      },
+      language: {
+        type: DataTypes.STRING,
+        defaultValue: 'en'
+      },
+      autoplayNext: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+      },
+      autoplayPreviews: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+      },
+      subtitles: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      subtitleLanguage: {
+        type: DataTypes.STRING,
+        defaultValue: 'en'
+      },
+      audioLanguage: {
+        type: DataTypes.STRING,
+        defaultValue: 'en'
+      },
+      maturityLevel: {
+        type: DataTypes.INTEGER,
+        defaultValue: 18
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
+      }
+    }, {
+      tableName: 'user_profiles',
+      timestamps: true
+    });
+
+    // Use database transaction for rollback capability
+    const transaction = await sequelize.transaction();
+    
     try {
       logger.info(`Starting profile creation for user: ${firebaseUid} with username: ${username}`);
 
       // Check if user already exists
-      let user = await User.findOne({
-        where: { firebaseUid: firebaseUid }
+      let user = await UserModel.findOne({
+        where: { firebaseUid: firebaseUid },
+        transaction
       });
+
+      let userCreated = false;
 
       // Create user if doesn't exist
       if (!user) {
         logger.info('Creating user record in database...');
-        user = await User.create({
+        user = await UserModel.create({
           firebaseUid: firebaseUid,
           email: '', // Will be updated later
           firstName: username,
@@ -472,7 +621,9 @@ const authController = {
           subscriptionStatus: 'active',
           isActive: true,
           emailVerified: false
-        });
+        }, { transaction });
+        
+        userCreated = true;
         logger.info(`User created with ID: ${user.id}`);
       } else {
         logger.info(`User already exists with ID: ${user.id}`);
@@ -480,7 +631,7 @@ const authController = {
 
       // Create default profile
       logger.info('Creating default profile in database...');
-      const defaultProfile = await UserProfile.create({
+      const defaultProfile = await UserProfileModel.create({
         userId: user.id,
         name: username,
         avatar: null,
@@ -494,7 +645,10 @@ const authController = {
         audioLanguage: 'en',
         maturityLevel: 18,
         isActive: true
-      });
+      }, { transaction });
+
+      // Commit the transaction
+      await transaction.commit();
 
       logger.info(`Default profile created successfully: ${defaultProfile.id}`);
       
@@ -507,7 +661,10 @@ const authController = {
       };
       
     } catch (error) {
-      logger.error('Error creating default profile:', {
+      // Rollback the transaction
+      await transaction.rollback();
+      
+      logger.error('Error creating default profile - transaction rolled back:', {
         error: error.message,
         stack: error.stack,
         firebaseUid,
