@@ -147,24 +147,26 @@ const authController = {
 
   async register(req, res) {
     try {
-      const { firebaseUid, email, displayName } = req.body;
+      const { displayName } = req.body;
 
-      if (!firebaseUid) {
-        return res.status(400).json({
-          error: 'Firebase UID is required',
-          message: 'firebaseUid must be provided'
+      // Get Firebase token from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Firebase auth token is required in Authorization header'
         });
       }
 
-      // Verify the Firebase user exists and is valid
+      const idToken = authHeader.split(' ')[1];
+
+      // Verify the Firebase token and extract user info
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const firebaseUid = decodedToken.uid;
+      const userEmail = decodedToken.email;
+
+      // Get full user record from Firebase
       const userRecord = await admin.auth().getUser(firebaseUid);
-      
-      if (!userRecord) {
-        return res.status(404).json({
-          error: 'Firebase user not found',
-          message: 'User does not exist in Firebase Auth'
-        });
-      }
 
       // Check if user already exists in database
       const existingUser = await User.findOne({ 
@@ -179,18 +181,19 @@ const authController = {
       }
 
       // Generate a default username from displayName or email
-      const defaultUsername = this.generateDefaultUsername(displayName || userRecord.email);
+      const defaultUsername = this.generateDefaultUsername(displayName || userRecord.displayName || userEmail);
 
       try {
         // Create default profile in user service
         const defaultProfile = await this.createDefaultProfile(firebaseUid, defaultUsername);
 
-        // Set custom claims with the default profile
+        // Set custom claims with the default profile and user role
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
           profile_id: defaultProfile.id,
           default_profile_id: defaultProfile.id,
           username: defaultUsername,
+          role: 'user',
           registered: true
         };
 
@@ -201,12 +204,13 @@ const authController = {
         res.status(201).json({
           message: 'User registered successfully',
           uid: firebaseUid,
-          email: userRecord.email,
+          email: userEmail,
+          role: 'user',
           defaultProfile: {
             id: defaultProfile.id,
             username: defaultUsername
           },
-          note: 'Default profile created and custom claims set'
+          note: 'Default profile created and custom claims set with user role'
         });
       } catch (profileError) {
         logger.error('Failed to create default profile:', profileError);
@@ -215,6 +219,7 @@ const authController = {
         const initialClaims = {
           created_at: Math.floor(Date.now() / 1000),
           username: defaultUsername,
+          role: 'user',
           registered: true
         };
 
@@ -223,13 +228,28 @@ const authController = {
         res.status(201).json({
           message: 'User registered successfully',
           uid: firebaseUid,
-          email: userRecord.email,
+          email: userEmail,
+          role: 'user',
           username: defaultUsername,
           warning: 'Default profile creation failed, can be created later'
         });
       }
     } catch (error) {
       logger.error('Registration error:', error);
+      
+      if (error.code === 'auth/id-token-expired') {
+        return res.status(401).json({
+          error: 'Token expired',
+          message: 'Firebase auth token has expired'
+        });
+      }
+      
+      if (error.code === 'auth/invalid-id-token') {
+        return res.status(401).json({
+          error: 'Invalid token',
+          message: 'Invalid Firebase auth token'
+        });
+      }
       
       if (error.code === 'auth/user-not-found') {
         return res.status(404).json({
