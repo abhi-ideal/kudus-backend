@@ -95,5 +95,5 @@ export const adminEndpoints = {
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
 
 // Export adminAPI for backward compatibility
-export const adminAPI = adminEndpoints;
+export { adminEndpoints as adminAPI };
 export default adminEndpoints;
