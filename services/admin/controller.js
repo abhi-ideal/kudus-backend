@@ -232,10 +232,9 @@ const adminController = {
         message: error.message
       });
     }
-  }
-};
+  },
 
-async updateContentGeoRestrictions(req, res) {
+  async updateContentGeoRestrictions(req, res) {
     try {
       const { id } = req.params;
       const { 
