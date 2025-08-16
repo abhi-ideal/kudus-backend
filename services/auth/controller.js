@@ -450,8 +450,25 @@ const authController = {
 module.exports = {
   login: authController.login,
   register: authController.register,
+  socialLogin: authController.socialLogin,
   logout: authController.logout,
-  verifyToken: authController.verifyToken, // Assuming verifyToken exists in the original context or will be added
+  verifyToken: async (req, res) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      res.json({
+        valid: true,
+        uid: decodedToken.uid,
+        email: decodedToken.email
+      });
+    } catch (error) {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  },
   refreshToken: authController.refreshToken,
   switchProfile: authController.switchProfile,
   setDefaultProfile: authController.setDefaultProfile
