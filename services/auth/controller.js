@@ -181,11 +181,11 @@ const authController = {
       }
 
       // Generate a default username from displayName or email
-      const defaultUsername = this.generateDefaultUsername(displayName || userRecord.displayName || userEmail);
+      const defaultUsername = authController.generateDefaultUsername(displayName || userRecord.displayName || userEmail);
 
       try {
         // Create default profile in user service
-        const defaultProfile = await this.createDefaultProfile(firebaseUid, defaultUsername);
+        const defaultProfile = await authController.createDefaultProfile(firebaseUid, defaultUsername);
 
         // Set custom claims with the default profile and user role
         const initialClaims = {
