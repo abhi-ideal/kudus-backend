@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "start": "node index.js",
-    "dev": "concurrently \"npm run gateway\" \"npm run auth\" \"npm run user\" \"npm run content\" \"npm run streaming\" \"npm run recommendation\" \"npm run admin\"",
+    "dev": "concurrently \"npm run gateway\" \"npm run auth\" \"npm run user\" \"npm run content\" \"npm run streaming\" \"npm run recommendation\" \"npm run admin\" \"npm run admin-dashboard\"",
     "gateway": "cd gateway && npm start",
     "auth": "cd services/auth && npm start",
     "user": "cd services/user && npm start",
@@ -17,9 +17,10 @@
     "streaming": "cd services/streaming && npm start",
     "recommendation": "cd services/recommendation && npm start",
     "admin": "cd services/admin && npm start",
+    "admin-dashboard": "cd admin-dashboard && npm run dev",
     "setup-dbs": "node scripts/setup-databases.js",
     "install-all": "npm install && npm run install-services",
-    "install-services": "cd gateway && npm install && cd ../services/auth && npm install && cd ../user && npm install && cd ../content && npm install && cd ../streaming && npm install && cd ../recommendation && npm install && cd ../admin && npm install",
+    "install-services": "cd gateway && npm install && cd ../services/auth && npm install && cd ../user && npm install && cd ../content && npm install && cd ../streaming && npm install && cd ../recommendation && npm install && cd ../admin && npm install && cd ../admin-dashboard && npm install",
     "migrate": "cd services/user && npm run migrate && cd ../content && npm run migrate && cd ../recommendation && npm run migrate && cd ../streaming && npm run migrate && cd ../admin && npm run migrate",
     "seed": "cd services/auth && npm run seed && cd ../user && npm run seed && cd ../content && npm run seed && cd ../recommendation && npm run seed && cd ../streaming && npm run seed && cd ../admin && npm run seed",
     "setup-env": "node scripts/setup-env.js"
