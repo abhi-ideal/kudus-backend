@@ -499,6 +499,80 @@ const controller = {
     }
   },
 
+  // Update profile
+  async updateProfile(req, res) {
+    try {
+      const { uid } = req.user;
+      const { profileId } = req.params;
+      const { profileName, isChild, avatarUrl, preferences } = req.body;
+
+      // Find the user first
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'User account not found'
+        });
+      }
+
+      // Find the profile to update
+      const profile = await UserProfile.findOne({ 
+        where: { 
+          id: profileId,
+          userId: user.id,
+          isActive: true 
+        } 
+      });
+
+      if (!profile) {
+        return res.status(404).json({
+          error: 'Profile not found',
+          message: 'Profile not found or does not belong to user'
+        });
+      }
+
+      // Check if new profile name conflicts with existing ones
+      if (profileName && profileName.trim() !== profile.name) {
+        const existingProfile = await UserProfile.findOne({
+          where: { 
+            userId: user.id, 
+            name: profileName.trim(),
+            isActive: true,
+            id: { [Op.ne]: profileId }
+          }
+        });
+
+        if (existingProfile) {
+          return res.status(400).json({
+            error: 'Profile name already exists',
+            message: 'A profile with this name already exists'
+          });
+        }
+      }
+
+      // Prepare update data
+      const updateData = {};
+      if (profileName !== undefined) updateData.name = profileName.trim();
+      if (typeof isChild === 'boolean') updateData.isKidsProfile = isChild;
+      if (avatarUrl !== undefined) updateData.avatar = avatarUrl;
+      if (preferences !== undefined) updateData.preferences = preferences;
+
+      await profile.update(updateData);
+
+      res.json({
+        success: true,
+        data: profile,
+        message: 'Profile updated successfully'
+      });
+    } catch (error) {
+      logger.error('Update profile error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to update profile'
+      });
+    }
+  },
+
   // Delete profile
   async deleteProfile(req, res) {
     try {
