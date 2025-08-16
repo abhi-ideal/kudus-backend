@@ -451,12 +451,18 @@ const authController = {
    * Create default profile by calling user service
    */
   async createDefaultProfile(firebaseUid, username) {
+    const axios = require('axios');
+    
     try {
-      // First, create user record in user service if it doesn't exist
-      const axios = require('axios');
-      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5000/api/users';
+      logger.info(`Starting profile creation for user: ${firebaseUid} with username: ${username}`);
+      
+      // Use internal service URL (same server different port)
+      const userServiceUrl = process.env.USER_SERVICE_URL || 'http://0.0.0.0:5001/api/users';
+      
+      logger.info(`User service URL: ${userServiceUrl}`);
 
-      // Create user record
+      // First, create user record in user service if it doesn't exist
+      logger.info('Creating user record...');
       const userResponse = await axios.post(`${userServiceUrl}/create-user`, {
         firebaseUid: firebaseUid,
         email: '', // Will be updated by user service
@@ -466,13 +472,16 @@ const authController = {
       }, {
         headers: {
           'Content-Type': 'application/json',
-          'X-Internal-Service': 'auth-service' // Internal service header
-        }
+          'X-Internal-Service': 'auth-service'
+        },
+        timeout: 10000 // 10 second timeout
       });
 
+      logger.info(`User created with ID: ${userResponse.data.user.id}`);
       const userId = userResponse.data.user.id;
 
       // Create default profile
+      logger.info('Creating default profile...');
       const profileResponse = await axios.post(`${userServiceUrl}/profiles`, {
         profileName: username,
         isChild: false,
@@ -488,13 +497,34 @@ const authController = {
           'Content-Type': 'application/json',
           'X-User-ID': userId,
           'X-Internal-Service': 'auth-service'
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
 
+      logger.info(`Default profile created successfully: ${profileResponse.data.profile.id}`);
       return profileResponse.data.profile;
+      
     } catch (error) {
-      console.error('Error creating default profile:', error.message);
-      throw new Error('Failed to create default profile');
+      logger.error('Error creating default profile:', {
+        error: error.message,
+        stack: error.stack,
+        response: error.response?.data,
+        status: error.response?.status,
+        firebaseUid,
+        username
+      });
+      
+      if (error.code === 'ECONNREFUSED') {
+        logger.error('Cannot connect to user service - is it running?');
+        throw new Error('User service is not available');
+      }
+      
+      if (error.response) {
+        logger.error(`HTTP Error ${error.response.status}: ${JSON.stringify(error.response.data)}`);
+        throw new Error(`User service error: ${error.response.data.message || error.message}`);
+      }
+      
+      throw new Error(`Failed to create default profile: ${error.message}`);
     }
   }
 };
