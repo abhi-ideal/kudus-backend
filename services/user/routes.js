@@ -41,10 +41,10 @@ router.get('/profile', verifyFirebaseToken, controller.getProfile);
 
 /**
  * @swagger
- * /api/users/profile:
+ * /api/users/profiles:
  *   post:
- *     summary: Create or update user profile
- *     tags: [Users]
+ *     summary: Create or update profile (if profileId provided, updates; otherwise creates new)
+ *     tags: [User Profiles]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -52,12 +52,26 @@ router.get('/profile', verifyFirebaseToken, controller.getProfile);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             type: object
+ *             properties:
+ *               profileId:
+ *                 type: string
+ *                 description: If provided, updates existing profile; if not provided, creates new profile
+ *               profileName:
+ *                 type: string
+ *               isChild:
+ *                 type: boolean
+ *               avatarUrl:
+ *                 type: string
+ *               preferences:
+ *                 type: object
  *     responses:
  *       200:
  *         description: Profile updated successfully
+ *       201:
+ *         description: Profile created successfully
  */
-router.post('/profile', verifyFirebaseToken, validate(schemas.userProfile), controller.updateProfile);
+router.post('/profiles', verifyFirebaseToken, controller.createOrUpdateProfile);
 
 /**
  * @swagger
@@ -198,35 +212,6 @@ router.delete('/:id/favorites/:contentId', controller.removeFromFavorites);
  *         description: User profiles retrieved successfully
  */
 router.get('/profiles', verifyFirebaseToken, controller.getProfiles);
-
-/**
- * @swagger
- * /api/users/profiles:
- *   post:
- *     summary: Create a new profile
- *     tags: [User Profiles]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               profileName:
- *                 type: string
- *               isChild:
- *                 type: boolean
- *               avatarUrl:
- *                 type: string
- *               preferences:
- *                 type: object
- *     responses:
- *       201:
- *         description: Profile created successfully
- */
-router.post('/profiles', verifyFirebaseToken, controller.createProfile);
 
 /**
  * @swagger
