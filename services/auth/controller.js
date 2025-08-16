@@ -451,163 +451,18 @@ const authController = {
    * Create default profile by directly inserting into database tables
    */
   async createDefaultProfile(firebaseUid, username) {
-    const { v4: uuidv4 } = require('uuid');
-    const { DataTypes } = require('sequelize');
-    const { sequelize } = require('./config/database');
-    
     try {
       logger.info(`Starting profile creation for user: ${firebaseUid} with username: ${username}`);
 
-      // Define User model directly (since auth and user services share same DB)
-      const UserModel = sequelize.define('User', {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true
-        },
-        firebaseUid: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true
-        },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: true
-        },
-        firstName: {
-          type: DataTypes.STRING,
-          allowNull: true
-        },
-        lastName: {
-          type: DataTypes.STRING,
-          allowNull: true
-        },
-        displayName: {
-          type: DataTypes.STRING,
-          allowNull: true
-        },
-        profilePicture: {
-          type: DataTypes.TEXT,
-          allowNull: true
-        },
-        dateOfBirth: {
-          type: DataTypes.DATE,
-          allowNull: true
-        },
-        phoneNumber: {
-          type: DataTypes.STRING,
-          allowNull: true
-        },
-        subscriptionType: {
-          type: DataTypes.ENUM('free', 'basic', 'standard', 'premium'),
-          defaultValue: 'free'
-        },
-        subscriptionStatus: {
-          type: DataTypes.ENUM('active', 'inactive', 'cancelled', 'expired'),
-          defaultValue: 'active'
-        },
-        subscriptionStartDate: {
-          type: DataTypes.DATE,
-          allowNull: true
-        },
-        subscriptionEndDate: {
-          type: DataTypes.DATE,
-          allowNull: true
-        },
-        isActive: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: true
-        },
-        emailVerified: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false
-        },
-        lastLoginAt: {
-          type: DataTypes.DATE,
-          allowNull: true
-        }
-      }, {
-        tableName: 'users',
-        timestamps: true
-      });
-
-      // Define UserProfile model directly
-      const UserProfileModel = sequelize.define('UserProfile', {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
-          primaryKey: true
-        },
-        userId: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: {
-            model: 'users',
-            key: 'id'
-          }
-        },
-        name: {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-        avatar: {
-          type: DataTypes.TEXT,
-          allowNull: true
-        },
-        isKidsProfile: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false
-        },
-        ageRating: {
-          type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
-          defaultValue: 'R'
-        },
-        language: {
-          type: DataTypes.STRING,
-          defaultValue: 'en'
-        },
-        autoplayNext: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: true
-        },
-        autoplayPreviews: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: true
-        },
-        subtitles: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false
-        },
-        subtitleLanguage: {
-          type: DataTypes.STRING,
-          defaultValue: 'en'
-        },
-        audioLanguage: {
-          type: DataTypes.STRING,
-          defaultValue: 'en'
-        },
-        maturityLevel: {
-          type: DataTypes.INTEGER,
-          defaultValue: 18
-        },
-        isActive: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: true
-        }
-      }, {
-        tableName: 'user_profiles',
-        timestamps: true
-      });
-
       // Check if user already exists
-      let user = await UserModel.findOne({
+      let user = await User.findOne({
         where: { firebaseUid: firebaseUid }
       });
 
       // Create user if doesn't exist
       if (!user) {
         logger.info('Creating user record in database...');
-        user = await UserModel.create({
+        user = await User.create({
           firebaseUid: firebaseUid,
           email: '', // Will be updated later
           firstName: username,
@@ -625,7 +480,7 @@ const authController = {
 
       // Create default profile
       logger.info('Creating default profile in database...');
-      const defaultProfile = await UserProfileModel.create({
+      const defaultProfile = await UserProfile.create({
         userId: user.id,
         name: username,
         avatar: null,
