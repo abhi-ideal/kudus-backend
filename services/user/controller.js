@@ -161,15 +161,20 @@ const controller = {
     try {
       const { uid } = req.user;
 
-      const user = await User.findOne({ where: { firebaseUid: uid } });
+      let user = await User.findOne({ where: { firebaseUid: uid } });
+      
       if (!user) {
-        return res.status(404).json({
-          error: 'User not found'
+        // Create user if doesn't exist
+        user = await User.create({
+          firebaseUid: uid,
+          email: req.user.email,
+          displayName: req.user.name || req.user.email,
+          photoURL: req.user.picture
         });
       }
 
       const profiles = await UserProfile.findAll({ 
-        where: { userId: user.id } 
+        where: { userId: user.id, isActive: true } 
       });
 
       res.json({
