@@ -293,6 +293,7 @@ const authController = {
     }
   },
 
+  // Switch active profile
   async switchProfile(req, res) {
     try {
       const { profileId } = req.body;
@@ -339,6 +340,7 @@ const authController = {
     }
   },
 
+  // Set default profile
   async setDefaultProfile(req, res) {
     try {
       const { profileId } = req.body;
@@ -450,5 +452,7 @@ module.exports = {
   register: authController.register,
   logout: authController.logout,
   verifyToken: authController.verifyToken, // Assuming verifyToken exists in the original context or will be added
-  refreshToken: authController.refreshToken
+  refreshToken: authController.refreshToken,
+  switchProfile: authController.switchProfile,
+  setDefaultProfile: authController.setDefaultProfile
 };
