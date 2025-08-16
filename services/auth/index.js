@@ -9,6 +9,9 @@ const authRoutes = require('./routes');
 
 const app = express();
 
+// Trust proxy for rate limiting in production
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -28,7 +31,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/auth/health', (req, res) => {
   res.status(200).json({
     service: 'Auth Service',
     status: 'OK',

@@ -13,6 +13,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.GATEWAY_PORT || 5000;
 
+// Trust proxy for rate limiting in production
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -114,7 +117,7 @@ app.get('/health', async (req, res) => {
   // Check each service health
   for (const [serviceName, config] of Object.entries(services)) {
     try {
-      const response = await fetch(`${config.target}/health`);
+      const response = await fetch(`${config.target}/api/${serviceName}/health`);
       healthChecks[serviceName] = {
         status: response.ok ? 'healthy' : 'unhealthy',
         statusCode: response.status

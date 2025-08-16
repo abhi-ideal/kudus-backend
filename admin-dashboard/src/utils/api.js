@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { message } from 'antd';
 
@@ -54,10 +53,10 @@ const setupInterceptors = (apiInstance) => {
         localStorage.removeItem('adminToken');
         window.location.href = '/login';
       }
-      
+
       const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
       message.error(errorMessage);
-      
+
       return Promise.reject(error);
     }
   );
@@ -96,5 +95,5 @@ export const adminEndpoints = {
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
 
 // Keep backward compatibility
-export const adminAPI = adminEndpoints;
+export { adminEndpoints as adminAPI };
 export default adminEndpoints;
