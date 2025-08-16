@@ -16,15 +16,8 @@ const User = sequelize.define('User', {
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: true
-  },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: true
+    allowNull: false,
+    unique: true
   },
   displayName: {
     type: DataTypes.STRING,
@@ -34,27 +27,43 @@ const User = sequelize.define('User', {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  dateOfBirth: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  phoneNumber: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
   subscriptionType: {
-    type: DataTypes.ENUM('free', 'basic', 'standard', 'premium'),
+    type: DataTypes.ENUM('free', 'basic', 'premium', 'family'),
     defaultValue: 'free'
   },
   subscriptionStatus: {
-    type: DataTypes.ENUM('active', 'inactive', 'cancelled', 'expired'),
-    defaultValue: 'active'
+    type: DataTypes.ENUM('active', 'inactive', 'canceled', 'expired'),
+    defaultValue: 'inactive'
   },
   subscriptionStartDate: {
     type: DataTypes.DATE,
     allowNull: true
   },
   subscriptionEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  preferences: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  parentalControls: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  language: {
+    type: DataTypes.STRING,
+    defaultValue: 'en'
+  },
+  country: {
+    type: DataTypes.STRING(2),
+    allowNull: true
+  },
+  timezone: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  lastLoginAt: {
     type: DataTypes.DATE,
     allowNull: true
   },
@@ -65,10 +74,6 @@ const User = sequelize.define('User', {
   emailVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
-  },
-  lastLoginAt: {
-    type: DataTypes.DATE,
-    allowNull: true
   }
 }, {
   tableName: 'users',
