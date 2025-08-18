@@ -3,7 +3,8 @@ const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
 const logger = require('../../shared/utils/logger');
 const { Op } = require('sequelize');
-const { sequelize } = require('./config/database');
+const { sequelize } = require('sequelize');
+const db = require('./config/database');
 
 const contentController = {
   async getAllContent(req, res) {
@@ -870,7 +871,7 @@ const contentController = {
 
       const averageRating = await Content.findOne({
         attributes: [
-          [sequelize.fn('AVG', sequelize.col('averageRating')), 'avgRating']
+          [db.sequelize.fn('AVG', db.sequelize.col('averageRating')), 'avgRating']
         ],
         where: { 
           isActive: true,
@@ -880,12 +881,12 @@ const contentController = {
 
       const topGenres = await Content.findAll({
         attributes: [
-          [sequelize.fn('UNNEST', sequelize.col('genre')), 'genre'],
-          [sequelize.fn('COUNT', '*'), 'count']
+          [db.sequelize.fn('UNNEST', db.sequelize.col('genre')), 'genre'],
+          [db.sequelize.fn('COUNT', '*'), 'count']
         ],
         where: { isActive: true },
-        group: [sequelize.fn('UNNEST', sequelize.col('genre'))],
-        order: [[sequelize.fn('COUNT', '*'), 'DESC']],
+        group: [db.sequelize.fn('UNNEST', db.sequelize.col('genre'))],
+        order: [[db.sequelize.fn('COUNT', '*'), 'DESC']],
         limit: 10,
         raw: true
       });
