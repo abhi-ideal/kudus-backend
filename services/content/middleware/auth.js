@@ -40,7 +40,6 @@ const verifyFirebaseToken = async (req, res, next) => {
 };
 
 module.exports = { verifyFirebaseToken };
-const admin = require('firebase-admin');
 const logger = require('../utils/logger');
 
 const verifyFirebaseToken = async (req, res, next) => {
