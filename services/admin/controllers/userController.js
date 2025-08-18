@@ -6,6 +6,13 @@ const admin = require('firebase-admin');
 const { Op } = require('sequelize');
 const logger = require('../../../shared/utils/logger');
 
+// Define associations
+User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
+UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
+WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 const userController = {
   async getUsers(req, res) {
     try {
@@ -244,13 +251,14 @@ const userController = {
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['updatedAt', 'DESC']],
-        include: [
-          {
-            model: require('../../content/models/Content'),
-            as: 'content',
-            attributes: ['id', 'title', 'type', 'poster']
-          }
-        ]
+        // Note: Content association would need to be defined separately
+        // include: [
+        //   {
+        //     model: require('../../content/models/Content'),
+        //     as: 'content',
+        //     attributes: ['id', 'title', 'type', 'poster']
+        //   }
+        // ]
       });
 
       // Get recent profile activities
