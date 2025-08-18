@@ -33,8 +33,12 @@ const userController = {
 
       // Apply filters
       if (role) where.role = role;
-      if (status) where.status = status;
-      if (subscription) where.subscription = subscription;
+      if (status) {
+        // Map status to isActive since User model uses isActive
+        if (status === 'active') where.isActive = true;
+        if (status === 'inactive' || status === 'blocked') where.isActive = false;
+      }
+      if (subscription) where.subscriptionType = subscription;
       if (startDate && endDate) {
         where.createdAt = {
           [Op.between]: [new Date(startDate), new Date(endDate)]
@@ -147,9 +151,9 @@ const userController = {
 
       // Update user status in database
       await user.update({
-        status: 'blocked',
+        isActive: false,
         blockedAt: new Date(),
-        blockReason: reason || 'Blocked by admin'
+        blockedReason: reason || 'Blocked by admin'
       });
 
       // Disable user in Firebase Auth
@@ -169,9 +173,10 @@ const userController = {
         user: {
           id: user.id,
           email: user.email,
-          status: user.status,
+          status: user.isActive ? 'active' : 'blocked',
+          isActive: user.isActive,
           blockedAt: user.blockedAt,
-          blockReason: user.blockReason
+          blockedReason: user.blockedReason
         }
       });
     } catch (error) {
@@ -197,9 +202,9 @@ const userController = {
 
       // Update user status in database
       await user.update({
-        status: 'active',
+        isActive: true,
         blockedAt: null,
-        blockReason: null
+        blockedReason: null
       });
 
       // Enable user in Firebase Auth
@@ -219,7 +224,8 @@ const userController = {
         user: {
           id: user.id,
           email: user.email,
-          status: user.status
+          status: user.isActive ? 'active' : 'inactive',
+          isActive: user.isActive
         }
       });
     } catch (error) {
@@ -305,7 +311,7 @@ const userController = {
       }
 
       await user.update({
-        subscription,
+        subscriptionType: subscription,
         subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate) : null
       });
 
@@ -316,7 +322,7 @@ const userController = {
         user: {
           id: user.id,
           email: user.email,
-          subscription: user.subscription,
+          subscription: user.subscriptionType,
           subscriptionEndDate: user.subscriptionEndDate
         }
       });
@@ -332,15 +338,15 @@ const userController = {
   async getUserStatistics(req, res) {
     try {
       const totalUsers = await User.count();
-      const activeUsers = await User.count({ where: { status: 'active' } });
-      const blockedUsers = await User.count({ where: { status: 'blocked' } });
+      const activeUsers = await User.count({ where: { isActive: true } });
+      const blockedUsers = await User.count({ where: { isActive: false } });
       
       const subscriptionBreakdown = await User.findAll({
         attributes: [
-          'subscription',
+          'subscriptionType',
           [User.sequelize.fn('COUNT', User.sequelize.col('id')), 'count']
         ],
-        group: 'subscription'
+        group: 'subscriptionType'
       });
 
       const userGrowth = await User.findAll({
