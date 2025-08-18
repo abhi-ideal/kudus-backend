@@ -1,8 +1,9 @@
 const express = require('express');
-const { verifyFirebaseToken } = require('../../shared/middleware/auth');
-const { validate, schemas } = require('../../shared/utils/validation');
+const { verifyFirebaseToken } = require('./middleware/auth');
+const { validate, schemas } = require('./utils/validation');
 const controller = require('./controller');
-const { createAdminRouter, standardAdminEndpoints } = require('../../shared/utils/adminRoutes');
+const { createAdminRouter, standardAdminEndpoints } = require('./utils/adminRoutes');
+const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
 
 const router = express.Router();
 

@@ -42,3 +42,61 @@ const validate = (schema) => {
 };
 
 module.exports = { schemas, validate };
+const joi = require('joi');
+
+/**
+ * Validation middleware for user service
+ */
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      });
+    }
+    next();
+  };
+};
+
+/**
+ * Validation schemas for user service
+ */
+const schemas = {
+  // User registration schema
+  register: joi.object({
+    email: joi.string().email().required(),
+    password: joi.string().min(8).required(),
+    displayName: joi.string().min(2).max(50),
+    dateOfBirth: joi.date().iso(),
+    phoneNumber: joi.string().pattern(/^\+?[1-9]\d{1,14}$/)
+  }),
+
+  // User profile update schema
+  updateProfile: joi.object({
+    displayName: joi.string().min(2).max(50),
+    dateOfBirth: joi.date().iso(),
+    phoneNumber: joi.string().pattern(/^\+?[1-9]\d{1,14}$/).allow(''),
+    preferences: joi.object(),
+    language: joi.string().length(2),
+    country: joi.string().length(2)
+  }),
+
+  // Subscription update schema
+  updateSubscription: joi.object({
+    subscription: joi.string().valid('free', 'premium', 'family').required(),
+    subscriptionEndDate: joi.date().iso().allow(null)
+  }),
+
+  // Block user schema
+  blockUser: joi.object({
+    reason: joi.string().min(10).max(500).required()
+  })
+};
+
+module.exports = {
+  validate,
+  schemas
+};

@@ -1,4 +1,3 @@
-
 const express = require('express');
 const contentController = require('./controller');
 const { verifyFirebaseToken } = require('./middleware/auth');
@@ -693,7 +692,7 @@ router.get('/admin/health', (req, res) => {
 router.get('/admin/stats', async (req, res) => {
   try {
     const Content = require('./models/Content');
-    
+
     const stats = {
       service: 'Content Service',
       uptime: process.uptime(),

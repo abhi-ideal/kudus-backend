@@ -1,5 +1,5 @@
 const express = require('express');
-const { createAdminRouter, standardAdminEndpoints } = require('../../shared/utils/adminRoutes');
+const { createAdminRouter, standardAdminEndpoints } = require('./utils/adminRoutes');
 const authController = require('./controller');
 const { validate, schemas } = require('./utils/validation');
 
