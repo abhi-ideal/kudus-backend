@@ -67,13 +67,13 @@ const setupInterceptors = (apiInstance) => {
 
 // Admin endpoints object with all admin API functions
 const adminEndpoints = {
-  // Users API
-  getUsers: (params) => adminAPI.get('/api/admin/users', { params }),
-  getUserById: (userId) => adminAPI.get(`/api/admin/users/${userId}`),
-  blockUser: (userId, reason) => adminAPI.patch(`/api/admin/users/${userId}/block`, { reason }),
-  unblockUser: (userId) => adminAPI.patch(`/api/admin/users/${userId}/unblock`),
-  updateUserSubscription: (userId, data) => adminAPI.patch(`/api/admin/users/${userId}/subscription`, data),
-  getUserStatistics: () => adminAPI.get('/api/admin/users/statistics'),
+  // Users API - using userAPI for user-related operations
+  getUsers: (params) => userAPI.get('/api/admin/users', { params }),
+  getUserById: (userId) => userAPI.get(`/api/admin/users/${userId}`),
+  blockUser: (userId, reason) => userAPI.patch(`/api/admin/users/${userId}/block`, { reason }),
+  unblockUser: (userId) => userAPI.patch(`/api/admin/users/${userId}/unblock`),
+  updateUserSubscription: (userId, data) => userAPI.patch(`/api/admin/users/${userId}/subscription`, data),
+  getUserStatistics: () => userAPI.get('/api/admin/users/statistics'),
 
   // Content API
   getContent: (params) => contentAPI.get('/api/admin/content', { params }),

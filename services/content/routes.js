@@ -1,4 +1,5 @@
 const express = require('express');
+const { createAdminRouter, standardAdminEndpoints } = require('../../shared/utils/adminRoutes');
 const contentController = require('./controller');
 const { verifyFirebaseToken } = require('./middleware/auth');
 const { detectCountry, applyGeoFilter } = require('./middleware/geoRestriction');
@@ -304,5 +305,8 @@ router.post('/', validate(schemas.content), contentController.createContent);
 
 router.put('/:id', validate(schemas.content), contentController.updateContent);
 router.delete('/:id', contentController.deleteContent);
+
+// Admin routes using shared utility
+router.use('/admin', createAdminRouter(standardAdminEndpoints.content, contentController));
 
 module.exports = router;

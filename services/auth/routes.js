@@ -1,5 +1,5 @@
-
 const express = require('express');
+const { createAdminRouter, standardAdminEndpoints } = require('../../shared/utils/adminRoutes');
 const authController = require('./controller');
 const { validate, schemas } = require('./utils/validation');
 
@@ -158,5 +158,9 @@ router.post('/switch-profile', require('./middleware/auth').verifyFirebaseToken,
  *         description: Default profile set successfully
  */
 router.post('/set-default-profile', require('./middleware/auth').verifyFirebaseToken, authController.setDefaultProfile);
+
+// Add admin routes
+const adminRouter = createAdminRouter(authController, standardAdminEndpoints(authController));
+router.use('/admin', adminRouter);
 
 module.exports = router;

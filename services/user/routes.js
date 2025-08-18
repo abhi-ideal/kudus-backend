@@ -2,6 +2,7 @@ const express = require('express');
 const { verifyFirebaseToken } = require('../../shared/middleware/auth');
 const { validate, schemas } = require('../../shared/utils/validation');
 const controller = require('./controller');
+const { createAdminRouter, standardAdminEndpoints } = require('../../shared/utils/adminRoutes');
 
 const router = express.Router();
 
@@ -327,5 +328,9 @@ router.post('/feed/generate', verifyFirebaseToken, controller.generateFeed);
  *         description: Feed item marked as viewed
  */
 router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, controller.markFeedViewed);
+
+// Admin Routes
+const adminRouter = createAdminRouter(controller, standardAdminEndpoints);
+router.use('/admin', adminRouter);
 
 module.exports = router;
