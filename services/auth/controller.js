@@ -155,8 +155,6 @@ const authController = {
 
   async register(req, res) {
     try {
-      const { displayName } = req.body;
-
       // Get Firebase token from Authorization header
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -188,8 +186,8 @@ const authController = {
         });
       }
 
-      // Generate a default username from displayName or email
-      const defaultUsername = authController.generateDefaultUsername(displayName || userRecord.displayName || userEmail);
+      // Generate a default username from email
+      const defaultUsername = authController.generateDefaultUsername(userEmail || userRecord.displayName);
 
       try {
         // Create default profile in user service
