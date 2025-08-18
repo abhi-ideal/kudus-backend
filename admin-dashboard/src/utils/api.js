@@ -65,22 +65,23 @@ const setupInterceptors = (apiInstance) => {
 // Apply interceptors to all service APIs
 [authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, adminAPI, commonAPI].forEach(setupInterceptors);
 
-// API endpoints using correct microservices
-export const adminEndpoints = {
-  // User management (Admin Service handles admin user operations)
+// Admin endpoints object with all admin API functions
+const adminEndpoints = {
+  // Users API
   getUsers: (params) => adminAPI.get('/api/admin/users', { params }),
-  getUserById: (id) => adminAPI.get(`/api/admin/users/${id}`),
-  blockUser: (id, reason) => adminAPI.patch(`/api/admin/users/${id}/block`, { reason }),
-  unblockUser: (id) => adminAPI.patch(`/api/admin/users/${id}/unblock`),
-  updateUserSubscription: (id, data) => adminAPI.patch(`/api/admin/users/${id}/subscription`, data),
+  getUserById: (userId) => adminAPI.get(`/api/admin/users/${userId}`),
+  blockUser: (userId, reason) => adminAPI.patch(`/api/admin/users/${userId}/block`, { reason }),
+  unblockUser: (userId) => adminAPI.patch(`/api/admin/users/${userId}/unblock`),
+  updateUserSubscription: (userId, data) => adminAPI.patch(`/api/admin/users/${userId}/subscription`, data),
   getUserStatistics: () => adminAPI.get('/api/admin/users/statistics'),
 
-  // Content management (Content Service handles content operations)
+  // Content API
   getContent: (params) => contentAPI.get('/api/admin/content', { params }),
-  getContentById: (id) => contentAPI.get(`/api/admin/content/${id}`),
+  getContentById: (contentId) => contentAPI.get(`/api/admin/content/${contentId}`),
   createContent: (data) => contentAPI.post('/api/admin/content', data),
-  updateContent: (id, data) => contentAPI.put(`/api/admin/content/${id}`, data),
-  deleteContent: (id) => contentAPI.delete(`/api/admin/content/${id}`),
+  updateContent: (contentId, data) => contentAPI.put(`/api/admin/content/${contentId}`, data),
+  deleteContent: (contentId) => contentAPI.delete(`/api/admin/content/${contentId}`),
+  getContentStatistics: () => contentAPI.get('/api/admin/content/statistics'),
 
   // Season management
   createSeason: (data) => contentAPI.post('/api/admin/content/seasons', data),
@@ -94,25 +95,6 @@ export const adminEndpoints = {
 // Export individual service APIs for direct access if needed
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
 
-// Admin endpoints object with all admin API functions
-const adminEndpoints = {
-  // Users API
-  getUsers: (params) => adminAPI.get('/api/admin/users', { params }),
-  getUserById: (userId) => adminAPI.get(`/api/admin/users/${userId}`),
-  blockUser: (userId, reason) => adminAPI.post(`/api/admin/users/${userId}/block`, { reason }),
-  unblockUser: (userId) => adminAPI.post(`/api/admin/users/${userId}/unblock`),
-  updateUserSubscription: (userId, data) => adminAPI.put(`/api/admin/users/${userId}/subscription`, data),
-  getUserStatistics: () => adminAPI.get('/api/admin/users/statistics'),
-
-  // Content API
-  getContent: (params) => contentAPI.get('/api/admin/content', { params }),
-  getContentById: (contentId) => contentAPI.get(`/api/admin/content/${contentId}`),
-  createContent: (data) => contentAPI.post('/api/admin/content', data),
-  updateContent: (contentId, data) => contentAPI.put(`/api/admin/content/${contentId}`, data),
-  deleteContent: (contentId) => contentAPI.delete(`/api/admin/content/${contentId}`),
-  getContentStatistics: () => contentAPI.get('/api/admin/content/statistics'),
-};
-
 // Export adminAPI for backward compatibility
-export const adminAPI = adminEndpoints;
+export { adminEndpoints as adminAPI };
 export default adminEndpoints;
