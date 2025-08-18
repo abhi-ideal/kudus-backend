@@ -160,7 +160,12 @@ router.post('/switch-profile', require('./middleware/auth').verifyFirebaseToken,
 router.post('/set-default-profile', require('./middleware/auth').verifyFirebaseToken, authController.setDefaultProfile);
 
 // Add admin routes
-const adminRouter = createAdminRouter(authController, standardAdminEndpoints(authController));
+const adminRouter = createAdminRouter('Auth Service');
+
+// Add standard admin endpoints
+adminRouter.get('/health', standardAdminEndpoints.health);
+adminRouter.get('/stats', standardAdminEndpoints.stats);
+
 router.use('/admin', adminRouter);
 
 module.exports = router;

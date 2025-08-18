@@ -15,7 +15,8 @@ const createAdminRouter = (serviceName) => {
   
   // Add service-specific logging
   router.use((req, res, next) => {
-    console.log(`[${serviceName}] Admin API accessed by: ${req.adminUser.email}`);
+    req.service = serviceName; // Set service name for endpoints
+    console.log(`[${serviceName}] Admin API accessed by: ${req.adminUser?.email || 'Unknown'}`);
     next();
   });
   

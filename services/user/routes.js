@@ -330,7 +330,21 @@ router.post('/feed/generate', verifyFirebaseToken, controller.generateFeed);
 router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, controller.markFeedViewed);
 
 // Admin Routes
-const adminRouter = createAdminRouter(controller, standardAdminEndpoints);
+// Add admin routes
+const adminRouter = createAdminRouter('User Service');
+
+// Add standard admin endpoints
+adminRouter.get('/health', standardAdminEndpoints.health);
+adminRouter.get('/stats', standardAdminEndpoints.stats);
+
+// Add user-specific admin endpoints
+adminRouter.get('/users', controller.getUsers);
+adminRouter.get('/users/:id', controller.getUserById);
+adminRouter.patch('/users/:id/block', controller.blockUser);
+adminRouter.patch('/users/:id/unblock', controller.unblockUser);
+adminRouter.patch('/users/:id/subscription', controller.updateUserSubscription);
+adminRouter.get('/users/statistics', controller.getUserStatistics);
+
 router.use('/admin', adminRouter);
 
 module.exports = router;
