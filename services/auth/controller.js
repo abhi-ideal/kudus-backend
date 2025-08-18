@@ -191,7 +191,7 @@ const authController = {
 
       try {
         // Create default profile in user service
-        const defaultProfile = await authController.createDefaultProfile(firebaseUid, defaultUsername);
+        const defaultProfile = await authController.createDefaultProfile(firebaseUid, defaultUsername, userEmail);
 
         // Set custom claims with the default profile and user role
         const initialClaims = {
@@ -456,7 +456,7 @@ const authController = {
   /**
    * Create default profile by directly inserting into database tables with transaction rollback
    */
-  async createDefaultProfile(firebaseUid, username) {
+  async createDefaultProfile(firebaseUid, username, userEmail) {
     const sequelize = require('./config/database');
 
     // Use database transaction for rollback capability
@@ -478,7 +478,7 @@ const authController = {
         logger.info('Creating user record in database...');
         user = await User.create({
           firebaseUid: firebaseUid,
-          email: `${username}@temp.com`, // Temporary email, will be updated later
+          email: userEmail || `${username}@temp.com`, // Use actual email or fallback to temporary
           displayName: username,
           subscriptionType: 'free',
           subscriptionStatus: 'active',
