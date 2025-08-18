@@ -307,19 +307,21 @@ router.put('/:id', validate(schemas.content), contentController.updateContent);
 router.delete('/:id', contentController.deleteContent);
 
 // Admin routes using shared utility
-router.use('/admin', createAdminRouter('Content Service'));
+const adminRouter = createAdminRouter('Content Service');
 
 // Add standard admin endpoints
-router.get('/admin/health', standardAdminEndpoints.health);
-router.get('/admin/stats', standardAdminEndpoints.stats);
+adminRouter.get('/health', standardAdminEndpoints.health);
+adminRouter.get('/stats', standardAdminEndpoints.stats);
 
 // Add content-specific admin endpoints
-router.get('/admin/content', contentController.getContent);
-router.get('/admin/content/:id', contentController.getContentById);
-router.post('/admin/content', contentController.createContent);
-router.put('/admin/content/:id', contentController.updateContent);
-router.delete('/admin/content/:id', contentController.deleteContent);
-router.get('/admin/content/statistics', contentController.getContentStatistics);
+adminRouter.get('/content', contentController.getContent);
+adminRouter.get('/content/statistics', contentController.getContentStatistics);
+adminRouter.get('/content/:id', contentController.getContentById);
+adminRouter.post('/content', contentController.createContent);
+adminRouter.put('/content/:id', contentController.updateContent);
+adminRouter.delete('/content/:id', contentController.deleteContent);
+
+router.use('/admin', adminRouter);
 
 
 module.exports = router;

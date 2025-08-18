@@ -3,6 +3,7 @@ const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
 const logger = require('../../shared/utils/logger');
 const { Op } = require('sequelize');
+const { sequelize } = require('./config/database');
 
 const contentController = {
   async getAllContent(req, res) {
@@ -788,6 +789,125 @@ const contentController = {
       res.status(500).json({
         success: false,
         error: 'Failed to check watchlist status'
+      });
+    }
+  },
+
+  // Admin functions
+  async getContent(req, res) {
+    try {
+      const { 
+        page = 1, 
+        limit = 20, 
+        type, 
+        genre, 
+        status,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC' 
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const whereClause = {};
+
+      if (type) whereClause.type = type;
+      if (genre) whereClause.genre = { [Op.contains]: [genre] };
+      if (status) whereClause.status = status;
+
+      const { count, rows: content } = await Content.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre', 
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'subtitles', 'cast', 'director',
+          'thumbnailUrl', 'trailerUrl', 'status', 'views',
+          'likes', 'averageRating', 'totalRatings', 'createdAt',
+          'isActive', 'isGloballyAvailable', 'availableCountries',
+          'restrictedCountries'
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          content,
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Admin get content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch content for admin'
+      });
+    }
+  },
+
+  async getContentStatistics(req, res) {
+    try {
+      const totalContent = await Content.count({
+        where: { isActive: true }
+      });
+
+      const totalMovies = await Content.count({
+        where: { type: 'movie', isActive: true }
+      });
+
+      const totalSeries = await Content.count({
+        where: { type: 'series', isActive: true }
+      });
+
+      const totalViews = await Content.sum('views', {
+        where: { isActive: true }
+      }) || 0;
+
+      const averageRating = await Content.findOne({
+        attributes: [
+          [sequelize.fn('AVG', sequelize.col('averageRating')), 'avgRating']
+        ],
+        where: { 
+          isActive: true,
+          averageRating: { [Op.gt]: 0 }
+        }
+      });
+
+      const topGenres = await Content.findAll({
+        attributes: [
+          [sequelize.fn('UNNEST', sequelize.col('genre')), 'genre'],
+          [sequelize.fn('COUNT', '*'), 'count']
+        ],
+        where: { isActive: true },
+        group: [sequelize.fn('UNNEST', sequelize.col('genre'))],
+        order: [[sequelize.fn('COUNT', '*'), 'DESC']],
+        limit: 10,
+        raw: true
+      });
+
+      res.json({
+        success: true,
+        data: {
+          overview: {
+            totalContent,
+            totalMovies,
+            totalSeries,
+            totalViews,
+            averageRating: parseFloat(averageRating?.getDataValue('avgRating') || 0).toFixed(2)
+          },
+          topGenres: topGenres || []
+        }
+      });
+    } catch (error) {
+      logger.error('Content statistics error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch content statistics'
       });
     }
   }
