@@ -1,4 +1,3 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -44,7 +43,30 @@ const User = sequelize.define('User', {
   },
   preferences: {
     type: DataTypes.JSON,
+    allowNull: true,
     defaultValue: {}
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'blocked', 'inactive'),
+    allowNull: false,
+    defaultValue: 'active'
+  },
+  subscription: {
+    type: DataTypes.ENUM('free', 'premium', 'family'),
+    allowNull: false,
+    defaultValue: 'free'
+  },
+  subscriptionEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  blockedReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  blockedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
   },
   parentalControls: {
     type: DataTypes.JSON,

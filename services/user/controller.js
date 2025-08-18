@@ -725,6 +725,214 @@ const controller = {
         message: 'Failed to mark feed as viewed'
       });
     }
+  },
+
+  // Admin methods
+  async getUsers(req, res) {
+    try {
+      const { page = 1, limit = 10, status, subscription } = req.query;
+      const offset = (page - 1) * limit;
+
+      const whereClause = {};
+      if (status) whereClause.status = status;
+      if (subscription) whereClause.subscription = subscription;
+
+      const { count, rows: users } = await User.findAndCountAll({
+        where: whereClause,
+        include: [{
+          model: UserProfile,
+          as: 'profiles',
+          where: { isActive: true },
+          required: false
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          users,
+          pagination: {
+            totalItems: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: parseInt(page),
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Get users error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get users'
+      });
+    }
+  },
+
+  async getUserById(req, res) {
+    try {
+      const { id } = req.params;
+
+      const user = await User.findByPk(id, {
+        include: [{
+          model: UserProfile,
+          as: 'profiles',
+          where: { isActive: true },
+          required: false
+        }]
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      // Get user statistics
+      const statistics = {
+        accountAge: Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+        totalWatchTime: 0, // Placeholder
+        profilesCount: user.profiles?.length || 0
+      };
+
+      res.json({
+        success: true,
+        data: {
+          user,
+          statistics
+        }
+      });
+    } catch (error) {
+      logger.error('Get user by ID error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get user'
+      });
+    }
+  },
+
+  async blockUser(req, res) {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      await user.update({
+        status: 'blocked',
+        blockedReason: reason,
+        blockedAt: new Date()
+      });
+
+      res.json({
+        success: true,
+        message: 'User blocked successfully'
+      });
+    } catch (error) {
+      logger.error('Block user error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to block user'
+      });
+    }
+  },
+
+  async unblockUser(req, res) {
+    try {
+      const { id } = req.params;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      await user.update({
+        status: 'active',
+        blockedReason: null,
+        blockedAt: null
+      });
+
+      res.json({
+        success: true,
+        message: 'User unblocked successfully'
+      });
+    } catch (error) {
+      logger.error('Unblock user error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to unblock user'
+      });
+    }
+  },
+
+  async updateUserSubscription(req, res) {
+    try {
+      const { id } = req.params;
+      const { subscription, subscriptionEndDate } = req.body;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found'
+        });
+      }
+
+      await user.update({
+        subscription,
+        subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate) : null
+      });
+
+      res.json({
+        success: true,
+        message: 'Subscription updated successfully',
+        data: user
+      });
+    } catch (error) {
+      logger.error('Update subscription error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to update subscription'
+      });
+    }
+  },
+
+  async getUserStatistics(req, res) {
+    try {
+      const totalUsers = await User.count();
+      const activeUsers = await User.count({ where: { status: 'active' } });
+      const blockedUsers = await User.count({ where: { status: 'blocked' } });
+      const premiumUsers = await User.count({ where: { subscription: 'premium' } });
+      const familyUsers = await User.count({ where: { subscription: 'family' } });
+
+      const statistics = {
+        totalUsers,
+        activeUsers,
+        blockedUsers,
+        premiumUsers,
+        familyUsers,
+        freeUsers: totalUsers - premiumUsers - familyUsers
+      };
+
+      res.json({
+        success: true,
+        data: statistics
+      });
+    } catch (error) {
+      logger.error('Get user statistics error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get statistics'
+      });
+    }
   }
 };
 
