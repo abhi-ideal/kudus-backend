@@ -480,12 +480,13 @@ const authController = {
         logger.info('Creating user record in database...');
         user = await User.create({
           firebaseUid: firebaseUid,
-          email: '', // Will be updated later
-          firstName: username,
-          lastName: '',
+          email: `${username}@temp.com`, // Temporary email, will be updated later
           displayName: username,
           subscriptionType: 'free',
           subscriptionStatus: 'active',
+          preferences: {},
+          parentalControls: {},
+          language: 'en',
           isActive: true,
           emailVerified: false
         }, { transaction });
