@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
-import { adminAPI } from '../utils/api';
+import { authAPI } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (token) {
-      adminAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      authAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // You can validate token here if needed
       setUser({ token });
     }
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       // In a real scenario, you'd call your auth API
       const mockToken = 'admin-mock-token-' + Date.now();
       localStorage.setItem('adminToken', mockToken);
-      adminAPI.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
+      authAPI.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
       setUser({ token: mockToken, ...credentials });
       message.success('Login successful');
       return true;
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('adminToken');
-    delete adminAPI.defaults.headers.common['Authorization'];
+    delete authAPI.defaults.headers.common['Authorization'];
     setUser(null);
     message.success('Logged out successfully');
   };
