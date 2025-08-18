@@ -244,28 +244,28 @@ const authController = {
       }
     } catch (error) {
       logger.error('Registration error:', error);
-      
+
       if (error.code === 'auth/id-token-expired') {
         return res.status(401).json({
           error: 'Token expired',
           message: 'Firebase auth token has expired'
         });
       }
-      
+
       if (error.code === 'auth/invalid-id-token') {
         return res.status(401).json({
           error: 'Invalid token',
           message: 'Invalid Firebase auth token'
         });
       }
-      
+
       if (error.code === 'auth/user-not-found') {
         return res.status(404).json({
           error: 'Firebase user not found',
           message: 'User does not exist in Firebase Auth'
         });
       }
-      
+
       res.status(400).json({
         error: 'Registration failed',
         message: error.message
@@ -460,10 +460,10 @@ const authController = {
    */
   async createDefaultProfile(firebaseUid, username) {
     const sequelize = require('./config/database');
-    
+
     // Use database transaction for rollback capability
     const transaction = await sequelize.transaction();
-    
+
     try {
       logger.info(`Starting profile creation for user: ${firebaseUid} with username: ${username}`);
 
@@ -489,7 +489,7 @@ const authController = {
           isActive: true,
           emailVerified: false
         }, { transaction });
-        
+
         userCreated = true;
         logger.info(`User created with ID: ${user.id}`);
       } else {
@@ -518,7 +518,7 @@ const authController = {
       await transaction.commit();
 
       logger.info(`Default profile created successfully: ${defaultProfile.id}`);
-      
+
       return {
         id: defaultProfile.id,
         name: defaultProfile.name,
@@ -526,18 +526,18 @@ const authController = {
         isKidsProfile: defaultProfile.isKidsProfile,
         avatar: defaultProfile.avatar
       };
-      
+
     } catch (error) {
       // Rollback the transaction
       await transaction.rollback();
-      
+
       logger.error('Error creating default profile - transaction rolled back:', {
         error: error.message,
         stack: error.stack,
         firebaseUid,
         username
       });
-      
+
       throw new Error(`Failed to create default profile: ${error.message}`);
     }
   }
