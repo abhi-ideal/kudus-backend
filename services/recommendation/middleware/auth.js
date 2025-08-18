@@ -1,5 +1,6 @@
 
 const admin = require('firebase-admin');
+const logger = require('../utils/logger');
 
 // Initialize Firebase Admin for recommendation service
 const serviceAccount = {
