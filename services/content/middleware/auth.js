@@ -40,3 +40,65 @@ const verifyFirebaseToken = async (req, res, next) => {
 };
 
 module.exports = { verifyFirebaseToken };
+const admin = require('firebase-admin');
+const logger = require('../utils/logger');
+
+const verifyFirebaseToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'No token provided' 
+      });
+    }
+
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    logger.error('Token verification failed:', error);
+    res.status(401).json({ 
+      success: false, 
+      error: 'Invalid token' 
+    });
+  }
+};
+
+const verifyAdminToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'No admin token provided' 
+      });
+    }
+
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    
+    // Check if user has admin role
+    if (!decodedToken.admin) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Admin access required' 
+      });
+    }
+
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    logger.error('Admin token verification failed:', error);
+    res.status(401).json({ 
+      success: false, 
+      error: 'Invalid admin token' 
+    });
+  }
+};
+
+module.exports = {
+  verifyFirebaseToken,
+  verifyAdminToken
+};

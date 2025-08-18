@@ -115,3 +115,71 @@ module.exports = {
   validate,
   schemas
 };
+const Joi = require('joi');
+
+const schemas = {
+  content: {
+    create: Joi.object({
+      title: Joi.string().required(),
+      description: Joi.string().required(),
+      type: Joi.string().valid('movie', 'series').required(),
+      genre: Joi.array().items(Joi.string()).required(),
+      duration: Joi.number().when('type', {
+        is: 'movie',
+        then: Joi.required(),
+        otherwise: Joi.optional()
+      }),
+      releaseYear: Joi.number().integer().min(1900).max(new Date().getFullYear() + 5).required(),
+      rating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17').required(),
+      ageRating: Joi.string().required(),
+      language: Joi.string().required(),
+      subtitles: Joi.array().items(Joi.string()).optional(),
+      cast: Joi.array().items(Joi.string()).optional(),
+      director: Joi.string().optional(),
+      thumbnailUrl: Joi.string().uri().optional(),
+      trailerUrl: Joi.string().uri().optional(),
+      isGloballyAvailable: Joi.boolean().default(true),
+      availableCountries: Joi.array().items(Joi.string()).optional(),
+      restrictedCountries: Joi.array().items(Joi.string()).optional()
+    }),
+    
+    update: Joi.object({
+      title: Joi.string().optional(),
+      description: Joi.string().optional(),
+      type: Joi.string().valid('movie', 'series').optional(),
+      genre: Joi.array().items(Joi.string()).optional(),
+      duration: Joi.number().optional(),
+      releaseYear: Joi.number().integer().min(1900).max(new Date().getFullYear() + 5).optional(),
+      rating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17').optional(),
+      ageRating: Joi.string().optional(),
+      language: Joi.string().optional(),
+      subtitles: Joi.array().items(Joi.string()).optional(),
+      cast: Joi.array().items(Joi.string()).optional(),
+      director: Joi.string().optional(),
+      thumbnailUrl: Joi.string().uri().optional(),
+      trailerUrl: Joi.string().uri().optional(),
+      isActive: Joi.boolean().optional(),
+      isGloballyAvailable: Joi.boolean().optional(),
+      availableCountries: Joi.array().items(Joi.string()).optional(),
+      restrictedCountries: Joi.array().items(Joi.string()).optional()
+    })
+  }
+};
+
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: error.details[0].message
+      });
+    }
+    next();
+  };
+};
+
+module.exports = {
+  validate,
+  schemas
+};

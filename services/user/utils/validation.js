@@ -100,3 +100,49 @@ module.exports = {
   validate,
   schemas
 };
+const Joi = require('joi');
+
+const schemas = {
+  user: {
+    update: Joi.object({
+      displayName: Joi.string().optional(),
+      preferences: Joi.object().optional(),
+      subscription: Joi.string().valid('free', 'premium', 'family').optional(),
+      subscriptionEndDate: Joi.date().optional()
+    }),
+    
+    profile: {
+      create: Joi.object({
+        name: Joi.string().required(),
+        avatar: Joi.string().optional(),
+        preferences: Joi.object().optional(),
+        parentalControls: Joi.object().optional()
+      }),
+      
+      update: Joi.object({
+        name: Joi.string().optional(),
+        avatar: Joi.string().optional(),
+        preferences: Joi.object().optional(),
+        parentalControls: Joi.object().optional()
+      })
+    }
+  }
+};
+
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: error.details[0].message
+      });
+    }
+    next();
+  };
+};
+
+module.exports = {
+  validate,
+  schemas
+};
