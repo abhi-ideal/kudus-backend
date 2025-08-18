@@ -2,7 +2,15 @@ const { Op } = require('sequelize');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
 const UserFeed = require('./models/UserFeed');
+const WatchHistory = require('./models/WatchHistory');
 const logger = require('./utils/logger');
+
+// Define associations
+User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
+UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
+WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 const controller = {
   // Get user profile

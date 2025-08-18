@@ -1,4 +1,5 @@
 
+// Import models from the user service
 const User = require('../../user/models/User');
 const UserProfile = require('../../user/models/UserProfile');
 const WatchHistory = require('../../user/models/WatchHistory');
@@ -6,7 +7,7 @@ const admin = require('firebase-admin');
 const { Op } = require('sequelize');
 const logger = require('../../../shared/utils/logger');
 
-// Define associations
+// Define associations between models
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
 UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
