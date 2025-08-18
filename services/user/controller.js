@@ -22,8 +22,8 @@ const controller = {
         });
       }
 
-      const profiles = await UserProfile.findAll({ 
-        where: { userId: user.id } 
+      const profiles = await UserProfile.findAll({
+        where: { userId: user.id }
       });
 
       res.json({
@@ -60,12 +60,12 @@ const controller = {
       // If profileId is provided, update existing profile
       if (profileId) {
         // Find the profile to update
-        const profile = await UserProfile.findOne({ 
-          where: { 
+        const profile = await UserProfile.findOne({
+          where: {
             id: profileId,
             userId: user.id,
-            isActive: true 
-          } 
+            isActive: true
+          }
         });
 
         if (!profile) {
@@ -78,8 +78,8 @@ const controller = {
         // Check if new profile name conflicts with existing ones
         if (profileName && profileName.trim() !== profile.name) {
           const existingProfile = await UserProfile.findOne({
-            where: { 
-              userId: user.id, 
+            where: {
+              userId: user.id,
               name: profileName.trim(),
               isActive: true,
               id: { [Op.ne]: profileId }
@@ -119,8 +119,8 @@ const controller = {
 
         // Check if profile name already exists
         const existingProfile = await UserProfile.findOne({
-          where: { 
-            userId: user.id, 
+          where: {
+            userId: user.id,
             name: profileName.trim(),
             isActive: true
           }
@@ -162,7 +162,7 @@ const controller = {
       const { uid } = req.user;
 
       let user = await User.findOne({ where: { firebaseUid: uid } });
-      
+
       if (!user) {
         // Create user if doesn't exist
         user = await User.create({
@@ -173,8 +173,8 @@ const controller = {
         });
       }
 
-      const profiles = await UserProfile.findAll({ 
-        where: { userId: user.id, isActive: true } 
+      const profiles = await UserProfile.findAll({
+        where: { userId: user.id, isActive: true }
       });
 
       res.json({
@@ -204,7 +204,7 @@ const controller = {
       }
 
       const watchHistory = await WatchHistory.findAll({
-        where: { 
+        where: {
           userId: user.id,
           profileId: profileId || null
         },
@@ -239,9 +239,9 @@ const controller = {
       }
 
       const [watchRecord, created] = await WatchHistory.findOrCreate({
-        where: { 
-          userId: user.id, 
-          contentId 
+        where: {
+          userId: user.id,
+          contentId
         },
         defaults: {
           userId: user.id,
@@ -321,8 +321,8 @@ const controller = {
         });
       }
 
-      const profiles = await UserProfile.findAll({ 
-        where: { userId: user.id } 
+      const profiles = await UserProfile.findAll({
+        where: { userId: user.id }
       });
 
       res.json({
@@ -521,12 +521,12 @@ const controller = {
       }
 
       // Find the profile to update
-      const profile = await UserProfile.findOne({ 
-        where: { 
+      const profile = await UserProfile.findOne({
+        where: {
           id: profileId,
           userId: user.id,
-          isActive: true 
-        } 
+          isActive: true
+        }
       });
 
       if (!profile) {
@@ -539,8 +539,8 @@ const controller = {
       // Check if new profile name conflicts with existing ones
       if (profileName && profileName.trim() !== profile.name) {
         const existingProfile = await UserProfile.findOne({
-          where: { 
-            userId: user.id, 
+          where: {
+            userId: user.id,
             name: profileName.trim(),
             isActive: true,
             id: { [Op.ne]: profileId }
@@ -933,7 +933,102 @@ const controller = {
         message: 'Failed to get statistics'
       });
     }
+  },
+
+  // Logout user and update session history
+  async logout(req, res) {
+    try {
+      const userId = req.user?.userId || req.params.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          error: 'User ID required',
+          message: 'User ID must be provided'
+        });
+      }
+
+      // Find the most recent active login session
+      const recentLogin = await LoginHistory.findOne({
+        where: {
+          userId: userId,
+          isActive: true,
+          logoutAt: null
+        },
+        order: [['loginAt', 'DESC']]
+      });
+
+      if (recentLogin) {
+        const logoutTime = new Date();
+        const sessionDuration = Math.floor((logoutTime - recentLogin.loginAt) / 1000);
+
+        await recentLogin.update({
+          logoutAt: logoutTime,
+          sessionDuration: sessionDuration,
+          isActive: false
+        });
+
+        logger.info(`User ${userId} logged out successfully`);
+      }
+
+      res.json({
+        success: true,
+        message: 'User logged out successfully',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('User logout error:', error);
+      res.status(500).json({
+        error: 'Logout failed',
+        message: error.message
+      });
+    }
+  },
+
+  // Get user activity summary
+  async getUserActivity(req, res) {
+    try {
+      const { userId } = req.params;
+      const { limit = 10, offset = 0 } = req.query;
+
+      // Get recent watch history
+      const watchHistory = await WatchHistory.findAll({
+        where: { userId },
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['updatedAt', 'DESC']],
+        // Note: Content association would need to be defined separately
+        // include: [
+        //   {
+        //     model: require('../../content/models/Content'),
+        //     as: 'content',
+        //     attributes: ['id', 'title', 'type', 'poster']
+        //   }
+        // ]
+      });
+
+      // Get recent profile activities
+    } catch (error) {
+      logger.error('Get user activity error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get user activity'
+      });
+    }
   }
 };
 
-module.exports = controller;
+// Export controller functions, including the new logout function
+module.exports = {
+  createUser,
+  getProfile,
+  getProfileById,
+  updateProfile,
+  deleteProfile,
+  createProfile,
+  getProfiles,
+  updateProfileById,
+  deleteProfileById,
+  getUsers,
+  getUserActivity,
+  logout
+};

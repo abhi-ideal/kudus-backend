@@ -348,4 +348,20 @@ adminRouter.get('/users/statistics', controller.getUserStatistics);
 
 router.use('/admin', adminRouter);
 
+/**
+ * @swagger
+ * /api/users/logout:
+ *   post:
+ *     summary: Logout user and update session history
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User logged out successfully
+ */
+router.post('/logout', controller.logout);
+
+router.get('/admin/users', controller.getUsers);
+
 module.exports = router;

@@ -1,4 +1,3 @@
-
 const Content = require('../content/models/Content');
 const User = require('../user/models/User');
 const awsService = require('../content/services/awsService');
@@ -10,7 +9,7 @@ const adminController = {
     try {
       const { title, description, type, genre, cast, director, rating } = req.body;
       const videoFile = req.file;
-      
+
       if (!videoFile) {
         return res.status(400).json({
           error: 'Video file is required'
@@ -20,10 +19,10 @@ const adminController = {
       // Generate unique content ID and S3 key
       const contentId = uuidv4();
       const s3Key = `content/${contentId}/original/${videoFile.originalname}`;
-      
+
       // Upload original file to S3
       await awsService.uploadToS3(videoFile, s3Key);
-      
+
       // Create content record
       const content = await Content.create({
         id: contentId,
@@ -37,16 +36,16 @@ const adminController = {
         s3Key,
         isActive: false // Will be activated after transcoding
       });
-      
+
       // Start transcoding job
       const transcodingJob = await awsService.createTranscodingJob(
         s3Key,
         `content/${contentId}/transcoded`,
         contentId
       );
-      
+
       logger.info(`Content uploaded and transcoding started: ${contentId}`);
-      
+
       res.status(201).json({
         message: 'Content uploaded successfully, transcoding started',
         contentId,
@@ -65,21 +64,21 @@ const adminController = {
   async startTranscoding(req, res) {
     try {
       const { contentId, inputFile } = req.body;
-      
+
       const content = await Content.findByPk(contentId);
-      
+
       if (!content) {
         return res.status(404).json({
           error: 'Content not found'
         });
       }
-      
+
       const transcodingJob = await awsService.createTranscodingJob(
         inputFile,
         `content/${contentId}/transcoded`,
         contentId
       );
-      
+
       res.json({
         message: 'Transcoding job started successfully',
         jobId: transcodingJob.Id,
@@ -100,7 +99,7 @@ const adminController = {
       const totalContent = await Content.count({ where: { isActive: true } });
       const totalUsers = await User.count({ where: { isActive: true } });
       const totalViews = await Content.sum('views');
-      
+
       // Content by type
       const contentByType = await Content.findAll({
         attributes: [
@@ -110,7 +109,7 @@ const adminController = {
         where: { isActive: true },
         group: 'type'
       });
-      
+
       // Top viewed content
       const topContent = await Content.findAll({
         where: { isActive: true },
@@ -118,7 +117,7 @@ const adminController = {
         limit: 10,
         attributes: ['id', 'title', 'views', 'type']
       });
-      
+
       // User subscription distribution
       const subscriptionStats = await User.findAll({
         attributes: [
@@ -153,15 +152,15 @@ const adminController = {
   async getContentStatus(req, res) {
     try {
       const { id } = req.params;
-      
+
       const content = await Content.findByPk(id);
-      
+
       if (!content) {
         return res.status(404).json({
           error: 'Content not found'
         });
       }
-      
+
       res.json({
         id: content.id,
         title: content.title,
@@ -208,7 +207,7 @@ const adminController = {
   async deleteContent(req, res) {
     try {
       const { id } = req.params;
-      
+
       const deletedRows = await Content.update(
         { isActive: false },
         { where: { id } }
@@ -244,7 +243,7 @@ const adminController = {
       } = req.body;
 
       const content = await Content.findByPk(id);
-      
+
       if (!content) {
         return res.status(404).json({
           error: 'Content not found'
@@ -286,6 +285,65 @@ const adminController = {
       logger.error('Update geo-restrictions error:', error);
       res.status(500).json({
         error: 'Failed to update geo-restrictions',
+        message: error.message
+      });
+    }
+  },
+
+  async getAnalytics(req, res) {
+    try {
+      // This would be implemented based on your analytics requirements
+      res.json({
+        message: 'Analytics endpoint - implementation pending',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Get analytics error:', error);
+      res.status(500).json({
+        error: 'Failed to get analytics',
+        message: error.message
+      });
+    }
+  },
+
+  async logout(req, res) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication token required for admin logout'
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+
+      // Verify admin token
+      const admin = require('firebase-admin');
+      const decodedToken = await admin.auth().verifyIdToken(token);
+
+      // Check if user has admin role
+      if (!decodedToken.role || decodedToken.role !== 'admin') {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'Admin access required'
+        });
+      }
+
+      // Revoke admin tokens
+      await admin.auth().revokeRefreshTokens(decodedToken.uid);
+
+      logger.info(`Admin ${decodedToken.uid} logged out successfully`);
+
+      res.json({
+        success: true,
+        message: 'Admin logout successful',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      logger.error('Admin logout error:', error);
+      res.status(500).json({
+        error: 'Admin logout failed',
         message: error.message
       });
     }

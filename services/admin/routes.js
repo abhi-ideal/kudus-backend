@@ -1,4 +1,3 @@
-
 const express = require('express');
 const adminController = require('./controller');
 const { verifyFirebaseToken } = require('../../shared/middleware/auth');
@@ -24,6 +23,34 @@ const upload = multer({
 
 // Apply auth middleware to all admin routes
 router.use(verifyFirebaseToken);
+
+/**
+ * @swagger
+ * /api/admin/logout:
+ *   post:
+ *     summary: Admin logout
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin logout successful
+ */
+router.post('/logout', adminController.logout);
+
+/**
+ * @swagger
+ * /api/admin/analytics:
+ *   get:
+ *     summary: Get platform analytics
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data retrieved successfully
+ */
+router.get('/analytics', adminController.getAnalytics);
 
 /**
  * @swagger

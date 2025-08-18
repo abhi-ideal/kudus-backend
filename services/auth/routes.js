@@ -103,7 +103,7 @@ router.post('/refresh', authController.refreshToken);
  * @swagger
  * /api/auth/logout:
  *   post:
- *     summary: Logout user
+ *     summary: Logout user from current session
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
@@ -112,6 +112,20 @@ router.post('/refresh', authController.refreshToken);
  *         description: Logout successful
  */
 router.post('/logout', authController.logout);
+
+/**
+ * @swagger
+ * /api/auth/logout-all:
+ *   post:
+ *     summary: Logout user from all sessions
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All sessions terminated successfully
+ */
+router.post('/logout-all', authController.logoutAll);
 
 /**
  * @swagger

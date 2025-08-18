@@ -312,40 +312,137 @@ const authController = {
 
   async logout(req, res) {
     try {
-      const { userId } = req.user;
+      const authHeader = req.headers.authorization;
+      let userId = null;
+      let firebaseUid = null;
 
-      // Find the most recent active login session and mark it as inactive
-      const recentLogin = await LoginHistory.findOne({
-        where: {
-          userId: userId,
-          isActive: true,
-          logoutAt: null
-        },
-        order: [['loginAt', 'DESC']]
-      });
-
-      if (recentLogin) {
-        const logoutTime = new Date();
-        const sessionDuration = Math.floor((logoutTime - recentLogin.loginAt) / 1000); // in seconds
-
-        await recentLogin.update({
-          logoutAt: logoutTime,
-          sessionDuration: sessionDuration,
-          isActive: false
-        });
+      // Try to get user info from token if available
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const token = authHeader.split(' ')[1];
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          firebaseUid = decodedToken.uid;
+          
+          // Find user by Firebase UID
+          const user = await User.findOne({ where: { firebaseUid: firebaseUid } });
+          if (user) {
+            userId = user.id;
+          }
+        } catch (tokenError) {
+          logger.warn('Token verification failed during logout:', tokenError.message);
+          // Continue with logout even if token is invalid
+        }
       }
 
-      logger.info('User logged out successfully');
+      // If we have a userId, update login history
+      if (userId) {
+        // Find the most recent active login session and mark it as inactive
+        const recentLogin = await LoginHistory.findOne({
+          where: {
+            userId: userId,
+            isActive: true,
+            logoutAt: null
+          },
+          order: [['loginAt', 'DESC']]
+        });
+
+        if (recentLogin) {
+          const logoutTime = new Date();
+          const sessionDuration = Math.floor((logoutTime - recentLogin.loginAt) / 1000); // in seconds
+
+          await recentLogin.update({
+            logoutAt: logoutTime,
+            sessionDuration: sessionDuration,
+            isActive: false
+          });
+
+          logger.info(`User ${userId} logged out successfully`);
+        }
+      }
+
+      // Revoke Firebase tokens if we have the UID
+      if (firebaseUid) {
+        try {
+          await admin.auth().revokeRefreshTokens(firebaseUid);
+          logger.info(`Firebase tokens revoked for user ${firebaseUid}`);
+        } catch (revokeError) {
+          logger.warn('Failed to revoke Firebase tokens:', revokeError.message);
+          // Don't fail the logout if token revocation fails
+        }
+      }
 
       res.json({
         success: true,
-        message: 'Logout successful'
+        message: 'Logout successful',
+        note: 'Session terminated and tokens revoked'
       });
     } catch (error) {
       logger.error('Logout error:', error);
       res.status(500).json({
         success: false,
         message: 'Logout failed',
+        error: error.message
+      });
+    }
+  },
+
+  async logoutAll(req, res) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Authentication token required'
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      const firebaseUid = decodedToken.uid;
+
+      // Find user by Firebase UID
+      const user = await User.findOne({ where: { firebaseUid: firebaseUid } });
+      if (!user) {
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'User record not found in database'
+        });
+      }
+
+      // Mark all active sessions as logged out
+      const activeSessions = await LoginHistory.findAll({
+        where: {
+          userId: user.id,
+          isActive: true,
+          logoutAt: null
+        }
+      });
+
+      const logoutTime = new Date();
+      for (const session of activeSessions) {
+        const sessionDuration = Math.floor((logoutTime - session.loginAt) / 1000);
+        await session.update({
+          logoutAt: logoutTime,
+          sessionDuration: sessionDuration,
+          isActive: false
+        });
+      }
+
+      // Revoke all Firebase refresh tokens
+      await admin.auth().revokeRefreshTokens(firebaseUid);
+
+      logger.info(`All sessions terminated for user ${user.id}`);
+
+      res.json({
+        success: true,
+        message: 'All sessions terminated successfully',
+        sessionsTerminated: activeSessions.length
+      });
+    } catch (error) {
+      logger.error('Logout all error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to terminate all sessions',
         error: error.message
       });
     }
@@ -547,6 +644,7 @@ module.exports = {
   register: authController.register,
   socialLogin: authController.socialLogin,
   logout: authController.logout,
+  logoutAll: authController.logoutAll,
   verifyToken: async (req, res) => {
     try {
       const token = req.headers.authorization?.split(' ')[1];
