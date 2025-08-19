@@ -1,7 +1,7 @@
 const express = require('express');
 const adminController = require('./controller');
-const { verifyFirebaseToken } = require('../../shared/middleware/auth');
-const { validate, schemas } = require('../../shared/utils/validation');
+const { verifyFirebaseToken } = require('./middleware/auth');
+const { validate, schemas } = require('./utils/validation');
 const multer = require('multer');
 
 const router = express.Router();

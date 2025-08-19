@@ -1,4 +1,5 @@
 const admin = require('firebase-admin');
+const logger = require('../utils/logger');
 
 // Initialize Firebase Admin for admin service
 const serviceAccount = {
@@ -30,7 +31,7 @@ const verifyFirebaseToken = async (req, res, next) => {
     req.user = decodedToken;
     next();
   } catch (error) {
-    console.error('Firebase token verification failed:', error);
+    logger.error('Firebase token verification failed:', error);
     res.status(401).json({
       error: 'Unauthorized',
       message: 'Invalid token'
