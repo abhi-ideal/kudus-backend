@@ -1,0 +1,25 @@
+You are an expert backend engineer. My project already has a REST API built with [Node.js + Express]. 
+I want you to generate a **comprehensive automated test suite** that covers **all existing endpoints**.  
+
+Requirements:
+1. Use **[Jest + Supertest]** (or Mocha/Chai if Jest is not available).
+2. Organize tests by **endpoint and method** (GET, POST, PUT, DELETE, etc.).
+3. Ensure **setup/teardown hooks** for database or mock data.
+4. Include both **happy-path tests** and **failure/edge-case tests**:
+   - Valid inputs
+   - Invalid inputs (bad payloads, missing fields, invalid IDs)
+   - Unauthorized / Forbidden access (if authentication exists)
+   - Non-existent resource requests
+5. Use a **configurable BASE_URL** so tests can run locally or in CI.
+6. Add clear descriptions for each test block (`describe`, `it`).
+7. Export the test file(s) into a `__tests__` or `tests` directory.
+8. At the end, generate a **coverage summary** (Jest `--coverage`).
+9. If environment variables are required, include `.env.test` usage with fallbacks.
+10. If some routes require authentication, generate a reusable **login helper** to fetch and reuse JWT tokens in tests.
+
+Steps:
+- First, scan my project and list all API routes.
+- Then, generate one test file per resource (e.g. `users.test.js`, `orders.test.js`).
+- Provide runnable code with explanations.
+
+Now generate the complete test suite.
