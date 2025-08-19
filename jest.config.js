@@ -5,6 +5,9 @@ module.exports = {
     '**/tests/**/*.test.js',
     '**/__tests__/**/*.js'
   ],
+  setupFiles: [
+    '<rootDir>/tests/setup.js'
+  ],
   collectCoverageFrom: [
     'services/**/*.js',
     '!services/**/migrations/**',
@@ -18,9 +21,7 @@ module.exports = {
     'lcov',
     'html'
   ],
-  setupFilesAfterEnv: [
-    '<rootDir>/tests/setup.js'
-  ],
+  
   testTimeout: 30000,
   verbose: true,
   forceExit: true,

@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 
 let firebaseApp = null;
@@ -63,7 +62,7 @@ const getFirebaseAuth = () => {
   if (process.env.NODE_ENV === 'test' || process.env.DISABLE_FIREBASE === 'true') {
     return getMockAuth();
   }
-  
+
   const app = initializeFirebaseAdmin();
   return app ? admin.auth(app) : getMockAuth();
 };

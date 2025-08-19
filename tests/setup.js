@@ -10,24 +10,44 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 // Then override with test-specific environment variables
 require('dotenv').config({ path: path.join(__dirname, '.env.test') });
 
-// Initialize Firebase Admin with test environment handling
-const { initializeFirebaseAdmin } = require('../utils/firebaseAdmin');
-initializeFirebaseAdmin();
+// Ensure Firebase is disabled in tests
+process.env.DISABLE_FIREBASE = 'true';
+
+// Mock Firebase Admin to prevent initialization issues
+jest.mock('../utils/firebaseAdmin', () => ({
+  initializeFirebaseAdmin: jest.fn(),
+  verifyToken: jest.fn().mockResolvedValue({ uid: 'test-user' }),
+  admin: {
+    auth: () => ({
+      verifyIdToken: jest.fn().mockResolvedValue({ uid: 'test-user' })
+    })
+  }
+}));
 
 // Test setup
 module.exports = {
   setupDatabase: async () => {
-    // Import sequelize after environment is loaded
-    const { sequelize } = require('../config/database');
-    // Sync database for tests
-    await sequelize.sync({ force: true });
+    try {
+      // Import sequelize after environment is loaded
+      const { sequelize } = require('../config/database');
+      // Sync database for tests
+      await sequelize.sync({ force: true });
+    } catch (error) {
+      console.error('Database setup failed:', error);
+      throw error;
+    }
   },
 
   teardownDatabase: async () => {
-    // Import sequelize after environment is loaded
-    const { sequelize } = require('../config/database');
-    // Clean up database after tests
-    await sequelize.drop();
-    await sequelize.close();
+    try {
+      // Import sequelize after environment is loaded
+      const { sequelize } = require('../config/database');
+      // Clean up database after tests
+      await sequelize.drop();
+      await sequelize.close();
+    } catch (error) {
+      console.error('Database teardown failed:', error);
+      throw error;
+    }
   }
 };
