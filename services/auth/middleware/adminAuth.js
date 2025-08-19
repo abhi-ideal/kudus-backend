@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin for auth service if not already initialized
@@ -21,7 +20,7 @@ if (!admin.apps.length) {
 const authAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -31,10 +30,10 @@ const authAdmin = async (req, res, next) => {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-    
+
     // Verify the Firebase ID token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    
+
     // Check if user has admin role
     if (!decodedToken.admin) {
       return res.status(403).json({
@@ -50,11 +49,12 @@ const authAdmin = async (req, res, next) => {
       email: decodedToken.email,
       isAdmin: true
     };
-    
+
     next();
   } catch (error) {
-    console.error('Auth service admin auth error:', error);
-    
+    const logger = require('../utils/logger'); // Updated logger import
+    logger.error('Auth service admin auth error:', error);
+
     if (error.code === 'auth/id-token-expired') {
       return res.status(401).json({
         success: false,
@@ -62,7 +62,7 @@ const authAdmin = async (req, res, next) => {
         message: 'Please refresh your token and try again'
       });
     }
-    
+
     if (error.code === 'auth/invalid-id-token') {
       return res.status(401).json({
         success: false,
@@ -70,7 +70,7 @@ const authAdmin = async (req, res, next) => {
         message: 'The provided token is invalid'
       });
     }
-    
+
     res.status(401).json({
       success: false,
       error: 'Unauthorized',

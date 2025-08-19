@@ -19,9 +19,9 @@ const verifyFirebaseToken = async (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'No token provided' 
+      return res.status(401).json({
+        success: false,
+        error: 'No token provided'
       });
     }
 
@@ -30,9 +30,9 @@ const verifyFirebaseToken = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error('Token verification failed:', error);
-    res.status(401).json({ 
-      success: false, 
-      error: 'Invalid token' 
+    res.status(401).json({
+      success: false,
+      error: 'Invalid token'
     });
   }
 };
@@ -42,9 +42,9 @@ const verifyAdminToken = async (req, res, next) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'No admin token provided' 
+      return res.status(401).json({
+        success: false,
+        error: 'No admin token provided'
       });
     }
 
@@ -52,9 +52,9 @@ const verifyAdminToken = async (req, res, next) => {
 
     // Check if user has admin role
     if (!decodedToken.admin) {
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Admin access required' 
+      return res.status(403).json({
+        success: false,
+        error: 'Admin access required'
       });
     }
 
@@ -62,9 +62,9 @@ const verifyAdminToken = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error('Admin token verification failed:', error);
-    res.status(401).json({ 
-      success: false, 
-      error: 'Invalid admin token' 
+    res.status(401).json({
+      success: false,
+      error: 'Invalid admin token'
     });
   }
 };

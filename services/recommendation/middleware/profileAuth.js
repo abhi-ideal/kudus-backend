@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin for recommendation service if not already initialized
@@ -20,7 +19,7 @@ if (!admin.apps.length) {
 const profileAuth = async (req, res, next) => {
   try {
     const { profile_id } = req.query || req.body;
-    
+
     if (!profile_id) {
       return res.status(400).json({
         success: false,
@@ -50,7 +49,7 @@ const profileAuth = async (req, res, next) => {
     }
 
     const isChildProfile = profile_id.toLowerCase().includes('child');
-    
+
     req.activeProfile = {
       id: profile_id,
       userId: userId,
@@ -60,7 +59,8 @@ const profileAuth = async (req, res, next) => {
     req.user = decodedToken;
     next();
   } catch (error) {
-    console.error('Recommendation service profile auth error:', error);
+    const logger = require('../utils/logger');
+    logger.error('Recommendation service profile auth error:', error);
     res.status(500).json({
       success: false,
       error: 'Profile authorization failed'

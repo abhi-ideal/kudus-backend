@@ -1,4 +1,3 @@
-
 const express = require('express');
 const { authAdmin } = require('../middleware/adminAuth');
 
@@ -10,17 +9,17 @@ const { authAdmin } = require('../middleware/adminAuth');
  */
 const createAdminRouter = (serviceName) => {
   const router = express.Router();
-  
+
   // Apply admin authentication middleware to all routes
   router.use(authAdmin);
-  
+
   // Add service-specific logging
   router.use((req, res, next) => {
     req.service = serviceName; // Set service name for endpoints
     console.log(`[${serviceName}] Admin API accessed by: ${req.adminUser?.email || 'Unknown'}`);
     next();
   });
-  
+
   return router;
 };
 
@@ -37,7 +36,7 @@ const standardAdminEndpoints = {
       admin: req.adminUser.email
     });
   },
-  
+
   // Service statistics
   stats: async (req, res) => {
     res.json({

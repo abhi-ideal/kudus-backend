@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 
 /**
@@ -7,11 +6,11 @@ const axios = require('axios');
 const detectCountry = async (req, res, next) => {
   try {
     // Get client IP address
-    let clientIP = req.headers['x-forwarded-for'] || 
-                   req.connection.remoteAddress || 
+    let clientIP = req.headers['x-forwarded-for'] ||
+                   req.connection.remoteAddress ||
                    req.socket.remoteAddress ||
                    (req.connection.socket ? req.connection.socket.remoteAddress : null);
-    
+
     // Handle localhost/development
     if (clientIP === '::1' || clientIP === '127.0.0.1' || clientIP?.includes('localhost')) {
       req.userCountry = process.env.DEFAULT_COUNTRY || 'US'; // Default for development
@@ -31,13 +30,13 @@ const detectCountry = async (req, res, next) => {
       const response = await axios.get(`http://ip-api.com/json/${clientIP}?fields=countryCode`, {
         timeout: 3000
       });
-      
+
       req.userCountry = response.data.countryCode || 'US';
     } catch (geoError) {
       console.warn('Geo-location service failed:', geoError.message);
       req.userCountry = 'US'; // Default fallback
     }
-    
+
     next();
   } catch (error) {
     console.error('Country detection error:', error);
@@ -51,7 +50,7 @@ const detectCountry = async (req, res, next) => {
  */
 const applyGeoFilter = (req, res, next) => {
   const userCountry = req.userCountry || 'US';
-  
+
   // Add geo filter to request for use in controllers
   req.geoFilter = {
     userCountry,
@@ -64,17 +63,17 @@ const applyGeoFilter = (req, res, next) => {
         }
         return true;
       }
-      
+
       // If content has specific available countries
       if (content.availableCountries && content.availableCountries.length > 0) {
         return content.availableCountries.includes(userCountry);
       }
-      
+
       // Default to available if no restrictions are set
       return true;
     }
   };
-  
+
   next();
 };
 

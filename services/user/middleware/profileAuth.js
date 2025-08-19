@@ -1,4 +1,3 @@
-
 const profileService = require('../services/profileService');
 
 /**
@@ -7,7 +6,7 @@ const profileService = require('../services/profileService');
 const profileAuth = async (req, res, next) => {
   try {
     const { profile_id } = req.query || req.body;
-    
+
     if (!profile_id) {
       return next(); // Profile ID is optional, continue without profile context
     }
@@ -19,7 +18,7 @@ const profileAuth = async (req, res, next) => {
 
     // Validate profile ownership without SQL query
     const isValidProfile = profileService.validateProfileOwnership(profile_id, userProfileIds);
-    
+
     if (!isValidProfile) {
       return res.status(403).json({
         success: false,
@@ -29,7 +28,7 @@ const profileAuth = async (req, res, next) => {
 
     // Get profile details for child restrictions
     const profile = await profileService.getProfileById(profile_id, userId);
-    
+
     if (!profile) {
       return res.status(404).json({
         success: false,

@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 
 // Initialize Firebase Admin for streaming service if not already initialized
@@ -20,7 +19,7 @@ if (!admin.apps.length) {
 const profileAuth = async (req, res, next) => {
   try {
     const { profile_id } = req.query || req.body;
-    
+
     if (!profile_id) {
       return next(); // Profile ID is optional
     }
@@ -47,7 +46,7 @@ const profileAuth = async (req, res, next) => {
     }
 
     const isChildProfile = profile_id.toLowerCase().includes('child');
-    
+
     req.activeProfile = {
       id: profile_id,
       userId: userId,

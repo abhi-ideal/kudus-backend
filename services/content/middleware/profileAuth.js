@@ -1,4 +1,3 @@
-
 const { verifyFirebaseToken } = require('./auth');
 
 /**
@@ -8,7 +7,7 @@ const { verifyFirebaseToken } = require('./auth');
 const profileAuth = async (req, res, next) => {
   try {
     const { profile_id } = req.query || req.body;
-    
+
     if (!profile_id) {
       return next(); // Profile ID is optional, continue without profile context
     }
@@ -29,12 +28,12 @@ const profileAuth = async (req, res, next) => {
 
     // Check if profile_id is provided in query/body or use the one from Firebase claims
     let activeProfileId = profile_id;
-    
+
     // If no profile_id provided, try to get from Firebase custom claims
     if (!activeProfileId && decodedToken.profile_id) {
       activeProfileId = decodedToken.profile_id;
     }
-    
+
     // If still no profile_id, check for default_profile_id in claims
     if (!activeProfileId && decodedToken.default_profile_id) {
       activeProfileId = decodedToken.default_profile_id;
@@ -51,7 +50,7 @@ const profileAuth = async (req, res, next) => {
 
       // Check if it's a child profile
       const isChildProfile = activeProfileId.toLowerCase().includes('child');
-    
+
     // Add profile context to request
       req.activeProfile = {
         id: activeProfileId,

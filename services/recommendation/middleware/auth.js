@@ -1,4 +1,3 @@
-
 const admin = require('firebase-admin');
 const logger = require('../utils/logger');
 
@@ -18,7 +17,7 @@ if (!admin.apps.length) {
 const verifyFirebaseToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -28,7 +27,7 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
-    
+
     req.user = decodedToken;
     next();
   } catch (error) {
