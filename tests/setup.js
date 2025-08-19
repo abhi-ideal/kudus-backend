@@ -1,5 +1,9 @@
 
 const path = require('path');
+
+// Set NODE_ENV to test before loading environment
+process.env.NODE_ENV = 'test';
+
 require('dotenv').config({ path: path.join(__dirname, '.env.test') });
 
 // Skip Firebase initialization in test environment
