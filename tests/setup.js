@@ -1,3 +1,4 @@
+
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env.test') });
 
@@ -16,16 +17,18 @@ if (!admin.apps.length) {
   });
 }
 
-const sequelize = require('../config/database');
-
 // Test setup
 module.exports = {
   setupDatabase: async () => {
+    // Import sequelize after environment is loaded
+    const { sequelize } = require('../config/config');
     // Sync database for tests
     await sequelize.sync({ force: true });
   },
 
   teardownDatabase: async () => {
+    // Import sequelize after environment is loaded
+    const { sequelize } = require('../config/config');
     // Clean up database after tests
     await sequelize.drop();
     await sequelize.close();
