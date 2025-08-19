@@ -1,56 +1,68 @@
 
 const path = require('path');
 
-// Set NODE_ENV to test before loading anything
-process.env.NODE_ENV = 'test';
+// Load test environment variables
+require('dotenv').config({ 
+  path: path.join(__dirname, '.env.test'),
+  override: true
+});
 
-// Load root .env file first for base configuration
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '..', '.env') });
-
-// Then override with test-specific environment variables
-require('dotenv').config({ path: path.join(__dirname, '.env.test') });
-
-// Ensure Firebase is disabled in tests
-process.env.DISABLE_FIREBASE = 'true';
-process.env.DISABLE_AWS = 'true';
-
-// Mock Firebase before any imports
-jest.mock('firebase-admin', () => ({
-  initializeApp: jest.fn(),
-  credential: {
-    cert: jest.fn()
-  },
-  auth: jest.fn(() => ({
+// Mock Firebase Admin before any imports
+jest.mock('firebase-admin', () => {
+  const mockAuth = {
     verifyIdToken: jest.fn().mockResolvedValue({
-      uid: 'test-user-id',
+      uid: 'test-uid',
+      email: 'test@example.com'
+    }),
+    createUser: jest.fn().mockResolvedValue({
+      uid: 'new-test-uid'
+    }),
+    updateUser: jest.fn().mockResolvedValue({
+      uid: 'test-uid'
+    }),
+    deleteUser: jest.fn().mockResolvedValue({}),
+    getUserByEmail: jest.fn().mockResolvedValue({
+      uid: 'test-uid',
       email: 'test@example.com'
     })
-  })),
-  apps: []
-}));
+  };
 
-module.exports = {
-  setupDatabase: async () => {
-    try {
-      const { sequelize } = require('../config/database');
-      await sequelize.authenticate();
-      await sequelize.sync({ force: true });
-      console.log('✅ Recommendation service database setup complete');
-      return sequelize;
-    } catch (error) {
-      console.error('❌ Recommendation service database setup failed:', error.message);
-      throw error;
-    }
-  },
+  return {
+    initializeApp: jest.fn(),
+    auth: jest.fn(() => mockAuth),
+    credential: {
+      cert: jest.fn()
+    },
+    apps: []
+  };
+});
 
-  teardownDatabase: async () => {
-    try {
-      const { sequelize } = require('../config/database');
-      await sequelize.drop();
-      await sequelize.close();
-      console.log('✅ Recommendation service database teardown complete');
-    } catch (error) {
-      console.error('❌ Recommendation service database teardown failed:', error.message);
-    }
+// Setup test database
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize({
+  dialect: 'mysql',
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD?.replace(/'/g, ''),
+  database: process.env.DB_NAME,
+  logging: false
+});
+
+// Test database connection
+beforeAll(async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Recommendation service test database connected');
+  } catch (error) {
+    console.error('❌ Recommendation service test database connection failed:', error.message);
+    throw error;
   }
-};
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
+
+module.exports = { sequelize };
