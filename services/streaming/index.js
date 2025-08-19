@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const streamingRoutes = require('./routes');
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 
 const app = express();
 

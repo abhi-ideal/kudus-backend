@@ -7,7 +7,7 @@ const sequelize = require('./config/database');
 require('dotenv').config();
 
 const contentRoutes = require('./routes');
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 
 const app = express();
 

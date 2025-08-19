@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 const adminRoutes = require('./routes');
 
 const app = express();
