@@ -4,6 +4,10 @@ const path = require('path');
 // Set NODE_ENV to test before loading environment
 process.env.NODE_ENV = 'test';
 
+// First load root .env file for base configuration
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// Then override with test-specific environment variables
 require('dotenv').config({ path: path.join(__dirname, '.env.test') });
 
 // Initialize Firebase Admin with test environment handling
