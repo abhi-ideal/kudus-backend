@@ -5,12 +5,9 @@ module.exports = {
     '**/tests/**/*.test.js',
     '**/__tests__/**/*.js'
   ],
-  setupFilesAfterEnv: [
+  setupFiles: [
     '<rootDir>/tests/setup.js'
   ],
-  moduleNameMapping: {
-    '^../utils/firebaseAdmin$': '<rootDir>/tests/__mocks__/firebaseAdmin.js'
-  },
   collectCoverageFrom: [
     'services/**/*.js',
     'utils/**/*.js',

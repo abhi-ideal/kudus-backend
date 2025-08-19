@@ -9,3 +9,42 @@ module.exports = {
     })
   }
 };
+// Mock Firebase Admin SDK for testing
+const mockAuth = () => ({
+  verifyIdToken: jest.fn().mockResolvedValue({
+    uid: 'test-user-id',
+    email: 'test@example.com'
+  }),
+  createUser: jest.fn().mockResolvedValue({
+    uid: 'test-user-id',
+    email: 'test@example.com'
+  }),
+  updateUser: jest.fn().mockResolvedValue({
+    uid: 'test-user-id',
+    email: 'test@example.com'
+  }),
+  deleteUser: jest.fn().mockResolvedValue(undefined),
+  getUserByEmail: jest.fn().mockResolvedValue({
+    uid: 'test-user-id',
+    email: 'test@example.com'
+  })
+});
+
+const mockAdmin = {
+  auth: mockAuth,
+  initializeApp: jest.fn(),
+  credential: {
+    cert: jest.fn()
+  },
+  apps: []
+};
+
+module.exports = {
+  admin: mockAdmin,
+  initializeFirebaseAdmin: jest.fn().mockReturnValue(mockAdmin),
+  verifyToken: jest.fn().mockResolvedValue({
+    uid: 'test-user-id',
+    email: 'test@example.com'
+  }),
+  getMockAuth: jest.fn().mockReturnValue(mockAuth())
+};
