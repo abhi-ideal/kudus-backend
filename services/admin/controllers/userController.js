@@ -5,7 +5,7 @@ const UserProfile = require('../../user/models/UserProfile');
 const WatchHistory = require('../../user/models/WatchHistory');
 const admin = require('firebase-admin');
 const { Op } = require('sequelize');
-const logger = require('../../../shared/utils/logger');
+const logger = require('../utils/logger');
 
 // Define associations between models
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
