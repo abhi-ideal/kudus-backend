@@ -23,7 +23,11 @@
     "install-services": "cd gateway && npm install && cd ../services/auth && npm install && cd ../user && npm install && cd ../content && npm install && cd ../streaming && npm install && cd ../recommendation && npm install && cd ../admin && npm install && cd ../admin-dashboard && npm install",
     "migrate": "cd services/user && npm run migrate && cd ../content && npm run migrate && cd ../recommendation && npm run migrate && cd ../streaming && npm run migrate && cd ../admin && npm run migrate",
     "seed": "cd services/auth && npm run seed && cd ../user && npm run seed && cd ../content && npm run seed && cd ../recommendation && npm run seed && cd ../streaming && npm run seed && cd ../admin && npm run seed",
-    "setup-env": "node scripts/setup-env.js"
+    "setup-env": "node scripts/setup-env.js",
+    "test": "cd tests && npm test",
+    "test:coverage": "cd tests && npm run test:coverage",
+    "test:watch": "cd tests && npm run test:watch",
+    "test:verbose": "cd tests && npm run test:verbose"
   },
   "dependencies": {
     "axios": "^1.11.0",
