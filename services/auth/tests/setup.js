@@ -1,7 +1,12 @@
 
 const path = require('path');
 
-// Load test environment variables
+// First load root .env file to get Firebase configuration
+require('dotenv').config({ 
+  path: path.join(__dirname, '../../../.env')
+});
+
+// Then load test-specific overrides
 require('dotenv').config({ 
   path: path.join(__dirname, '.env.test'),
   override: true
@@ -50,19 +55,33 @@ const sequelize = new Sequelize({
   logging: false
 });
 
-// Test database connection
-beforeAll(async () => {
+// Database setup and teardown functions
+const setupDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Auth service test database connected');
+    return sequelize;
   } catch (error) {
     console.error('❌ Auth service test database connection failed:', error.message);
     throw error;
   }
+};
+
+const teardownDatabase = async () => {
+  await sequelize.close();
+};
+
+// Test database connection
+beforeAll(async () => {
+  await setupDatabase();
 });
 
 afterAll(async () => {
-  await sequelize.close();
+  await teardownDatabase();
 });
 
-module.exports = { sequelize };
+module.exports = { 
+  sequelize,
+  setupDatabase,
+  teardownDatabase
+};
