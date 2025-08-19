@@ -1,7 +1,7 @@
 const Content = require('../content/models/Content');
 const User = require('../user/models/User');
 const awsService = require('../content/services/awsService');
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 const { v4: uuidv4 } = require('uuid');
 
 const adminController = {
