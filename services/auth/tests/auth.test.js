@@ -1,5 +1,5 @@
 
-const request = require('supertest');
+const axios = require('axios');
 const path = require('path');
 
 // Load environment variables properly
@@ -31,8 +31,26 @@ jest.mock('firebase-admin', () => ({
 const app = require('../index');
 const admin = require('firebase-admin');
 
+// Base URL for axios requests
+const BASE_URL = 'http://0.0.0.0:3001';
+
 describe('Auth Service', () => {
   let mockAuth;
+  let server;
+
+  beforeAll(async () => {
+    // Start the server for testing
+    server = app.listen(3001, '0.0.0.0');
+    // Wait for server to be ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  });
+
+  afterAll(async () => {
+    // Close the server after tests
+    if (server) {
+      server.close();
+    }
+  });
 
   beforeEach(() => {
     // Reset mocks before each test
@@ -48,12 +66,11 @@ describe('Auth Service', () => {
 
   describe('GET /api/auth/health', () => {
     test('should return health status', async () => {
-      const response = await request(app)
-        .get('/api/auth/health')
-        .expect(200);
+      const response = await axios.get(`${BASE_URL}/api/auth/health`);
 
-      expect(response.body).toHaveProperty('status', 'OK');
-      expect(response.body).toHaveProperty('service', 'Auth Service');
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty('status', 'OK');
+      expect(response.data).toHaveProperty('service', 'Auth Service');
     });
   });
 
@@ -76,14 +93,16 @@ describe('Auth Service', () => {
       mockAuth.getUser.mockResolvedValue(mockUserRecord);
       mockAuth.setCustomUserClaims.mockResolvedValue();
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .set('Authorization', 'Bearer mock-firebase-token')
-        .expect(201);
+      const response = await axios.post(`${BASE_URL}/api/auth/register`, {}, {
+        headers: {
+          'Authorization': 'Bearer mock-firebase-token'
+        }
+      });
 
-      expect(response.body).toHaveProperty('message', 'User registered successfully');
-      expect(response.body).toHaveProperty('uid', 'test-firebase-uid');
-      expect(response.body).toHaveProperty('role', 'user');
+      expect(response.status).toBe(201);
+      expect(response.data).toHaveProperty('message', 'User registered successfully');
+      expect(response.data).toHaveProperty('uid', 'test-firebase-uid');
+      expect(response.data).toHaveProperty('role', 'user');
       expect(mockAuth.verifyIdToken).toHaveBeenCalledWith('mock-firebase-token');
       expect(mockAuth.setCustomUserClaims).toHaveBeenCalled();
     });
