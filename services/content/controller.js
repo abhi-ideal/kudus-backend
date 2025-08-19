@@ -1,7 +1,7 @@
 const Content = require('./models/Content');
 const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 const { Op } = require('sequelize');
 const { sequelize } = require('sequelize');
 const db = require('./config/database');

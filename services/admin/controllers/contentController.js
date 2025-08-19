@@ -3,7 +3,7 @@ const Content = require('../../content/models/Content');
 const Season = require('../../content/models/Season');
 const Episode = require('../../content/models/Episode');
 const { Op } = require('sequelize');
-const logger = require('../../../shared/utils/logger');
+const logger = require('../utils/logger');
 
 const contentController = {
   // Content CRUD operations

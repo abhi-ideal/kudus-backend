@@ -1,5 +1,5 @@
 
-const logger = require('../../shared/utils/logger');
+const logger = require('./utils/logger');
 const awsService = require('../content/services/awsService');
 
 // In-memory session storage (use Redis in production)
