@@ -1,3 +1,9 @@
+// Skip Firebase initialization in test environment
+if (process.env.NODE_ENV === 'test') {
+  module.exports = require('../tests/__mocks__/firebaseAdmin');
+  return;
+}
+
 const admin = require('firebase-admin');
 
 let firebaseApp = null;

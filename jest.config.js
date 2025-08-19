@@ -5,15 +5,20 @@ module.exports = {
     '**/tests/**/*.test.js',
     '**/__tests__/**/*.js'
   ],
-  setupFiles: [
+  setupFilesAfterEnv: [
     '<rootDir>/tests/setup.js'
   ],
+  moduleNameMapping: {
+    '^../utils/firebaseAdmin$': '<rootDir>/tests/__mocks__/firebaseAdmin.js'
+  },
   collectCoverageFrom: [
     'services/**/*.js',
+    'utils/**/*.js',
     '!services/**/migrations/**',
     '!services/**/seeders/**',
     '!services/**/config/**',
-    '!**/node_modules/**'
+    '!**/node_modules/**',
+    '!tests/**'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: [
@@ -21,7 +26,6 @@ module.exports = {
     'lcov',
     'html'
   ],
-  
   testTimeout: 30000,
   verbose: true,
   forceExit: true,
