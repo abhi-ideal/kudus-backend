@@ -1,73 +1,92 @@
 
-const { v4: uuidv4 } = require('uuid');
-
 const mockData = {
   users: {
     validUser: {
-      email: 'testuser@example.com',
+      firebaseUid: 'test-firebase-uid-123',
+      email: 'test@example.com',
       displayName: 'Test User',
-      subscriptionType: 'free'
+      emailVerified: true
     },
     adminUser: {
-      email: 'admin@kudus.com',
+      firebaseUid: 'admin-firebase-uid-456',
+      email: 'admin@example.com',
       displayName: 'Admin User',
+      emailVerified: true,
       role: 'admin'
-    },
-    invalidUser: {
-      email: 'invalid-email',
-      displayName: ''
-    }
-  },
-
-  profiles: {
-    validProfile: {
-      name: 'Test Profile',
-      isKidsProfile: false,
-      ageRating: 'PG-13',
-      language: 'en'
     },
     kidsProfile: {
       name: 'Kids Profile',
       isKidsProfile: true,
       ageRating: 'G',
-      language: 'en'
+      maturityLevel: 7
+    }
+  },
+
+  firebaseTokens: {
+    validUserToken: 'mock-valid-user-token',
+    validAdminToken: 'mock-valid-admin-token',
+    invalidToken: 'mock-invalid-token',
+    expiredToken: 'mock-expired-token'
+  },
+
+  decodedTokens: {
+    validUser: {
+      uid: 'test-firebase-uid-123',
+      email: 'test@example.com',
+      name: 'Test User',
+      email_verified: true,
+      firebase: {
+        sign_in_provider: 'google.com'
+      }
     },
-    invalidProfile: {
-      name: '',
-      isKidsProfile: 'not-boolean'
+    validAdmin: {
+      uid: 'admin-firebase-uid-456',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      email_verified: true,
+      role: 'admin',
+      firebase: {
+        sign_in_provider: 'password'
+      }
     }
   },
 
   content: {
-    validMovie: {
+    movie: {
       title: 'Test Movie',
-      description: 'A test movie for unit tests',
       type: 'movie',
-      genre: ['action', 'drama'],
+      description: 'A test movie for unit testing',
+      genre: 'Action',
       ageRating: 'PG-13',
       duration: 120,
-      releaseYear: 2024,
-      language: 'en',
-      availableCountries: ['US', 'CA']
+      releaseYear: 2023
     },
-    validSeries: {
+    series: {
       title: 'Test Series',
-      description: 'A test series for unit tests',
       type: 'series',
-      genre: ['comedy'],
-      ageRating: 'PG',
-      releaseYear: 2024,
-      language: 'en',
-      availableCountries: ['US']
-    },
-    invalidContent: {
-      title: '',
-      type: 'invalid-type',
-      duration: -1
+      description: 'A test series for unit testing',
+      genre: 'Drama',
+      ageRating: 'TV-14',
+      releaseYear: 2023
     }
   },
 
-  generateId: () => uuidv4()
+  profiles: {
+    adultProfile: {
+      name: 'Adult Profile',
+      isKidsProfile: false,
+      ageRating: 'R',
+      maturityLevel: 18,
+      language: 'en'
+    },
+    teenProfile: {
+      name: 'Teen Profile',
+      isKidsProfile: false,
+      ageRating: 'PG-13',
+      maturityLevel: 13,
+      language: 'en'
+    }
+  }
 };
 
 module.exports = mockData;

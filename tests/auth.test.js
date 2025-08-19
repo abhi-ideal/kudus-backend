@@ -1,9 +1,9 @@
-
 const request = require('supertest');
 const app = require('../index');
 const { setupDatabase, teardownDatabase } = require('./setup');
-const authHelper = require('./helpers/authHelper');
-const mockData = require('./helpers/mockData');
+
+// Mock Firebase Admin
+jest.mock('../utils/firebaseAdmin', () => require('./__mocks__/firebaseAdmin'));
 
 describe('Auth API Endpoints', () => {
   beforeAll(async () => {
@@ -14,17 +14,11 @@ describe('Auth API Endpoints', () => {
     await teardownDatabase();
   });
 
-  beforeEach(() => {
-    authHelper.clearTokens();
-  });
-
   describe('POST /api/auth/register', () => {
-    it('should register a new user successfully', async () => {
-      const userData = mockData.users.validUser;
-      
+    it('should register a new user successfully with Firebase token', async () => {
       const response = await request(app)
         .post('/api/auth/register')
-        .send(userData)
+        .set('Authorization', 'Bearer mock-firebase-token')
         .expect(201);
 
       expect(response.body).toHaveProperty('message');
@@ -32,109 +26,63 @@ describe('Auth API Endpoints', () => {
       expect(response.body.role).toBe('user');
     });
 
-    it('should fail with invalid email format', async () => {
-      const userData = {
-        ...mockData.users.validUser,
-        email: 'invalid-email'
-      };
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
-
-      expect(response.body).toHaveProperty('error');
-    });
-
-    it('should fail with missing required fields', async () => {
+    it('should fail with missing Authorization header', async () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({})
+        .expect(401);
+
+      expect(response.body).toHaveProperty('error', 'Unauthorized');
+      expect(response.body.message).toContain('Firebase auth token is required');
+    });
+
+    it('should fail with invalid Firebase token', async () => {
+      const response = await request(app)
+        .post('/api/auth/register')
+        .set('Authorization', 'Bearer invalid-token')
         .expect(400);
 
       expect(response.body).toHaveProperty('error');
-    });
-
-    it('should fail when user already exists', async () => {
-      const userData = mockData.users.validUser;
-      
-      // Register user first time
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
-
-      // Try to register same user again
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(409);
-
-      expect(response.body.error).toBe('User already registered');
     });
   });
 
   describe('POST /api/auth/login', () => {
-    beforeEach(async () => {
-      // Register a user for login tests
-      await authHelper.registerUser();
-    });
-
-    it('should login successfully with valid credentials', async () => {
-      const response = await authHelper.loginUser();
-      
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('accessToken');
-      expect(response.body).toHaveProperty('user');
-      expect(response.body.success).toBe(true);
-    });
-
-    it('should fail with invalid credentials', async () => {
+    it('should login successfully with valid Firebase token', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({
-          email: 'test@example.com',
-          password: 'wrongpassword'
-        })
-        .expect(401);
+        .send({ idToken: 'mock-firebase-token' })
+        .expect(200);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('message', 'Login successful');
+      expect(response.body).toHaveProperty('user');
+      expect(response.body).toHaveProperty('accessToken');
     });
 
-    it('should fail with missing credentials', async () => {
+    it('should fail with missing idToken', async () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({})
         .expect(400);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('error', 'ID token is required');
     });
 
-    it('should fail with non-existent user', async () => {
+    it('should fail with invalid Firebase token', async () => {
       const response = await request(app)
         .post('/api/auth/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'password123'
-        })
+        .send({ idToken: 'invalid-token' })
         .expect(401);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('error', 'Invalid ID token');
     });
   });
 
   describe('GET /api/auth/verify-token', () => {
-    let authToken;
-
-    beforeEach(async () => {
-      await authHelper.registerUser();
-      const loginResponse = await authHelper.loginUser();
-      authToken = loginResponse.body.accessToken;
-    });
-
-    it('should verify valid token', async () => {
+    it('should verify valid Firebase token', async () => {
       const response = await request(app)
         .get('/api/auth/verify-token')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', 'Bearer mock-firebase-token')
         .expect(200);
 
       expect(response.body.valid).toBe(true);
@@ -148,7 +96,7 @@ describe('Auth API Endpoints', () => {
         .set('Authorization', 'Bearer invalid-token')
         .expect(401);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('error', 'Invalid token');
     });
 
     it('should fail without token', async () => {
@@ -156,23 +104,15 @@ describe('Auth API Endpoints', () => {
         .get('/api/auth/verify-token')
         .expect(401);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('error', 'No token provided');
     });
   });
 
   describe('POST /api/auth/logout', () => {
-    let authToken;
-
-    beforeEach(async () => {
-      await authHelper.registerUser();
-      const loginResponse = await authHelper.loginUser();
-      authToken = loginResponse.body.accessToken;
-    });
-
     it('should logout successfully', async () => {
       const response = await request(app)
         .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', 'Bearer mock-firebase-token')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -189,18 +129,10 @@ describe('Auth API Endpoints', () => {
   });
 
   describe('POST /api/auth/logout-all', () => {
-    let authToken;
-
-    beforeEach(async () => {
-      await authHelper.registerUser();
-      const loginResponse = await authHelper.loginUser();
-      authToken = loginResponse.body.accessToken;
-    });
-
     it('should logout all sessions successfully', async () => {
       const response = await request(app)
         .post('/api/auth/logout-all')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', 'Bearer mock-firebase-token')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -212,7 +144,22 @@ describe('Auth API Endpoints', () => {
         .post('/api/auth/logout-all')
         .expect(401);
 
-      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('error', 'Unauthorized');
+    });
+  });
+
+  describe('POST /api/auth/social-login', () => {
+    it('should handle social login with Firebase token', async () => {
+      const response = await request(app)
+        .post('/api/auth/social-login')
+        .send({ 
+          provider: 'google',
+          token: 'mock-firebase-token'
+        })
+        .expect(200);
+
+      expect(response.body).toHaveProperty('message', 'Social login successful');
+      expect(response.body).toHaveProperty('uid');
     });
   });
 });

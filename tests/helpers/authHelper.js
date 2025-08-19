@@ -2,75 +2,77 @@
 const request = require('supertest');
 const app = require('../../index');
 
-class AuthHelper {
-  constructor() {
-    this.tokens = {};
-  }
+// Mock Firebase tokens for testing
+const mockFirebaseTokens = {
+  validToken: 'mock-valid-firebase-token',
+  invalidToken: 'mock-invalid-firebase-token'
+};
 
+let storedTokens = {};
+
+const authHelper = {
+  // Register a user using Firebase token
   async registerUser(userData = {}) {
-    const defaultUser = {
+    const defaultUserData = {
       email: 'test@example.com',
-      password: 'password123',
       displayName: 'Test User'
     };
-    
-    const user = { ...defaultUser, ...userData };
+
+    const mergedUserData = { ...defaultUserData, ...userData };
     
     const response = await request(app)
       .post('/api/auth/register')
-      .send(user);
-    
-    return response;
-  }
+      .set('Authorization', `Bearer ${mockFirebaseTokens.validToken}`);
 
+    if (response.body.accessToken) {
+      storedTokens.accessToken = response.body.accessToken;
+    }
+
+    return response;
+  },
+
+  // Login user using Firebase token
   async loginUser(credentials = {}) {
     const defaultCredentials = {
-      email: 'test@example.com',
-      password: 'password123'
+      idToken: mockFirebaseTokens.validToken
     };
-    
-    const creds = { ...defaultCredentials, ...credentials };
-    
+
+    const mergedCredentials = { ...defaultCredentials, ...credentials };
+
     const response = await request(app)
       .post('/api/auth/login')
-      .send(creds);
-    
+      .send(mergedCredentials);
+
     if (response.body.accessToken) {
-      this.tokens[creds.email] = response.body.accessToken;
+      storedTokens.accessToken = response.body.accessToken;
     }
-    
+
     return response;
-  }
+  },
 
-  async loginAdmin() {
-    const adminCreds = {
-      email: 'admin@kudus.com',
-      password: 'admin123'
-    };
-    
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send(adminCreds);
-    
-    if (response.body.accessToken) {
-      this.tokens.admin = response.body.accessToken;
-    }
-    
-    return response;
-  }
+  // Get stored access token
+  getAccessToken() {
+    return storedTokens.accessToken;
+  },
 
-  getToken(email = 'test@example.com') {
-    return this.tokens[email] || this.tokens.admin;
-  }
-
-  getAuthHeader(email = 'test@example.com') {
-    const token = this.getToken(email);
-    return token ? `Bearer ${token}` : '';
-  }
-
+  // Clear stored tokens
   clearTokens() {
-    this.tokens = {};
-  }
-}
+    storedTokens = {};
+  },
 
-module.exports = new AuthHelper();
+  // Create authenticated request helper
+  authenticatedRequest(method, endpoint) {
+    const req = request(app)[method.toLowerCase()](endpoint);
+    
+    if (storedTokens.accessToken) {
+      req.set('Authorization', `Bearer ${storedTokens.accessToken}`);
+    }
+    
+    return req;
+  },
+
+  // Mock Firebase tokens
+  mockTokens: mockFirebaseTokens
+};
+
+module.exports = authHelper;
