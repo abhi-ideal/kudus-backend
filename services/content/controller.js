@@ -145,8 +145,7 @@ const contentController = {
                 required: false,
                 order: [['episodeNumber', 'ASC']],
                 attributes: { 
-                  exclude: ['s3Key'],
-                  include: ['views', 'likes'] // Include episode-specific metrics
+                  exclude: ['s3Key']
                 },
                 include: req.activeProfile?.id ? [
                   {
@@ -157,7 +156,8 @@ const contentController = {
                     },
                     required: false,
                     order: [['watchedAt', 'DESC']],
-                    limit: 1
+                    limit: 1,
+                    attributes: ['id', 'watchedAt', 'watchDuration', 'totalDuration', 'progressPercentage', 'isCompleted']
                   }
                 ] : []
               }
@@ -549,7 +549,8 @@ const contentController = {
                 },
                 required: false,
                 order: [['watchedAt', 'DESC']],
-                limit: 1
+                limit: 1,
+                attributes: ['id', 'watchedAt', 'watchDuration', 'totalDuration', 'progressPercentage', 'isCompleted']
               }
             ] : []
           }
@@ -638,7 +639,8 @@ const contentController = {
               },
               required: false,
               order: [['watchedAt', 'DESC']],
-              limit: 1
+              limit: 1,
+              attributes: ['id', 'watchedAt', 'watchDuration', 'totalDuration', 'progressPercentage', 'isCompleted']
             }
           ] : [])
         ],
