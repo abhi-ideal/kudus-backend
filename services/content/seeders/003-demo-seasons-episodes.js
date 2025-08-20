@@ -72,7 +72,13 @@ module.exports = {
         title: 'Pilot',
         description: 'The story begins when Detective Morgan receives a mysterious case.',
         duration: 45,
-        thumbnailUrl: 'https://example.com/episodes/s1e1-thumb.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/episodes/s1e1-150x150.jpg',
+          "300x300": 'https://example.com/episodes/s1e1-300x300.jpg',
+          "500x500": 'https://example.com/episodes/s1e1-500x500.jpg',
+          "800x800": 'https://example.com/episodes/s1e1-800x800.jpg',
+          "1080x1080": 'https://example.com/episodes/s1e1-1080x1080.jpg'
+        },
         videoQualities: JSON.stringify({
           '480p': 'https://example.com/videos/s1e1-480p.mp4',
           '720p': 'https://example.com/videos/s1e1-720p.mp4',
@@ -95,7 +101,13 @@ module.exports = {
         title: 'First Clues',
         description: 'The first clues lead to unexpected discoveries.',
         duration: 42,
-        thumbnailUrl: 'https://example.com/episodes/s1e2-thumb.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/episodes/s1e2-150x150.jpg',
+          "300x300": 'https://example.com/episodes/s1e2-300x300.jpg',
+          "500x500": 'https://example.com/episodes/s1e2-500x500.jpg',
+          "800x800": 'https://example.com/episodes/s1e2-800x800.jpg',
+          "1080x1080": 'https://example.com/episodes/s1e2-1080x1080.jpg'
+        },
         videoQualities: JSON.stringify({
           '480p': 'https://example.com/videos/s1e2-480p.mp4',
           '720p': 'https://example.com/videos/s1e2-720p.mp4',
@@ -118,7 +130,13 @@ module.exports = {
         title: 'Hidden Connections',
         description: 'Connections between seemingly unrelated events start to emerge.',
         duration: 44,
-        thumbnailUrl: 'https://example.com/episodes/s1e3-thumb.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/episodes/s1e3-150x150.jpg',
+          "300x300": 'https://example.com/episodes/s1e3-300x300.jpg',
+          "500x500": 'https://example.com/episodes/s1e3-500x500.jpg',
+          "800x800": 'https://example.com/episodes/s1e3-800x800.jpg',
+          "1080x1080": 'https://example.com/episodes/s1e3-1080x1080.jpg'
+        },
         videoQualities: JSON.stringify({
           '480p': 'https://example.com/videos/s1e3-480p.mp4',
           '720p': 'https://example.com/videos/s1e3-720p.mp4',
@@ -145,7 +163,13 @@ module.exports = {
         title: 'New Beginnings',
         description: 'Season 2 opens with new mysteries and returning characters.',
         duration: 48,
-        thumbnailUrl: 'https://example.com/episodes/s2e1-thumb.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/episodes/s2e1-150x150.jpg',
+          "300x300": 'https://example.com/episodes/s2e1-300x300.jpg',
+          "500x500": 'https://example.com/episodes/s2e1-500x500.jpg',
+          "800x800": 'https://example.com/episodes/s2e1-800x800.jpg',
+          "1080x1080": 'https://example.com/episodes/s2e1-1080x1080.jpg'
+        },
         videoQualities: JSON.stringify({
           '480p': 'https://example.com/videos/s2e1-480p.mp4',
           '720p': 'https://example.com/videos/s2e1-720p.mp4',
@@ -168,7 +192,13 @@ module.exports = {
         title: 'The Plot Thickens',
         description: 'New revelations complicate the already complex mystery.',
         duration: 46,
-        thumbnailUrl: 'https://example.com/episodes/s2e2-thumb.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/episodes/s2e2-150x150.jpg',
+          "300x300": 'https://example.com/episodes/s2e2-300x300.jpg',
+          "500x500": 'https://example.com/episodes/s2e2-500x500.jpg',
+          "800x800": 'https://example.com/episodes/s2e2-800x800.jpg',
+          "1080x1080": 'https://example.com/episodes/s2e2-1080x1080.jpg'
+        },
         videoQualities: JSON.stringify({
           '480p': 'https://example.com/videos/s2e2-480p.mp4',
           '720p': 'https://example.com/videos/s2e2-720p.mp4',

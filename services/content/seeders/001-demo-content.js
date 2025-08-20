@@ -30,7 +30,13 @@ module.exports = {
         cast: JSON.stringify(['John Doe', 'Jane Smith', 'Bob Johnson']),
         characters: JSON.stringify(['Hero Alex', 'Mentor Sarah', 'Villain Marcus']),
         director: 'Famous Director',
-        thumbnailUrl: 'https://example.com/thumbnails/adventure-begins.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/adventure-begins-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/adventure-begins-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/adventure-begins-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/adventure-begins-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/adventure-begins-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/adventure-begins-thumb.jpg',
           medium: 'https://example.com/posters/adventure-begins-med.jpg',
@@ -61,7 +67,13 @@ module.exports = {
         cast: JSON.stringify(['Christian Bale', 'Michael Caine', 'Anne Hathaway']),
         characters: JSON.stringify(['Batman', 'Alfred', 'Catwoman']),
         director: 'Christopher Nolan',
-        thumbnailUrl: 'https://example.com/thumbnails/dark-knight.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/dark-knight-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/dark-knight-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/dark-knight-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/dark-knight-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/dark-knight-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/dark-knight-thumb.jpg',
           medium: 'https://example.com/posters/dark-knight-med.jpg',
@@ -92,7 +104,13 @@ module.exports = {
         cast: JSON.stringify(['Emma Stone', 'Ryan Gosling', 'Marion Cotillard']),
         characters: JSON.stringify(['Sophie', 'James', 'Marie']),
         director: 'Romantic Director',
-        thumbnailUrl: 'https://example.com/thumbnails/love-paris.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/love-paris-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/love-paris-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/love-paris-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/love-paris-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/love-paris-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/love-paris-thumb.jpg',
           medium: 'https://example.com/posters/love-paris-med.jpg',
@@ -123,7 +141,13 @@ module.exports = {
         cast: JSON.stringify(['Matthew McConaughey', 'Jessica Chastain', 'Anne Hathaway']),
         characters: JSON.stringify(['Captain Cooper', 'Dr. Brand', 'TARS']),
         director: 'Sci-Fi Master',
-        thumbnailUrl: 'https://example.com/thumbnails/space-odyssey.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/space-odyssey-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/space-odyssey-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/space-odyssey-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/space-odyssey-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/space-odyssey-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/space-odyssey-thumb.jpg',
           medium: 'https://example.com/posters/space-odyssey-med.jpg',
@@ -154,7 +178,13 @@ module.exports = {
         cast: JSON.stringify(['Vera Farmiga', 'Patrick Wilson', 'Madison Wolfe']),
         characters: JSON.stringify(['Lorraine Warren', 'Ed Warren', 'Janet Hodgson']),
         director: 'Horror Master',
-        thumbnailUrl: 'https://example.com/thumbnails/haunted-manor.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/haunted-manor-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/haunted-manor-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/haunted-manor-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/haunted-manor-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/haunted-manor-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/haunted-manor-thumb.jpg',
           medium: 'https://example.com/posters/haunted-manor-med.jpg',
@@ -185,7 +215,13 @@ module.exports = {
         cast: JSON.stringify(['Will Ferrell', 'Steve Carell', 'Tina Fey']),
         characters: JSON.stringify(['Ron Burgundy', 'Michael Scott', 'Liz Lemon']),
         director: 'Comedy King',
-        thumbnailUrl: 'https://example.com/thumbnails/laugh-out-loud.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/laugh-out-loud-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/laugh-out-loud-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/laugh-out-loud-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/laugh-out-loud-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/laugh-out-loud-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/laugh-out-loud-thumb.jpg',
           medium: 'https://example.com/posters/laugh-out-loud-med.jpg',
@@ -216,7 +252,13 @@ module.exports = {
         cast: JSON.stringify(['Robin Williams', 'Amy Adams', 'Tom Hanks']),
         characters: JSON.stringify(['Dad', 'Mom', 'Grandpa']),
         director: 'Family Director',
-        thumbnailUrl: 'https://example.com/thumbnails/family-road-trip.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/family-road-trip-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/family-road-trip-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/family-road-trip-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/family-road-trip-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/family-road-trip-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/family-road-trip-thumb.jpg',
           medium: 'https://example.com/posters/family-road-trip-med.jpg',
@@ -247,7 +289,13 @@ module.exports = {
         cast: JSON.stringify(['Tom Cruise', 'Ken Watanabe', 'Billy Connolly']),
         characters: JSON.stringify(['Nathan Algren', 'Katsumoto', 'Zebulon Gant']),
         director: 'Epic Director',
-        thumbnailUrl: 'https://example.com/thumbnails/last-samurai.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/last-samurai-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/last-samurai-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/last-samurai-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/last-samurai-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/last-samurai-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/last-samurai-thumb.jpg',
           medium: 'https://example.com/posters/last-samurai-med.jpg',
@@ -278,7 +326,13 @@ module.exports = {
         cast: JSON.stringify(['George Clooney', 'Brad Pitt', 'Matt Damon']),
         characters: JSON.stringify(['Danny Ocean', 'Rusty Ryan', 'Linus Caldwell']),
         director: 'Heist Master',
-        thumbnailUrl: 'https://example.com/thumbnails/oceans-heist.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/oceans-heist-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/oceans-heist-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/oceans-heist-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/oceans-heist-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/oceans-heist-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/oceans-heist-thumb.jpg',
           medium: 'https://example.com/posters/oceans-heist-med.jpg',
@@ -309,7 +363,13 @@ module.exports = {
         cast: JSON.stringify(['Elijah Wood', 'Cate Blanchett', 'Ian McKellen']),
         characters: JSON.stringify(['Frodo', 'Galadriel', 'Gandalf']),
         director: 'Fantasy Master',
-        thumbnailUrl: 'https://example.com/thumbnails/mystic-forest.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/mystic-forest-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/mystic-forest-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/mystic-forest-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/mystic-forest-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/mystic-forest-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/mystic-forest-thumb.jpg',
           medium: 'https://example.com/posters/mystic-forest-med.jpg',
@@ -340,7 +400,13 @@ module.exports = {
         cast: JSON.stringify(['Emile Hirsch', 'Christina Ricci', 'John Goodman']),
         characters: JSON.stringify(['Speed Racer', 'Trixie', 'Pops Racer']),
         director: 'Racing Director',
-        thumbnailUrl: 'https://example.com/thumbnails/speed-racer.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/speed-racer-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/speed-racer-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/speed-racer-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/speed-racer-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/speed-racer-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/speed-racer-thumb.jpg',
           medium: 'https://example.com/posters/speed-racer-med.jpg',
@@ -371,7 +437,13 @@ module.exports = {
         cast: JSON.stringify(['Ryan Gosling', 'Emma Stone', 'Russell Crowe']),
         characters: JSON.stringify(['Detective Holland March', 'Amelia Kuttner', 'Jackson Healy']),
         director: 'Noir Master',
-        thumbnailUrl: 'https://example.com/thumbnails/the-detective.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/the-detective-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/the-detective-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/the-detective-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/the-detective-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/the-detective-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/the-detective-thumb.jpg',
           medium: 'https://example.com/posters/the-detective-med.jpg',
@@ -402,7 +474,13 @@ module.exports = {
         cast: JSON.stringify(['Norman Reedus', 'Lauren Cohan', 'Jeffrey Dean Morgan']),
         characters: JSON.stringify(['Daryl Dixon', 'Maggie Rhee', 'Negan']),
         director: 'Zombie Director',
-        thumbnailUrl: 'https://example.com/thumbnails/zombie-apocalypse.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/zombie-apocalypse-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/zombie-apocalypse-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/zombie-apocalypse-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/zombie-apocalypse-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/zombie-apocalypse-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/zombie-apocalypse-thumb.jpg',
           medium: 'https://example.com/posters/zombie-apocalypse-med.jpg',
@@ -433,7 +511,13 @@ module.exports = {
         cast: JSON.stringify(['Hugh Jackman', 'Zac Efron', 'Michelle Williams']),
         characters: JSON.stringify(['P.T. Barnum', 'Phillip Carlyle', 'Charity Barnum']),
         director: 'Musical Master',
-        thumbnailUrl: 'https://example.com/thumbnails/musical-dreams.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/musical-dreams-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/musical-dreams-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/musical-dreams-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/musical-dreams-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/musical-dreams-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/musical-dreams-thumb.jpg',
           medium: 'https://example.com/posters/musical-dreams-med.jpg',
@@ -464,7 +548,13 @@ module.exports = {
         cast: JSON.stringify(['Tom Hanks', 'Matt Damon', 'Vin Diesel']),
         characters: JSON.stringify(['Captain Miller', 'Private Ryan', 'Private Caparzo']),
         director: 'War Director',
-        thumbnailUrl: 'https://example.com/thumbnails/war-heroes.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/war-heroes-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/war-heroes-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/war-heroes-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/war-heroes-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/war-heroes-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/war-heroes-thumb.jpg',
           medium: 'https://example.com/posters/war-heroes-med.jpg',
@@ -503,7 +593,13 @@ module.exports = {
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
         cast: JSON.stringify(['Alice Cooper', 'David Wilson', 'Emma Brown']),
         director: 'Mystery Master',
-        thumbnailUrl: 'https://example.com/thumbnails/lost-city.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/lost-city-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/lost-city-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/lost-city-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/lost-city-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/lost-city-1080x1080.jpg'
+        },
         trailerUrl: 'https://example.com/trailers/lost-city.mp4',
         status: 'published',
         isActive: true,
@@ -528,7 +624,13 @@ module.exports = {
         cast: JSON.stringify(['Jesse Eisenberg', 'Andrew Garfield', 'Justin Timberlake']),
         characters: JSON.stringify(['Mark Zuckerberg', 'Eduardo Saverin', 'Sean Parker']),
         director: 'Tech Director',
-        thumbnailUrl: 'https://example.com/thumbnails/tech-titans.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/tech-titans-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/tech-titans-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/tech-titans-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/tech-titans-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/tech-titans-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/tech-titans-thumb.jpg',
           medium: 'https://example.com/posters/tech-titans-med.jpg',
@@ -559,7 +661,13 @@ module.exports = {
         cast: JSON.stringify(['Peter Dinklage', 'Emilia Clarke', 'Kit Harington']),
         characters: JSON.stringify(['Tyrion Lannister', 'Daenerys Targaryen', 'Jon Snow']),
         director: 'Fantasy Epic Director',
-        thumbnailUrl: 'https://example.com/thumbnails/medieval-kingdoms.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/medieval-kingdoms-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/medieval-kingdoms-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/medieval-kingdoms-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/medieval-kingdoms-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/medieval-kingdoms-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/medieval-kingdoms-thumb.jpg',
           medium: 'https://example.com/posters/medieval-kingdoms-med.jpg',
@@ -590,7 +698,13 @@ module.exports = {
         cast: JSON.stringify(['Sandra Bullock', 'George Clooney', 'Ed Harris']),
         characters: JSON.stringify(['Commander Stone', 'Captain Kowalski', 'Mission Control']),
         director: 'Space Director',
-        thumbnailUrl: 'https://example.com/thumbnails/space-station-alpha.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/space-station-alpha-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/space-station-alpha-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/space-station-alpha-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/space-station-alpha-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/space-station-alpha-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/space-station-alpha-thumb.jpg',
           medium: 'https://example.com/posters/space-station-alpha-med.jpg',
@@ -621,7 +735,13 @@ module.exports = {
         cast: JSON.stringify(['Matthew McConaughey', 'Reese Witherspoon', 'Kerry Washington']),
         characters: JSON.stringify(['Jake Brigance', 'Elle Woods', 'Olivia Pope']),
         director: 'Legal Director',
-        thumbnailUrl: 'https://example.com/thumbnails/legal-eagles.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/legal-eagles-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/legal-eagles-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/legal-eagles-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/legal-eagles-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/legal-eagles-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/legal-eagles-thumb.jpg',
           medium: 'https://example.com/posters/legal-eagles-med.jpg',
@@ -652,7 +772,13 @@ module.exports = {
         cast: JSON.stringify(['Ellen Pompeo', 'Sandra Oh', 'Patrick Dempsey']),
         characters: JSON.stringify(['Meredith Grey', 'Cristina Yang', 'Derek Shepherd']),
         director: 'Medical Director',
-        thumbnailUrl: 'https://example.com/thumbnails/medical-miracles.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/medical-miracles-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/medical-miracles-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/medical-miracles-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/medical-miracles-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/medical-miracles-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/medical-miracles-thumb.jpg',
           medium: 'https://example.com/posters/medical-miracles-med.jpg',
@@ -683,7 +809,13 @@ module.exports = {
         cast: JSON.stringify(['Zendaya', 'Jacob Elordi', 'Hunter Schafer']),
         characters: JSON.stringify(['Rue Bennett', 'Nate Jacobs', 'Jules Vaughn']),
         director: 'Teen Director',
-        thumbnailUrl: 'https://example.com/thumbnails/high-school-heroes.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/high-school-heroes-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/high-school-heroes-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/high-school-heroes-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/high-school-heroes-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/high-school-heroes-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/high-school-heroes-thumb.jpg',
           medium: 'https://example.com/posters/high-school-heroes-med.jpg',
@@ -714,7 +846,13 @@ module.exports = {
         cast: JSON.stringify(['William Petersen', 'Marg Helgenberger', 'Laurence Fishburne']),
         characters: JSON.stringify(['Gil Grissom', 'Catherine Willows', 'D.B. Russell']),
         director: 'Crime Director',
-        thumbnailUrl: 'https://example.com/thumbnails/crime-scene.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/crime-scene-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/crime-scene-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/crime-scene-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/crime-scene-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/crime-scene-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/crime-scene-thumb.jpg',
           medium: 'https://example.com/posters/crime-scene-med.jpg',
@@ -746,7 +884,13 @@ module.exports = {
         subtitles: JSON.stringify(['English']),
         cast: JSON.stringify(['David Attenborough']),
         director: 'Nature Filmmaker',
-        thumbnailUrl: 'https://example.com/thumbnails/nature-doc.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/nature-doc-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/nature-doc-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/nature-doc-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/nature-doc-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/nature-doc-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/nature-doc-thumb.jpg',
           medium: 'https://example.com/posters/nature-doc-med.jpg',
@@ -776,7 +920,13 @@ module.exports = {
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
         cast: JSON.stringify(['James Cameron', 'Sylvia Earle']),
         director: 'Ocean Director',
-        thumbnailUrl: 'https://example.com/thumbnails/ocean-depths.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/ocean-depths-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/ocean-depths-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/ocean-depths-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/ocean-depths-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/ocean-depths-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/ocean-depths-thumb.jpg',
           medium: 'https://example.com/posters/ocean-depths-med.jpg',
@@ -806,7 +956,13 @@ module.exports = {
         subtitles: JSON.stringify(['English', 'Russian', 'Mandarin']),
         cast: JSON.stringify(['Neil deGrasse Tyson', 'Buzz Aldrin']),
         director: 'Space Documentary Director',
-        thumbnailUrl: 'https://example.com/thumbnails/space-exploration.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/space-exploration-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/space-exploration-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/space-exploration-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/space-exploration-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/space-exploration-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/space-exploration-thumb.jpg',
           medium: 'https://example.com/posters/space-exploration-med.jpg',
@@ -836,7 +992,13 @@ module.exports = {
         subtitles: JSON.stringify(['English', 'Spanish', 'Italian', 'Greek']),
         cast: JSON.stringify(['Morgan Freeman', 'Mary Beard']),
         director: 'History Director',
-        thumbnailUrl: 'https://example.com/thumbnails/ancient-civilizations.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/ancient-civilizations-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/ancient-civilizations-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/ancient-civilizations-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/ancient-civilizations-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/ancient-civilizations-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/ancient-civilizations-thumb.jpg',
           medium: 'https://example.com/posters/ancient-civilizations-med.jpg',
@@ -866,7 +1028,13 @@ module.exports = {
         subtitles: JSON.stringify(['English', 'Mandarin', 'Japanese', 'Korean']),
         cast: JSON.stringify(['Bill Gates', 'Steve Jobs', 'Mark Zuckerberg']),
         director: 'Tech Documentary Director',
-        thumbnailUrl: 'https://example.com/thumbnails/tech-revolution.jpg',
+        thumbnailUrl: {
+          "150x150": 'https://example.com/thumbnails/tech-revolution-150x150.jpg',
+          "300x300": 'https://example.com/thumbnails/tech-revolution-300x300.jpg',
+          "500x500": 'https://example.com/thumbnails/tech-revolution-500x500.jpg',
+          "800x800": 'https://example.com/thumbnails/tech-revolution-800x800.jpg',
+          "1080x1080": 'https://example.com/thumbnails/tech-revolution-1080x1080.jpg'
+        },
         posterImages: JSON.stringify({
           thumbnail: 'https://example.com/posters/tech-revolution-thumb.jpg',
           medium: 'https://example.com/posters/tech-revolution-med.jpg',
@@ -900,7 +1068,13 @@ module.exports = {
         description: `Episode ${i} of the thrilling mystery series.`,
         duration: 45,
         airDate: new Date(2023, 0, 15 + (i - 1) * 7), // Weekly episodes starting Jan 15
-        thumbnailUrl: `https://example.com/episodes/mystery-s1e${i}.jpg`,
+        thumbnailUrl: {
+          "150x150": `https://example.com/episodes/mystery-s1e${i}-150x150.jpg`,
+          "300x300": `https://example.com/episodes/mystery-s1e${i}-300x300.jpg`,
+          "500x500": `https://example.com/episodes/mystery-s1e${i}-500x500.jpg`,
+          "800x800": `https://example.com/episodes/mystery-s1e${i}-800x800.jpg`,
+          "1080x1080": `https://example.com/episodes/mystery-s1e${i}-1080x1080.jpg`
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -918,7 +1092,13 @@ module.exports = {
         description: `Episode ${i} exploring the tech world.`,
         duration: 50,
         airDate: new Date(2024, 0, 10 + (i - 1) * 7),
-        thumbnailUrl: `https://example.com/episodes/tech-s1e${i}.jpg`,
+        thumbnailUrl: {
+          "150x150": `https://example.com/episodes/tech-s1e${i}-150x150.jpg`,
+          "300x300": `https://example.com/episodes/tech-s1e${i}-300x300.jpg`,
+          "500x500": `https://example.com/episodes/tech-s1e${i}-500x500.jpg`,
+          "800x800": `https://example.com/episodes/tech-s1e${i}-800x800.jpg`,
+          "1080x1080": `https://example.com/episodes/tech-s1e${i}-1080x1080.jpg`
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
