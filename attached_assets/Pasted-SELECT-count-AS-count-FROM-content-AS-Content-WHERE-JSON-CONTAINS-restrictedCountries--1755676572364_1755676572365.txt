@@ -1,0 +1,31 @@
+SELECT count(*) AS `count` FROM `content` AS `Content` WHERE ((JSON_CONTAINS(restrictedCountries, '"US"') AND `Content`.`isGloballyAvailable` = true) OR (`Content`.`isGloballyAvailable` = false AND JSON_CONTAINS(availableCountries, '"US"'))) AND `Content`.`isActive` = true;
+[3] Executing (default): SELECT `id`, `title`, `description`, `type`, `genre`, `duration`, `releaseYear`, `rating`, `ageRating`, `language`, `subtitles`, `cast`, `director`, `thumbnailUrl`, `trailerUrl`, `status`, `views`, `likes`, `averageRating`, `totalRatings`, `createdAt` FROM `content` AS `Content` WHERE ((JSON_CONTAINS(restrictedCountries, '"US"') AND `Content`.`isGloballyAvailable` = true) OR (`Content`.`isGloballyAvailable` = false AND JSON_CONTAINS(availableCountries, '"US"'))) AND `Content`.`isActive` = true ORDER BY `Content`.`createdAt` DESC LIMIT 0, 20;
+[3] Get all content error: Error
+[3]     at Query.run (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/dialects/mysql/query.js:52:25)
+[3]     at /home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/sequelize.js:315:28
+[3]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[3]     at async MySQLQueryInterface.select (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+[3]     at async Content.findAll (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/model.js:1140:21)
+[3]     at async Promise.all (index 1)
+[3]     at async Content.findAndCountAll (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/model.js:1322:27)
+[3]     at async getAllContent (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/content/controller.js:71:40) {
+[3]   name: 'SequelizeDatabaseError',
+[3]   parent: Error: Unknown column 'views' in 'field list'
+[3]       at Packet.asError (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/packets/packet.js:740:17)
+[3]       at Query.execute (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/commands/command.js:29:26)
+[3]       at Connection.handlePacket (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/base/connection.js:475:34)
+[3]       at PacketParser.onPacket (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/base/connection.js:93:12)
+[3]       at PacketParser.executeStart (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/packet_parser.js:75:16)
+[3]       at Socket.<anonymous> (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/mysql2/lib/base/connection.js:100:25)
+[3]       at Socket.emit (node:events:518:28)
+[3]       at addChunk (node:internal/streams/readable:559:12)
+[3]       at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+[3]       at Readable.push (node:internal/streams/readable:390:5) {
+[3]     code: 'ER_BAD_FIELD_ERROR',
+[3]     errno: 1054,
+[3]     sqlState: '42S22',
+[3]     sqlMessage: "Unknown column 'views' in 'field list'",
+[3]     sql: 'SELECT `id`, `title`, `description`, `type`, `genre`, `duration`, `releaseYear`, `rating`, `ageRating`, `language`, `subtitles`, `cast`, `director`, `thumbnailUrl`, `trailerUrl`, `status`, `views`, `likes`, `averageRating`, `totalRatings`, `createdAt` FROM `content` AS `Content` WHERE ((JSON_CONTAINS(restrictedCountries, \'"US"\') AND `Content`.`isGloballyAvailable` = true) OR (`Content`.`isGloballyAvailable` = false AND JSON_CONTAINS(availableCountries, \'"US"\'))) AND `Content`.`isActive` = true ORDER BY `Content`.`createdAt` DESC LIMIT 0, 20;',
+[3]     parameters: undefined
+[3]   },
+[3]   original: Error: Unknown column 'views' in 'field list'
