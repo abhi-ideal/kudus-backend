@@ -58,6 +58,25 @@ const profileAuth = async (req, res, next) => {
     next();
   } catch (error) {
     console.error('Content service profile auth error:', error);
+    
+    // Handle Firebase token errors with proper status codes
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token expired',
+        message: 'Please refresh your token and try again'
+      });
+    }
+    
+    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/argument-error') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'The provided token is invalid'
+      });
+    }
+    
+    // For other errors, return 500
     res.status(500).json({
       success: false,
       error: 'Profile authorization failed'
