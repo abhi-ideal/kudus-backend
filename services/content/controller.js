@@ -77,8 +77,7 @@ const contentController = {
           'id', 'title', 'description', 'type', 'genre', 
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
-          'thumbnailUrl', 'trailerUrl', 'status', 'views',
-          'likes', 'averageRating', 'totalRatings', 'createdAt'
+          'thumbnailUrl', 'trailerUrl', 'status', 'createdAt'
         ]
       });
 
@@ -296,8 +295,7 @@ const contentController = {
           'id', 'title', 'description', 'type', 'genre', 
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
-          'thumbnailUrl', 'trailerUrl', 'status', 'views',
-          'likes', 'averageRating', 'totalRatings', 'createdAt'
+          'thumbnailUrl', 'trailerUrl', 'status', 'createdAt'
         ]
       });
 
@@ -713,7 +711,6 @@ const contentController = {
               'id', 'title', 'description', 'type', 'genre', 
               'duration', 'releaseYear', 'rating', 'ageRating',
               'language', 'thumbnailUrl', 'trailerUrl', 'status',
-              'views', 'likes', 'averageRating', 'totalRatings',
               'posterImages', 'characters'
             ]
           }
@@ -817,8 +814,7 @@ const contentController = {
           'id', 'title', 'description', 'type', 'genre', 
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
-          'thumbnailUrl', 'trailerUrl', 'status', 'views',
-          'likes', 'averageRating', 'totalRatings', 'createdAt',
+          'thumbnailUrl', 'trailerUrl', 'status', 'createdAt',
           'isActive', 'isGloballyAvailable', 'availableCountries',
           'restrictedCountries'
         ]
