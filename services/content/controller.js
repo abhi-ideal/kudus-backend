@@ -150,9 +150,12 @@ const contentController = {
                 },
                 include: req.activeProfile?.id ? [
                   {
-                    model: require('./models/WatchHistory'),
+                    model: models.WatchHistory,
                     as: 'watchHistory',
-                    where: { profileId: req.activeProfile.id },
+                    where: { 
+                      profileId: req.activeProfile.id,
+                      episodeId: sequelize.col('episodes.id')
+                    },
                     required: false,
                     order: [['watchedAt', 'DESC']],
                     limit: 1
@@ -540,9 +543,12 @@ const contentController = {
             attributes: { exclude: ['s3Key'] },
             include: req.activeProfile?.id ? [
               {
-                model: require('./models/WatchHistory'),
+                model: models.WatchHistory,
                 as: 'watchHistory',
-                where: { profileId: req.activeProfile.id },
+                where: { 
+                  profileId: req.activeProfile.id,
+                  episodeId: sequelize.col('episodes.id')
+                },
                 required: false,
                 order: [['watchedAt', 'DESC']],
                 limit: 1
@@ -613,16 +619,31 @@ const contentController = {
             ]
           }
         ],
-        include: req.activeProfile?.id ? [
+        include: [
           {
-            model: require('./models/WatchHistory'),
-            as: 'watchHistory',
-            where: { profileId: req.activeProfile.id },
-            required: false,
-            order: [['watchedAt', 'DESC']],
-            limit: 1
-          }
-        ] : [],
+            model: Season,
+            as: 'season',
+            include: [
+              {
+                model: Content,
+                as: 'series'
+              }
+            ]
+          },
+          ...(req.activeProfile?.id ? [
+            {
+              model: models.WatchHistory,
+              as: 'watchHistory',
+              where: { 
+                profileId: req.activeProfile.id,
+                episodeId: episodeId
+              },
+              required: false,
+              order: [['watchedAt', 'DESC']],
+              limit: 1
+            }
+          ] : [])
+        ],
         attributes: { exclude: ['s3Key'] }
       });
 
