@@ -136,6 +136,14 @@ Content.associate = (models) => {
     foreignKey: 'contentId',
     as: 'watchlistEntries'
   });
+
+  // Watch history association (if you have this model)
+  if (models.WatchHistory) {
+    Content.hasMany(models.WatchHistory, {
+      foreignKey: 'contentId',
+      as: 'watchHistory'
+    });
+  }
 };
 
 module.exports = Content;

@@ -109,8 +109,33 @@ const contentController = {
   async getContentById(req, res) {
     try {
       const { id } = req.params;
+      const Season = require('./models/Season');
+      const Episode = require('./models/Episode');
+      
       const content = await Content.findByPk(id, {
-        attributes: { exclude: ['s3Key', 'videoQualities'] }
+        attributes: { exclude: ['s3Key', 'videoQualities'] },
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            where: { isActive: true },
+            required: false,
+            order: [['seasonNumber', 'ASC']],
+            include: [
+              {
+                model: Episode,
+                as: 'episodes',
+                where: { isActive: true },
+                required: false,
+                order: [['episodeNumber', 'ASC']],
+                attributes: { 
+                  exclude: ['s3Key'],
+                  include: ['views', 'likes'] // Include episode-specific metrics
+                }
+              }
+            ]
+          }
+        ]
       });
 
       if (!content || !content.isActive) {
@@ -119,7 +144,51 @@ const contentController = {
         });
       }
 
-      res.json(content);
+      // Apply child profile filtering if needed
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedRatings = ['G', 'PG', 'PG-13'];
+        if (!allowedRatings.includes(content.ageRating)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content not available for child profiles'
+          });
+        }
+      }
+
+      // Add streaming session information if profile is provided
+      let streamingInfo = null;
+      if (req.activeProfile?.id) {
+        // Get current streaming session info (you may need to adjust this based on your streaming service)
+        streamingInfo = {
+          hasActiveSession: false, // This would come from streaming service
+          lastWatchPosition: 0,    // This would come from watch history
+          availableQualities: ['480p', '720p', '1080p', '4K'], // Default qualities
+          profileId: req.activeProfile.id
+        };
+      }
+
+      // Format response with additional metadata
+      const response = {
+        success: true,
+        data: {
+          ...content.toJSON(),
+          streamingInfo,
+          totalSeasons: content.seasons ? content.seasons.length : 0,
+          totalEpisodes: content.seasons 
+            ? content.seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0)
+            : 0,
+          contentType: content.type,
+          isSeriesComplete: content.type === 'series' 
+            ? content.seasons?.every(season => season.status === 'completed')
+            : null
+        },
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
+      };
+
+      res.json(response);
     } catch (error) {
       logger.error('Get content by ID error:', error);
       res.status(500).json({
