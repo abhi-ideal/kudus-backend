@@ -42,8 +42,14 @@ const Episode = sequelize.define('Episode', {
     comment: 'Duration in minutes'
   },
   thumbnailUrl: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {
+      thumbnail: null,
+      medium: null,
+      hd: null,
+      original: null
+    }
   },
   videoUrl: {
     type: DataTypes.TEXT,

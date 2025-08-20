@@ -53,8 +53,14 @@ const Content = sequelize.define('Content', {
     defaultValue: []
   },
   thumbnailUrl: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {
+      thumbnail: null,
+      medium: null,
+      hd: null,
+      original: null
+    }
   },
   posterImages: {
     type: DataTypes.JSON,
