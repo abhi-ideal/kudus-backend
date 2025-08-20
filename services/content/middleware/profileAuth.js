@@ -1,3 +1,4 @@
+
 const { verifyFirebaseToken } = require('./auth');
 
 /**
@@ -6,12 +7,6 @@ const { verifyFirebaseToken } = require('./auth');
  */
 const profileAuth = async (req, res, next) => {
   try {
-    const { profile_id } = req.query || req.body;
-
-    if (!profile_id) {
-      return next(); // Profile ID is optional, continue without profile context
-    }
-
     // Verify Firebase token first
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -26,40 +21,38 @@ const profileAuth = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    // Check if profile_id is provided in query/body or use the one from Firebase claims
-    let activeProfileId = profile_id;
-
-    // If no profile_id provided, try to get from Firebase custom claims
-    if (!activeProfileId && decodedToken.profile_id) {
-      activeProfileId = decodedToken.profile_id;
+    // Priority order: token claims > query/body parameters
+    let activeProfileId = decodedToken.profile_id || decodedToken.default_profile_id;
+    
+    // Fallback to query/body parameters if not in token
+    if (!activeProfileId) {
+      const { profile_id } = req.query || req.body;
+      activeProfileId = profile_id;
     }
 
-    // If still no profile_id, check for default_profile_id in claims
-    if (!activeProfileId && decodedToken.default_profile_id) {
-      activeProfileId = decodedToken.default_profile_id;
+    if (!activeProfileId) {
+      return next(); // Profile ID is optional, continue without profile context
     }
 
-    if (activeProfileId) {
-      // Basic profile validation - ensure profile_id format is valid
-      if (!activeProfileId.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid profile ID format'
-        });
-      }
+    // Basic profile validation - ensure profile_id format is valid
+    if (!activeProfileId.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid profile ID format'
+      });
+    }
 
-      // Check if it's a child profile
-      const isChildProfile = activeProfileId.toLowerCase().includes('child');
+    // Check if it's a child profile
+    const isChildProfile = activeProfileId.toLowerCase().includes('child');
 
     // Add profile context to request
-      req.activeProfile = {
-        id: activeProfileId,
-        userId: userId,
-        isChild: isChildProfile,
-        preferences: {},
-        fromClaims: !profile_id // Indicates if profile came from Firebase claims
-      };
-    }
+    req.activeProfile = {
+      id: activeProfileId,
+      userId: userId,
+      isChild: isChildProfile,
+      preferences: {},
+      fromToken: !!(decodedToken.profile_id || decodedToken.default_profile_id) // Indicates if profile came from token
+    };
 
     req.user = decodedToken;
     next();

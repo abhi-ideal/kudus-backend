@@ -1,3 +1,4 @@
+
 const profileService = require('../services/profileService');
 
 /**
@@ -5,19 +6,38 @@ const profileService = require('../services/profileService');
  */
 const profileAuth = async (req, res, next) => {
   try {
-    const { profile_id } = req.query || req.body;
+    // Verify Firebase token first
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'No authentication token provided'
+      });
+    }
 
-    if (!profile_id) {
+    const token = authHeader.split(' ')[1];
+    const admin = require('firebase-admin');
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const userId = decodedToken.uid;
+
+    // Priority order: token claims > query/body parameters
+    let activeProfileId = decodedToken.profile_id || decodedToken.default_profile_id;
+    
+    // Fallback to query/body parameters if not in token
+    if (!activeProfileId) {
+      const { profile_id } = req.query || req.body;
+      activeProfileId = profile_id;
+    }
+
+    if (!activeProfileId) {
       return next(); // Profile ID is optional, continue without profile context
     }
 
     // Get user's profile IDs from JWT token or session
-    // In a real implementation, these would be included in the JWT token
-    const userId = req.user.uid;
     const userProfileIds = await profileService.getUserProfileIds(userId);
 
     // Validate profile ownership without SQL query
-    const isValidProfile = profileService.validateProfileOwnership(profile_id, userProfileIds);
+    const isValidProfile = profileService.validateProfileOwnership(activeProfileId, userProfileIds);
 
     if (!isValidProfile) {
       return res.status(403).json({
@@ -27,7 +47,7 @@ const profileAuth = async (req, res, next) => {
     }
 
     // Get profile details for child restrictions
-    const profile = await profileService.getProfileById(profile_id, userId);
+    const profile = await profileService.getProfileById(activeProfileId, userId);
 
     if (!profile) {
       return res.status(404).json({
@@ -40,9 +60,11 @@ const profileAuth = async (req, res, next) => {
     req.activeProfile = {
       id: profile.id,
       isChild: profile.isChild,
-      preferences: profile.preferences
+      preferences: profile.preferences,
+      fromToken: !!(decodedToken.profile_id || decodedToken.default_profile_id)
     };
 
+    req.user = decodedToken;
     next();
   } catch (error) {
     console.error('Profile auth error:', error);
