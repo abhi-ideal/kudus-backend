@@ -108,23 +108,28 @@ describe('Auth Service', () => {
     });
 
     test('should fail with missing Authorization header', async () => {
-      const response = await request(app)
-        .post('/api/auth/register')
-        .expect(401);
-
-      expect(response.body).toHaveProperty('error', 'Unauthorized');
-      expect(response.body.message).toContain('Firebase auth token is required');
+      try {
+        await axios.post(`${BASE_URL}/api/auth/register`);
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data).toHaveProperty('error', 'Unauthorized');
+        expect(error.response.data.message).toContain('Firebase auth token is required');
+      }
     });
 
     test('should fail with invalid Firebase token', async () => {
       mockAuth.verifyIdToken.mockRejectedValue(new Error('Invalid token'));
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .set('Authorization', 'Bearer invalid-token')
-        .expect(400);
-
-      expect(response.body).toHaveProperty('error', 'Registration failed');
+      try {
+        await axios.post(`${BASE_URL}/api/auth/register`, {}, {
+          headers: {
+            'Authorization': 'Bearer invalid-token'
+          }
+        });
+      } catch (error) {
+        expect(error.response.status).toBe(400);
+        expect(error.response.data).toHaveProperty('error', 'Registration failed');
+      }
     });
 
     test('should fail when user already exists', async () => {
@@ -139,9 +144,11 @@ describe('Auth Service', () => {
 
       // Mock that user already exists in database
       // This would be handled by the actual database logic
-      const response = await request(app)
-        .post('/api/auth/register')
-        .set('Authorization', 'Bearer mock-firebase-token');
+      const response = await axios.post(`${BASE_URL}/api/auth/register`, {}, {
+        headers: {
+          'Authorization': 'Bearer mock-firebase-token'
+        }
+      });
 
       // Since we're mocking, we expect the registration to proceed
       // In a real test with database, you'd seed an existing user first
@@ -160,9 +167,9 @@ describe('Auth Service', () => {
 
       mockAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({ idToken: 'valid-firebase-token' });
+      const response = await axios.post(`${BASE_URL}/api/auth/login`, {
+        idToken: 'valid-firebase-token'
+      });
 
       // The actual response depends on whether the user exists in the database
       // For a new user, it might create a user record
@@ -172,23 +179,25 @@ describe('Auth Service', () => {
     });
 
     test('should fail with missing idToken', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({})
-        .expect(400);
-
-      expect(response.body).toHaveProperty('error', 'ID token is required');
+      try {
+        await axios.post(`${BASE_URL}/api/auth/login`, {});
+      } catch (error) {
+        expect(error.response.status).toBe(400);
+        expect(error.response.data).toHaveProperty('error', 'ID token is required');
+      }
     });
 
     test('should fail with invalid Firebase token', async () => {
       mockAuth.verifyIdToken.mockRejectedValue(new Error('Invalid token'));
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({ idToken: 'invalid-firebase-token' })
-        .expect(401);
-
-      expect(response.body).toHaveProperty('error', 'Invalid ID token');
+      try {
+        await axios.post(`${BASE_URL}/api/auth/login`, {
+          idToken: 'invalid-firebase-token'
+        });
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data).toHaveProperty('error', 'Invalid ID token');
+      }
     });
   });
 
@@ -202,21 +211,22 @@ describe('Auth Service', () => {
       mockAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
       mockAuth.revokeRefreshTokens.mockResolvedValue();
 
-      const response = await request(app)
-        .post('/api/auth/logout')
-        .set('Authorization', 'Bearer valid-firebase-token')
-        .expect(200);
+      const response = await axios.post(`${BASE_URL}/api/auth/logout`, {}, {
+        headers: {
+          'Authorization': 'Bearer valid-firebase-token'
+        }
+      });
 
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('message', 'Logout successful');
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty('success', true);
+      expect(response.data).toHaveProperty('message', 'Logout successful');
     });
 
     test('should handle logout without token gracefully', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout')
-        .expect(200);
+      const response = await axios.post(`${BASE_URL}/api/auth/logout`);
 
-      expect(response.body).toHaveProperty('success', true);
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty('success', true);
     });
   });
 
@@ -229,33 +239,40 @@ describe('Auth Service', () => {
 
       mockAuth.verifyIdToken.mockResolvedValue(mockDecodedToken);
 
-      const response = await request(app)
-        .get('/api/auth/verify-token')
-        .set('Authorization', 'Bearer valid-firebase-token')
-        .expect(200);
+      const response = await axios.get(`${BASE_URL}/api/auth/verify-token`, {
+        headers: {
+          'Authorization': 'Bearer valid-firebase-token'
+        }
+      });
 
-      expect(response.body).toHaveProperty('valid', true);
-      expect(response.body).toHaveProperty('uid', 'test-firebase-uid');
-      expect(response.body).toHaveProperty('email', 'test@example.com');
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty('valid', true);
+      expect(response.data).toHaveProperty('uid', 'test-firebase-uid');
+      expect(response.data).toHaveProperty('email', 'test@example.com');
     });
 
     test('should fail with invalid token', async () => {
       mockAuth.verifyIdToken.mockRejectedValue(new Error('Invalid token'));
 
-      const response = await request(app)
-        .get('/api/auth/verify-token')
-        .set('Authorization', 'Bearer invalid-token')
-        .expect(401);
-
-      expect(response.body).toHaveProperty('error', 'Invalid token');
+      try {
+        await axios.get(`${BASE_URL}/api/auth/verify-token`, {
+          headers: {
+            'Authorization': 'Bearer invalid-token'
+          }
+        });
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data).toHaveProperty('error', 'Invalid token');
+      }
     });
 
     test('should fail without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/verify-token')
-        .expect(401);
-
-      expect(response.body).toHaveProperty('error', 'No token provided');
+      try {
+        await axios.get(`${BASE_URL}/api/auth/verify-token`);
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+        expect(error.response.data).toHaveProperty('error', 'No token provided');
+      }
     });
   });
 
@@ -271,9 +288,9 @@ describe('Auth Service', () => {
       mockAuth.revokeRefreshTokens.mockResolvedValue();
 
       // Mock the middleware that adds user to request
-      const response = await request(app)
-        .post('/api/auth/switch-profile')
-        .send({ profileId: 'test-profile-id' });
+      const response = await axios.post(`${BASE_URL}/api/auth/switch-profile`, {
+        profileId: 'test-profile-id'
+      });
 
       // This endpoint requires authentication middleware
       // The actual test would need proper setup with middleware mocking

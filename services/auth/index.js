@@ -63,6 +63,9 @@ app.use('*', (req, res) => {
 // Lambda handler
 module.exports.handler = serverless(app);
 
+// Export app for testing
+module.exports = app;
+
 // For local development
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.AUTH_SERVICE_PORT || 3001;
