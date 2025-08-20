@@ -103,6 +103,12 @@ Episode.associate = (models) => {
     foreignKey: 'seriesId',
     as: 'series'
   });
+  if (models.WatchHistory) {
+    Episode.hasMany(models.WatchHistory, {
+      foreignKey: 'episodeId',
+      as: 'watchHistory'
+    });
+  }
 };
 
 module.exports = Episode;

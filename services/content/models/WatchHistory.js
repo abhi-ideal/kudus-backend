@@ -55,7 +55,19 @@ const WatchHistory = sequelize.define('WatchHistory', {
 });
 
 // Define associations
-Content.hasMany(WatchHistory, { foreignKey: 'contentId', as: 'watchHistory' });
-WatchHistory.belongsTo(Content, { foreignKey: 'contentId', as: 'content' });
+WatchHistory.associate = (models) => {
+  if (models.Content) {
+    WatchHistory.belongsTo(models.Content, { 
+      foreignKey: 'contentId', 
+      as: 'content' 
+    });
+  }
+  if (models.Episode) {
+    WatchHistory.belongsTo(models.Episode, { 
+      foreignKey: 'episodeId', 
+      as: 'episode' 
+    });
+  }
+};
 
 module.exports = WatchHistory;

@@ -13,7 +13,8 @@ const models = {
   Content,
   Season,
   Episode,
-  Watchlist
+  Watchlist,
+  WatchHistory: require('./models/WatchHistory')
 };
 
 // Set up associations
@@ -146,7 +147,17 @@ const contentController = {
                 attributes: { 
                   exclude: ['s3Key'],
                   include: ['views', 'likes'] // Include episode-specific metrics
-                }
+                },
+                include: req.activeProfile?.id ? [
+                  {
+                    model: require('./models/WatchHistory'),
+                    as: 'watchHistory',
+                    where: { profileId: req.activeProfile.id },
+                    required: false,
+                    order: [['watchedAt', 'DESC']],
+                    limit: 1
+                  }
+                ] : []
               }
             ]
           }
@@ -526,7 +537,17 @@ const contentController = {
             limit: parseInt(limit),
             offset: offset,
             order: [['episodeNumber', 'ASC']],
-            attributes: { exclude: ['s3Key'] }
+            attributes: { exclude: ['s3Key'] },
+            include: req.activeProfile?.id ? [
+              {
+                model: require('./models/WatchHistory'),
+                as: 'watchHistory',
+                where: { profileId: req.activeProfile.id },
+                required: false,
+                order: [['watchedAt', 'DESC']],
+                limit: 1
+              }
+            ] : []
           }
         ]
       });
@@ -592,6 +613,16 @@ const contentController = {
             ]
           }
         ],
+        include: req.activeProfile?.id ? [
+          {
+            model: require('./models/WatchHistory'),
+            as: 'watchHistory',
+            where: { profileId: req.activeProfile.id },
+            required: false,
+            order: [['watchedAt', 'DESC']],
+            limit: 1
+          }
+        ] : [],
         attributes: { exclude: ['s3Key'] }
       });
 
