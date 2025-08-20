@@ -1,4 +1,3 @@
-
 const Content = require('../../content/models/Content');
 const Season = require('../../content/models/Season');
 const Episode = require('../../content/models/Episode');
@@ -45,8 +44,7 @@ const contentController = {
         poster,
         thumbnail,
         trailerUrl,
-        isActive: true,
-        views: 0
+        isActive: true
       });
 
       logger.info(`Admin created content: ${content.id}`);
@@ -326,8 +324,7 @@ const contentController = {
         releaseDate,
         thumbnail,
         videoUrl,
-        isActive: true,
-        views: 0
+        isActive: true
       });
 
       logger.info(`Admin created episode: ${episode.id} for season: ${seasonId}`);
