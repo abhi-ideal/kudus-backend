@@ -153,8 +153,7 @@ const contentController = {
                     model: models.WatchHistory,
                     as: 'watchHistory',
                     where: { 
-                      profileId: req.activeProfile.id,
-                      episodeId: sequelize.col('episodes.id')
+                      profileId: req.activeProfile.id
                     },
                     required: false,
                     order: [['watchedAt', 'DESC']],
@@ -546,8 +545,7 @@ const contentController = {
                 model: models.WatchHistory,
                 as: 'watchHistory',
                 where: { 
-                  profileId: req.activeProfile.id,
-                  episodeId: sequelize.col('episodes.id')
+                  profileId: req.activeProfile.id
                 },
                 required: false,
                 order: [['watchedAt', 'DESC']],
