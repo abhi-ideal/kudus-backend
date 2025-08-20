@@ -46,14 +46,6 @@ const User = sequelize.define('User', {
     allowNull: true,
     defaultValue: {}
   },
-  blockedReason: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  blockedAt: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
   parentalControls: {
     type: DataTypes.JSON,
     defaultValue: {}
