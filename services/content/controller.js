@@ -2,8 +2,8 @@ const Content = require('./models/Content');
 const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
 const logger = require('./utils/logger');
-const { Op, sequelize } = require('sequelize');
-const db = require('./config/database');
+const { Op } = require('sequelize');
+const sequelize = require('./config/database');
 
 const contentController = {
   async getAllContent(req, res) {
@@ -53,14 +53,12 @@ const contentController = {
           // Globally available content not restricted in user's country
           {
             isGloballyAvailable: true,
-            restrictedCountries: {
-              [Op.not]: sequelize.jsonPathExists('restrictedCountries', '$[*] ? (@ == "US")')
-            }
+            [Op.not]: sequelize.literal(`JSON_CONTAINS(restrictedCountries, '"${userCountry}"')`)
           },
           // Content specifically available in user's country
           {
             isGloballyAvailable: false,
-            availableCountries: sequelize.jsonPathExists('availableCountries', '$[*] ? (@ == "US")')
+            availableCountries: sequelize.literal(`JSON_CONTAINS(availableCountries, '"${userCountry}"')`)
           }
         ];
       }
