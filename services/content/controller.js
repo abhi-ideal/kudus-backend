@@ -1,10 +1,27 @@
 const Content = require('./models/Content');
+const Season = require('./models/Season');
+const Episode = require('./models/Episode');
 const Watchlist = require('./models/Watchlist');
 const awsService = require('./services/awsService');
 const logger = require('./utils/logger');
 const { Op } = require('sequelize');
 const sequelize = require('./config/database');
 const db = require('./config/database');
+
+// Initialize associations
+const models = {
+  Content,
+  Season,
+  Episode,
+  Watchlist
+};
+
+// Set up associations
+Object.keys(models).forEach(modelName => {
+  if (models[modelName].associate) {
+    models[modelName].associate(models);
+  }
+});
 
 const contentController = {
   async getAllContent(req, res) {
@@ -109,8 +126,6 @@ const contentController = {
   async getContentById(req, res) {
     try {
       const { id } = req.params;
-      const Season = require('./models/Season');
-      const Episode = require('./models/Episode');
       
       const content = await Content.findByPk(id, {
         attributes: { exclude: ['s3Key', 'videoQualities'] },

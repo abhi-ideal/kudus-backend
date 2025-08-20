@@ -66,14 +66,18 @@ const Season = sequelize.define('Season', {
 
 // Define associations
 Season.associate = (models) => {
-  Season.belongsTo(models.Content, {
-    foreignKey: 'seriesId',
-    as: 'series'
-  });
-  Season.hasMany(models.Episode, {
-    foreignKey: 'seasonId',
-    as: 'episodes'
-  });
+  if (models.Content) {
+    Season.belongsTo(models.Content, {
+      foreignKey: 'seriesId',
+      as: 'series'
+    });
+  }
+  if (models.Episode) {
+    Season.hasMany(models.Episode, {
+      foreignKey: 'seasonId',
+      as: 'episodes'
+    });
+  }
 };
 
 module.exports = Season;

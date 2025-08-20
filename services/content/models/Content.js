@@ -115,29 +115,37 @@ const Content = sequelize.define('Content', {
 
 // Define associations
 Content.associate = (models) => {
-  Content.belongsTo(models.ContentItem, {
-    foreignKey: 'itemId',
-    as: 'item'
-  });
+  if (models.ContentItem) {
+    Content.belongsTo(models.ContentItem, {
+      foreignKey: 'itemId',
+      as: 'item'
+    });
+  }
   
   // Series associations
-  Content.hasMany(models.Season, {
-    foreignKey: 'seriesId',
-    as: 'seasons'
-  });
+  if (models.Season) {
+    Content.hasMany(models.Season, {
+      foreignKey: 'seriesId',
+      as: 'seasons'
+    });
+  }
   
-  Content.hasMany(models.Episode, {
-    foreignKey: 'seriesId',
-    as: 'episodes'
-  });
+  if (models.Episode) {
+    Content.hasMany(models.Episode, {
+      foreignKey: 'seriesId',
+      as: 'episodes'
+    });
+  }
 
   // Watchlist association
-  Content.hasMany(models.Watchlist, {
-    foreignKey: 'contentId',
-    as: 'watchlistEntries'
-  });
+  if (models.Watchlist) {
+    Content.hasMany(models.Watchlist, {
+      foreignKey: 'contentId',
+      as: 'watchlistEntries'
+    });
+  }
 
-  // Watch history association (if you have this model)
+  // Watch history association
   if (models.WatchHistory) {
     Content.hasMany(models.WatchHistory, {
       foreignKey: 'contentId',
