@@ -119,9 +119,6 @@ const contentController = {
         });
       }
 
-      // Increment view count
-      await content.increment('views');
-
       res.json(content);
     } catch (error) {
       logger.error('Get content by ID error:', error);
