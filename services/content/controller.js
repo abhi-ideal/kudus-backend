@@ -2,22 +2,11 @@ const Content = require('./models/Content');
 const Season = require('./models/Season');
 const Episode = require('./models/Episode');
 const Watchlist = require('./models/Watchlist');
-const awsService = require('./services/awsService');
-const logger = require('./utils/logger');
-const { Op } = require('sequelize');
-const sequelize = require('./config/database');
-const db = require('./config/database');
+const WatchHistory = require('./models/WatchHistory');
+const ContentItem = require('./models/ContentItem');
 
 // Initialize associations
-const models = {
-  Content,
-  Season,
-  Episode,
-  Watchlist,
-  WatchHistory: require('./models/WatchHistory')
-};
-
-// Set up associations
+const models = { Content, ContentItem, Season, Episode, Watchlist, WatchHistory };
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     models[modelName].associate(models);
@@ -27,14 +16,14 @@ Object.keys(models).forEach(modelName => {
 const contentController = {
   async getAllContent(req, res) {
     try {
-      const { 
-        page = 1, 
-        limit = 20, 
-        type, 
-        genre, 
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre,
         language,
         sortBy = 'createdAt',
-        sortOrder = 'DESC' 
+        sortOrder = 'DESC'
       } = req.query;
 
       const offset = (page - 1) * limit;
@@ -92,7 +81,7 @@ const contentController = {
         offset: offset,
         order: [[sortBy, sortOrder]],
         attributes: [
-          'id', 'title', 'description', 'type', 'genre', 
+          'id', 'title', 'description', 'type', 'genre',
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
           'thumbnailUrl', 'trailerUrl', 'status', 'createdAt'
@@ -127,7 +116,7 @@ const contentController = {
   async getContentById(req, res) {
     try {
       const { id } = req.params;
-      
+
       const content = await Content.findByPk(id, {
         attributes: { exclude: ['s3Key', 'videoQualities'] },
         include: [
@@ -144,14 +133,14 @@ const contentController = {
                 where: { isActive: true },
                 required: false,
                 order: [['episodeNumber', 'ASC']],
-                attributes: { 
+                attributes: {
                   exclude: ['s3Key']
                 },
                 include: req.activeProfile?.id ? [
                   {
                     model: models.WatchHistory,
                     as: 'watchHistory',
-                    where: { 
+                    where: {
                       profileId: req.activeProfile.id
                     },
                     required: false,
@@ -202,11 +191,11 @@ const contentController = {
           ...content.toJSON(),
           streamingInfo,
           totalSeasons: content.seasons ? content.seasons.length : 0,
-          totalEpisodes: content.seasons 
+          totalEpisodes: content.seasons
             ? content.seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0)
             : 0,
           contentType: content.type,
-          isSeriesComplete: content.type === 'series' 
+          isSeriesComplete: content.type === 'series'
             ? content.seasons?.every(season => season.status === 'completed')
             : null
         },
@@ -344,17 +333,17 @@ const contentController = {
 
   async getKidsContent(req, res) {
     try {
-      const { 
-        page = 1, 
-        limit = 20, 
-        type, 
+      const {
+        page = 1,
+        limit = 20,
+        type,
         genre,
         sortBy = 'createdAt',
-        sortOrder = 'DESC' 
+        sortOrder = 'DESC'
       } = req.query;
 
       const offset = (page - 1) * limit;
-      const whereClause = { 
+      const whereClause = {
         isActive: true,
         // Only kid-friendly age ratings
         ageRating: {
@@ -386,7 +375,7 @@ const contentController = {
         offset: offset,
         order: [[sortBy, sortOrder]],
         attributes: [
-          'id', 'title', 'description', 'type', 'genre', 
+          'id', 'title', 'description', 'type', 'genre',
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
           'thumbnailUrl', 'trailerUrl', 'status', 'createdAt'
@@ -429,10 +418,10 @@ const contentController = {
       const Episode = require('./models/Episode');
 
       const seriesData = await Content.findOne({
-        where: { 
-          id, 
-          type: 'series', 
-          isActive: true 
+        where: {
+          id,
+          type: 'series',
+          isActive: true
         },
         include: [
           {
@@ -499,10 +488,10 @@ const contentController = {
 
       // Verify series exists and user has access
       const series = await Content.findOne({
-        where: { 
-          id: seriesId, 
-          type: 'series', 
-          isActive: true 
+        where: {
+          id: seriesId,
+          type: 'series',
+          isActive: true
         }
       });
 
@@ -525,10 +514,10 @@ const contentController = {
       }
 
       const season = await Season.findOne({
-        where: { 
-          seriesId, 
-          seasonNumber: parseInt(seasonNumber), 
-          isActive: true 
+        where: {
+          seriesId,
+          seasonNumber: parseInt(seasonNumber),
+          isActive: true
         },
         include: [
           {
@@ -544,7 +533,7 @@ const contentController = {
               {
                 model: models.WatchHistory,
                 as: 'watchHistory',
-                where: { 
+                where: {
                   profileId: req.activeProfile.id
                 },
                 required: false,
@@ -566,9 +555,9 @@ const contentController = {
 
       // Get total episodes count for pagination
       const totalEpisodes = await Episode.count({
-        where: { 
-          seasonId: season.id, 
-          isActive: true 
+        where: {
+          seasonId: season.id,
+          isActive: true
         }
       });
 
@@ -602,22 +591,10 @@ const contentController = {
       const Content = require('./models/Content');
 
       const episode = await Episode.findOne({
-        where: { 
-          id: episodeId, 
-          isActive: true 
+        where: {
+          id: episodeId,
+          isActive: true
         },
-        include: [
-          {
-            model: Season,
-            as: 'season',
-            include: [
-              {
-                model: Content,
-                as: 'series'
-              }
-            ]
-          }
-        ],
         include: [
           {
             model: Season,
@@ -633,7 +610,7 @@ const contentController = {
             {
               model: models.WatchHistory,
               as: 'watchHistory',
-              where: { 
+              where: {
                 profileId: req.activeProfile.id,
                 episodeId: episodeId
               },
@@ -700,9 +677,9 @@ const contentController = {
 
       // Check if content exists and is active
       const content = await Content.findOne({
-        where: { 
-          id: contentId, 
-          isActive: true 
+        where: {
+          id: contentId,
+          isActive: true
         }
       });
 
@@ -726,9 +703,9 @@ const contentController = {
 
       // Check if already in watchlist
       const existingEntry = await Watchlist.findOne({
-        where: { 
-          profileId, 
-          contentId 
+        where: {
+          profileId,
+          contentId
         }
       });
 
@@ -777,9 +754,9 @@ const contentController = {
       }
 
       const deletedRows = await Watchlist.destroy({
-        where: { 
-          profileId, 
-          contentId 
+        where: {
+          profileId,
+          contentId
         }
       });
 
@@ -806,12 +783,12 @@ const contentController = {
   async getWatchlist(req, res) {
     try {
       const profileId = req.activeProfile?.id;
-      const { 
-        page = 1, 
-        limit = 20, 
+      const {
+        page = 1,
+        limit = 20,
         type,
         sortBy = 'addedAt',
-        sortOrder = 'DESC' 
+        sortOrder = 'DESC'
       } = req.query;
 
       if (!profileId) {
@@ -841,7 +818,7 @@ const contentController = {
             as: 'content',
             where: whereClause,
             attributes: [
-              'id', 'title', 'description', 'type', 'genre', 
+              'id', 'title', 'description', 'type', 'genre',
               'duration', 'releaseYear', 'rating', 'ageRating',
               'language', 'thumbnailUrl', 'trailerUrl', 'status',
               'posterImages', 'characters'
@@ -896,9 +873,9 @@ const contentController = {
       }
 
       const watchlistEntry = await Watchlist.findOne({
-        where: { 
-          profileId, 
-          contentId 
+        where: {
+          profileId,
+          contentId
         }
       });
 
@@ -921,14 +898,14 @@ const contentController = {
   // Admin functions
   async getContent(req, res) {
     try {
-      const { 
-        page = 1, 
-        limit = 20, 
-        type, 
-        genre, 
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre,
         status,
         sortBy = 'createdAt',
-        sortOrder = 'DESC' 
+        sortOrder = 'DESC'
       } = req.query;
 
       const offset = (page - 1) * limit;
@@ -944,7 +921,7 @@ const contentController = {
         offset: offset,
         order: [[sortBy, sortOrder]],
         attributes: [
-          'id', 'title', 'description', 'type', 'genre', 
+          'id', 'title', 'description', 'type', 'genre',
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'subtitles', 'cast', 'director',
           'thumbnailUrl', 'trailerUrl', 'status', 'createdAt',
@@ -995,10 +972,10 @@ const contentController = {
             limit: 10, // Max 10 content per item
             required: false, // Include items even if they have no content
             attributes: [
-              'id', 'title', 'description', 'type', 'genre', 
+              'id', 'title', 'description', 'type', 'genre',
               'duration', 'releaseYear', 'rating', 'ageRating',
               'language', 'subtitles', 'cast', 'director',
-              'thumbnailUrl', 'posterImages', 'trailerUrl', 
+              'thumbnailUrl', 'posterImages', 'trailerUrl',
               'status', 'createdAt'
             ],
             order: [['createdAt', 'DESC']]
@@ -1016,7 +993,7 @@ const contentController = {
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         filteredItems = items.map(item => ({
           ...item.toJSON(),
-          content: item.content.filter(content => 
+          content: item.content.filter(content =>
             ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
             content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
           )
