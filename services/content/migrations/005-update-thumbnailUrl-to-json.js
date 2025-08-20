@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -8,10 +7,11 @@ module.exports = {
       type: Sequelize.JSON,
       allowNull: true,
       defaultValue: {
-        thumbnail: null,
-        medium: null,
-        hd: null,
-        original: null
+        "150x150": null,
+        "300x300": null,
+        "500x500": null,
+        "800x800": null,
+        "1080x1080": null
       }
     });
 
@@ -20,10 +20,11 @@ module.exports = {
       type: Sequelize.JSON,
       allowNull: true,
       defaultValue: {
-        thumbnail: null,
-        medium: null,
-        hd: null,
-        original: null
+        "150x150": null,
+        "300x300": null,
+        "500x500": null,
+        "800x800": null,
+        "1080x1080": null
       }
     });
   },
