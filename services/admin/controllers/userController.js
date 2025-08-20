@@ -1,4 +1,3 @@
-
 // Import models from the user service
 const User = require('../../user/models/User');
 const UserProfile = require('../../user/models/UserProfile');
@@ -337,10 +336,13 @@ const userController = {
 
   async getUserStatistics(req, res) {
     try {
-      const totalUsers = await User.count();
-      const activeUsers = await User.count({ where: { isActive: true } });
-      const blockedUsers = await User.count({ where: { isActive: false } });
-      
+      const [totalUsers, activeUsers, blockedUsers, premiumUsers] = await Promise.all([
+      User.count(),
+      User.count({ where: { isActive: true } }),
+      User.count({ where: { isActive: false } }),
+      User.count({ where: { subscription: 'premium' } })
+    ]);
+
       const subscriptionBreakdown = await User.findAll({
         attributes: [
           'subscriptionType',

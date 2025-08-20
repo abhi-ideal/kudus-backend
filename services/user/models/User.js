@@ -46,20 +46,6 @@ const User = sequelize.define('User', {
     allowNull: true,
     defaultValue: {}
   },
-  status: {
-    type: DataTypes.ENUM('active', 'blocked', 'inactive'),
-    allowNull: false,
-    defaultValue: 'active'
-  },
-  subscription: {
-    type: DataTypes.ENUM('free', 'premium', 'family'),
-    allowNull: false,
-    defaultValue: 'free'
-  },
-  subscriptionEndDate: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
   blockedReason: {
     type: DataTypes.TEXT,
     allowNull: true
