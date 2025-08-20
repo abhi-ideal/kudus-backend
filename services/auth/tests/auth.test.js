@@ -3,8 +3,9 @@ const axios = require('axios');
 const path = require('path');
 
 // Load environment variables
-require('dotenv').config({ 
-  path: path.join(__dirname, '../../../.env')
+require('dotenv').config({
+  path: path.join(__dirname, '.env.test'),
+  override: true
 });
 
 // Import the app - using real Firebase and database

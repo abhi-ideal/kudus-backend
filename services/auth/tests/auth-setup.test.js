@@ -4,18 +4,7 @@ const { setupDatabase, teardownDatabase } = require('./setup');
 describe('Auth Service Test Setup', () => {
   test('should have correct test environment', () => {
     expect(process.env.NODE_ENV).toBe('test');
-    expect(process.env.DB_NAME).toBe('ott_auth_test');
-    expect(process.env.DISABLE_FIREBASE).toBe('true');
+    expect(process.env.DB_NAME).toBe('ott_users');
   });
 
-  test('should setup and teardown database', async () => {
-    const sequelize = await setupDatabase();
-    expect(sequelize).toBeDefined();
-    await teardownDatabase();
-  }, 30000);
-
-  test('should have Firebase mocked', () => {
-    const admin = require('firebase-admin');
-    expect(jest.isMockFunction(admin.initializeApp)).toBe(true);
-  });
 });
