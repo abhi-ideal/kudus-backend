@@ -19,6 +19,13 @@ const commonRoutes = require('./services/common/routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy configuration for rate limiting
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Trust first proxy only
+} else {
+  app.set('trust proxy', 'loopback'); // Trust only loopback for development
+}
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -26,10 +33,11 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting with secure proxy settings
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  trustProxy: process.env.NODE_ENV === 'production' ? 1 : false
 });
 app.use(limiter);
 

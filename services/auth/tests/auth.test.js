@@ -39,6 +39,15 @@ describe('Auth Service', () => {
   let server;
 
   beforeAll(async () => {
+    // Set up test database
+    const { sequelize } = require('../config/database');
+    try {
+      await sequelize.sync({ force: true }); // This will create all tables
+      console.log('Test database tables created successfully');
+    } catch (error) {
+      console.error('Failed to create test database tables:', error);
+    }
+
     // Start the server for testing
     server = app.listen(3001, '0.0.0.0');
     // Wait for server to be ready

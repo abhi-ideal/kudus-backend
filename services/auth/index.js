@@ -9,8 +9,12 @@ const authRoutes = require('./routes');
 
 const app = express();
 
-// Trust proxy for rate limiting in production
-app.set('trust proxy', true);
+// Trust proxy for rate limiting in production - more secure configuration
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // Trust first proxy only
+} else {
+  app.set('trust proxy', 'loopback'); // Trust only loopback for development
+}
 
 // Security middleware
 app.use(helmet());
@@ -19,10 +23,11 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting with secure proxy settings
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 100,
+  trustProxy: process.env.NODE_ENV === 'production' ? 1 : false
 });
 app.use(limiter);
 
