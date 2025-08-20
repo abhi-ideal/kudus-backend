@@ -1,4 +1,3 @@
-
 'use strict';
 const { v4: uuidv4 } = require('uuid');
 
@@ -6,20 +5,20 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.bulkInsert('content_items', [
       {
-        id: uuidv4(),
-        name: 'Drama Delights',
-        slug: 'drama-delights',
-        description: 'Compelling drama series and movies that touch the heart',
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        name: 'Sparks Your Digital Superstars',
+        slug: 'sparks-your-digital-superstars',
+        description: 'Digital entertainment that sparks your imagination',
         displayOrder: 1,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        id: uuidv4(),
-        name: 'Sparks Your Digital Superstars',
-        slug: 'sparks-your-digital-superstars',
-        description: 'Content featuring popular digital influencers and creators',
+        id: '550e8400-e29b-41d4-a716-446655440002',
+        name: 'Mystery & Thriller Collection',
+        slug: 'mystery-thriller-collection',
+        description: 'Edge-of-your-seat mysteries and thrilling adventures',
         displayOrder: 2,
         isActive: true,
         createdAt: new Date(),
@@ -27,9 +26,9 @@ module.exports = {
       },
       {
         id: uuidv4(),
-        name: 'Documentary Shows',
-        slug: 'documentary-shows',
-        description: 'Educational and informative documentary content',
+        name: 'Trending Now',
+        slug: 'trending-now',
+        description: 'The hottest content everyone is watching right now',
         displayOrder: 3,
         isActive: true,
         createdAt: new Date(),

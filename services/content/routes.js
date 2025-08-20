@@ -67,6 +67,55 @@ router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsCont
 
 /**
  * @swagger
+ * /api/content/items:
+ *   get:
+ *     summary: Get content grouped by items (max 10 content per item)
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Content grouped by items retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           slug:
+ *                             type: string
+ *                           content:
+ *                             type: array
+ *                             maxItems: 10
+ */
+router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentGroupedByItems);
+
+/**
+ * @swagger
  * /api/content/{id}:
  *   get:
  *     summary: Get content by ID

@@ -974,6 +974,77 @@ const contentController = {
     }
   },
 
+  async getContentGroupedByItems(req, res) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const offset = (page - 1) * limit;
+
+      const ContentItem = require('./models/ContentItem');
+
+      // Get items with their associated content (max 10 per item)
+      const items = await ContentItem.findAll({
+        where: { isActive: true },
+        limit: parseInt(limit),
+        offset: offset,
+        order: [['displayOrder', 'ASC'], ['createdAt', 'DESC']],
+        include: [
+          {
+            model: Content,
+            as: 'content',
+            where: { isActive: true },
+            limit: 10, // Max 10 content per item
+            required: false, // Include items even if they have no content
+            attributes: [
+              'id', 'title', 'description', 'type', 'genre', 
+              'duration', 'releaseYear', 'rating', 'ageRating',
+              'language', 'subtitles', 'cast', 'director',
+              'thumbnailUrl', 'posterImages', 'trailerUrl', 
+              'status', 'createdAt'
+            ],
+            order: [['createdAt', 'DESC']]
+          }
+        ]
+      });
+
+      // Get total count for pagination
+      const totalItems = await ContentItem.count({
+        where: { isActive: true }
+      });
+
+      // Apply profile-based filters if applicable
+      let filteredItems = items;
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        filteredItems = items.map(item => ({
+          ...item.toJSON(),
+          content: item.content.filter(content => 
+            ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
+            content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
+          )
+        }));
+      }
+
+      res.json({
+        success: true,
+        data: {
+          items: filteredItems,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(totalItems / limit),
+            totalItems: totalItems,
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Get content grouped by items error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve content grouped by items',
+        message: error.message
+      });
+    }
+  },
+
   async getContentStatistics(req, res) {
     try {
       const totalContent = await Content.count({

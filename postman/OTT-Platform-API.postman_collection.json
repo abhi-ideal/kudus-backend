@@ -419,6 +419,28 @@
           }
         },
         {
+          "name": "Get Content Grouped by Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{contentServiceUrl}}/api/content/items?page=1&limit=5",
+              "host": ["{{contentServiceUrl}}"],
+              "path": ["api", "content", "items"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Get Series Details",
           "request": {
             "method": "GET",

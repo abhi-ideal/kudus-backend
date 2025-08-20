@@ -35,4 +35,14 @@ const ContentItem = sequelize.define('ContentItem', {
   timestamps: true
 });
 
+// Define associations
+ContentItem.associate = (models) => {
+  if (models.Content) {
+    ContentItem.hasMany(models.Content, {
+      foreignKey: 'itemId',
+      as: 'content'
+    });
+  }
+};
+
 module.exports = ContentItem;
