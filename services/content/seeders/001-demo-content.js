@@ -1,3 +1,4 @@
+
 'use strict';
 const { v4: uuidv4 } = require('uuid');
 
@@ -541,10 +542,12 @@ module.exports = {
         duration: 142,
         releaseYear: 2024,
         rating: 'R',
-        ageRating: '18',
+        ageRating: 'R',
         language: 'English',
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
+        cast: JSON.stringify(['Tom Hanks', 'Matt Damon', 'Edward Burns']),
         characters: JSON.stringify(['Captain Miller', 'Lieutenant Taylor', 'Sergeant Johnson']),
+        director: 'War Director',
         thumbnailUrl: JSON.stringify({
           "150x150": "https://example.com/thumbnails/war-heroes-150x150.jpg",
           "300x300": "https://example.com/thumbnails/war-heroes-300x300.jpg",
@@ -581,16 +584,10 @@ module.exports = {
         releaseYear: 2023,
         rating: 'PG-13',
         ageRating: 'PG-13',
-        characters: JSON.stringify(['Detective Morgan', 'Professor Wilson', 'Captain Torres']),
-        posterImages: JSON.stringify({
-          thumbnail: 'https://example.com/posters/mystery-city-thumb.jpg',
-          medium: 'https://example.com/posters/mystery-city-med.jpg',
-          hd: 'https://example.com/posters/mystery-city-hd.jpg',
-          original: 'https://example.com/posters/mystery-city-orig.jpg'
-        }),
         language: 'English',
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
         cast: JSON.stringify(['Alice Cooper', 'David Wilson', 'Emma Brown']),
+        characters: JSON.stringify(['Detective Morgan', 'Professor Wilson', 'Captain Torres']),
         director: 'Mystery Master',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/lost-city-150x150.jpg',
@@ -598,6 +595,12 @@ module.exports = {
           "500x500": 'https://example.com/thumbnails/lost-city-500x500.jpg',
           "800x800": 'https://example.com/thumbnails/lost-city-800x800.jpg',
           "1080x1080": 'https://example.com/thumbnails/lost-city-1080x1080.jpg'
+        }),
+        posterImages: JSON.stringify({
+          thumbnail: 'https://example.com/posters/mystery-city-thumb.jpg',
+          medium: 'https://example.com/posters/mystery-city-med.jpg',
+          hd: 'https://example.com/posters/mystery-city-hd.jpg',
+          original: 'https://example.com/posters/mystery-city-orig.jpg'
         }),
         trailerUrl: 'https://example.com/trailers/lost-city.mp4',
         status: 'published',
@@ -882,6 +885,7 @@ module.exports = {
         language: 'English',
         subtitles: JSON.stringify(['English']),
         cast: JSON.stringify(['David Attenborough']),
+        characters: JSON.stringify(['Narrator']),
         director: 'Nature Filmmaker',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/nature-doc-150x150.jpg',
@@ -918,6 +922,7 @@ module.exports = {
         language: 'English',
         subtitles: JSON.stringify(['English', 'Spanish', 'French']),
         cast: JSON.stringify(['James Cameron', 'Sylvia Earle']),
+        characters: JSON.stringify(['Explorer', 'Marine Biologist']),
         director: 'Ocean Director',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/ocean-depths-150x150.jpg',
@@ -954,6 +959,7 @@ module.exports = {
         language: 'English',
         subtitles: JSON.stringify(['English', 'Russian', 'Mandarin']),
         cast: JSON.stringify(['Neil deGrasse Tyson', 'Buzz Aldrin']),
+        characters: JSON.stringify(['Astrophysicist', 'Astronaut']),
         director: 'Space Documentary Director',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/space-exploration-150x150.jpg',
@@ -990,6 +996,7 @@ module.exports = {
         language: 'English',
         subtitles: JSON.stringify(['English', 'Spanish', 'Italian', 'Greek']),
         cast: JSON.stringify(['Morgan Freeman', 'Mary Beard']),
+        characters: JSON.stringify(['Narrator', 'Historian']),
         director: 'History Director',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/ancient-civilizations-150x150.jpg',
@@ -1026,6 +1033,7 @@ module.exports = {
         language: 'English',
         subtitles: JSON.stringify(['English', 'Mandarin', 'Japanese', 'Korean']),
         cast: JSON.stringify(['Bill Gates', 'Steve Jobs', 'Mark Zuckerberg']),
+        characters: JSON.stringify(['Tech Pioneer', 'Innovator', 'Entrepreneur']),
         director: 'Tech Documentary Director',
         thumbnailUrl: JSON.stringify({
           "150x150": 'https://example.com/thumbnails/tech-revolution-150x150.jpg',
