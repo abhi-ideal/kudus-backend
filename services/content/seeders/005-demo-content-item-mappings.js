@@ -21,7 +21,21 @@ module.exports = {
 
     // Map content to multiple items based on genre and type
     contentRows.forEach((content, index) => {
-      const genre = JSON.parse(content.genre || '[]');
+      let genre = [];
+      try {
+        // Handle both JSON string and raw comma-separated string formats
+        if (content.genre) {
+          if (content.genre.startsWith('[') || content.genre.startsWith('{')) {
+            genre = JSON.parse(content.genre);
+          } else {
+            // Handle raw comma-separated string
+            genre = content.genre.split(',').map(g => g.trim());
+          }
+        }
+      } catch (error) {
+        console.log(`Error parsing genre for content ${content.title}: ${content.genre}`);
+        genre = [];
+      }
       const contentType = content.type;
       
       // Add to multiple relevant items
