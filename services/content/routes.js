@@ -317,6 +317,89 @@ router.get('/:contentId/watchlist-status', verifyFirebaseToken, profileAuth, con
  */
 router.get('/:id/stream', verifyFirebaseToken, detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getStreamingUrl);
 
+/**
+ * @swagger
+ * /api/content/admin/health:
+ *   get:
+ *     summary: Health check for Content Service
+ *     tags: [Admin Health]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 service:
+ *                   type: string
+ *                   example: Content Service
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
+router.get('/admin/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'Content Service',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+/**
+ * @swagger
+ * /api/content/admin/stats:
+ *   get:
+ *     summary: Get service statistics
+ *     tags: [Admin Health]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Service statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 service:
+ *                   type: string
+ *                 uptime:
+ *                   type: number
+ *                 memory:
+ *                   type: object
+ *                 database:
+ *                   type: object
+ */
+router.get('/admin/stats', async (req, res) => {
+  try {
+    const Content = require('./models/Content');
+
+    const stats = {
+      service: 'Content Service',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      database: {
+        connected: true,
+        totalContent: await Content.count()
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({
+      service: 'Content Service',
+      error: 'Failed to get stats',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Admin routes (require authentication)
 router.use(verifyFirebaseToken);
 
@@ -679,88 +762,5 @@ router.put('/admin/content/:id', validate(schemas.content), contentController.up
  *         description: Content not found
  */
 router.delete('/admin/content/:id', contentController.deleteContent);
-
-/**
- * @swagger
- * /api/admin/health:
- *   get:
- *     summary: Health check for Content Service
- *     tags: [Admin Health]
- *     responses:
- *       200:
- *         description: Service is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: healthy
- *                 service:
- *                   type: string
- *                   example: Content Service
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- */
-router.get('/admin/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    service: 'Content Service',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
-});
-
-/**
- * @swagger
- * /api/admin/stats:
- *   get:
- *     summary: Get service statistics
- *     tags: [Admin Health]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Service statistics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 service:
- *                   type: string
- *                 uptime:
- *                   type: number
- *                 memory:
- *                   type: object
- *                 database:
- *                   type: object
- */
-router.get('/admin/stats', async (req, res) => {
-  try {
-    const Content = require('./models/Content');
-
-    const stats = {
-      service: 'Content Service',
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      database: {
-        connected: true,
-        totalContent: await Content.count()
-      },
-      timestamp: new Date().toISOString()
-    };
-
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({
-      service: 'Content Service',
-      error: 'Failed to get stats',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
 
 module.exports = router;
