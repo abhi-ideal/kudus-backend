@@ -85,7 +85,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify(['CN']),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440001', // Same item as first movie
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -123,7 +122,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'GB', 'FR']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440002', // Different item for mystery content
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -161,7 +159,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440001', // Same item as first movie
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -199,7 +196,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA']),
         restrictedCountries: JSON.stringify(['DE', 'AU']),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440002', // Same item as third movie
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -237,7 +233,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440003', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -275,7 +270,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440003', // Same item as previous comedy
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -313,7 +307,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440004', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -351,7 +344,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'GB', 'FR', 'IT']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440004', // Same item as previous historical drama
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -389,7 +381,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440005', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -427,7 +418,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'BR', 'MX']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440005', // Same item as previous fantasy
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -465,7 +455,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'GB']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440006', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -503,7 +492,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US']),
         restrictedCountries: JSON.stringify(['DE', 'AU', 'GB']),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440006', // Same item as previous mystery
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -541,7 +529,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440007', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -618,7 +605,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify(['CN', 'RU']),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440008', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -656,7 +642,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440008', // Same item as previous mystery series
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -694,7 +679,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify(['CN']),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440009', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -732,7 +716,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440009', // Same item as previous fantasy series
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -770,7 +753,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440010', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -808,7 +790,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440010', // Same item as previous legal drama
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -846,7 +827,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'AU']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440011', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -884,7 +864,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440011', // Same item as previous teen drama
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -923,7 +902,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'GB', 'AU']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440012', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -960,7 +938,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440012', // Same item as previous nature doc
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -997,7 +974,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440013', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -1034,7 +1010,6 @@ module.exports = {
         availableCountries: JSON.stringify(['US', 'CA', 'GB', 'IT', 'GR']),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: false,
-        itemId: '550e8400-e29b-41d4-a716-446655440013', // Same item as previous space doc
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -1071,7 +1046,6 @@ module.exports = {
         availableCountries: JSON.stringify([]),
         restrictedCountries: JSON.stringify([]),
         isGloballyAvailable: true,
-        itemId: '550e8400-e29b-41d4-a716-446655440014', // New item
         createdAt: new Date(),
         updatedAt: new Date()
       }
