@@ -25,18 +25,15 @@ describe('Content Service', () => {
     // Get Firebase token from environment or use default
     testFirebaseToken = process.env.TEST_FIREBASE_TOKEN || 'your-test-firebase-token';
     
-    // Start the server for testing
-    server = app.listen(3002, '0.0.0.0');
-    // Wait for server to be ready
-    await new Promise(resolve => setTimeout(resolve, 2000));
+   
   });
 
-  afterAll(async () => {
-    // Close the server after tests
-    if (server) {
-      server.close();
-    }
-  });
+  // afterAll(async () => {
+  //   // Close the server after tests
+  //   if (server) {
+  //     server.close();
+  //   }
+  // });
 
   describe('Health Check', () => {
     test('GET /api/content/admin/health - should return health status', async () => {
