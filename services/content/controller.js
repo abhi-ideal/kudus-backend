@@ -1,4 +1,5 @@
-const { Op, sequelize } = require('sequelize');
+const { Op } = require('sequelize');
+const { sequelize } = require('./config/database');
 const logger = require('./utils/logger');
 const Content = require('./models/Content');
 const Season = require('./models/Season');
