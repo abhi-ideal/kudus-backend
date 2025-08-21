@@ -45,6 +45,14 @@ ContentItem.associate = (models) => {
       as: 'content'
     });
   }
+  
+  // Direct association with ContentItemMapping
+  if (models.ContentItemMapping) {
+    ContentItem.hasMany(models.ContentItemMapping, {
+      foreignKey: 'itemId',
+      as: 'itemMappings'
+    });
+  }
 };
 
 module.exports = ContentItem;

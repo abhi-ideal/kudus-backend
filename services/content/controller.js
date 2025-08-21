@@ -4,9 +4,10 @@ const Episode = require('./models/Episode');
 const Watchlist = require('./models/Watchlist');
 const WatchHistory = require('./models/WatchHistory');
 const ContentItem = require('./models/ContentItem');
+const ContentItemMapping = require('./models/ContentItemMapping');
 
 // Initialize associations
-const models = { Content, ContentItem, Season, Episode, Watchlist, WatchHistory };
+const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory };
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     models[modelName].associate(models);
@@ -413,6 +414,8 @@ const contentController = {
       const { id } = req.params;
       const { includeEpisodes = true } = req.query;
 
+      // Re-importing models here is not ideal, they should be loaded once at the top.
+      // Keeping it as per the original code for now, but this is a point for refactoring.
       const Content = require('./models/Content');
       const Season = require('./models/Season');
       const Episode = require('./models/Episode');
@@ -480,6 +483,8 @@ const contentController = {
       const { seriesId, seasonNumber } = req.params;
       const { page = 1, limit = 20 } = req.query;
 
+      // Re-importing models here is not ideal, they should be loaded once at the top.
+      // Keeping it as per the original code for now, but this is a point for refactoring.
       const Content = require('./models/Content');
       const Season = require('./models/Season');
       const Episode = require('./models/Episode');
@@ -586,6 +591,8 @@ const contentController = {
     try {
       const { episodeId } = req.params;
 
+      // Re-importing models here is not ideal, they should be loaded once at the top.
+      // Keeping it as per the original code for now, but this is a point for refactoring.
       const Episode = require('./models/Episode');
       const Season = require('./models/Season');
       const Content = require('./models/Content');
@@ -993,16 +1000,16 @@ const contentController = {
       // Process items to ensure max 10 content per item and apply filters
       let filteredItems = items.map(item => {
         let content = item.content || [];
-        
+
         // Sort content by featured status and display order
         content = content.sort((a, b) => {
           const aMapping = a.ContentItemMapping || {};
           const bMapping = b.ContentItemMapping || {};
-          
+
           // Featured content first
           if (aMapping.isFeatured && !bMapping.isFeatured) return -1;
           if (!aMapping.isFeatured && bMapping.isFeatured) return 1;
-          
+
           // Then by display order
           return (aMapping.displayOrder || 0) - (bMapping.displayOrder || 0);
         });

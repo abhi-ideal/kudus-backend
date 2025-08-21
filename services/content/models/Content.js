@@ -124,6 +124,14 @@ Content.associate = (models) => {
     });
   }
   
+  // Direct association with ContentItemMapping
+  if (models.ContentItemMapping) {
+    Content.hasMany(models.ContentItemMapping, {
+      foreignKey: 'contentId',
+      as: 'contentMappings'
+    });
+  }
+  
   // Series associations
   if (models.Season) {
     Content.hasMany(models.Season, {
