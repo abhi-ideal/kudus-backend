@@ -562,8 +562,6 @@ module.exports = {
           original: "https://example.com/posters/war-heroes-original.jpg"
         }),
         trailerUrl: 'https://example.com/trailers/war-heroes-trailer.mp4',
-        videoUrl: 'https://example.com/videos/war-heroes-full.mp4',
-        s3Key: 'content/movies/war-heroes.mp4',
         status: 'published',
         availableCountries: JSON.stringify(['US', 'CA', 'GB', 'AU']),
         restrictedCountries: JSON.stringify([]),

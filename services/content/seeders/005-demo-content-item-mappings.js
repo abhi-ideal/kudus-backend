@@ -1,5 +1,4 @@
 
-'use strict';
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
@@ -31,51 +30,116 @@ module.exports = {
         let displayOrder = 0;
         let isFeatured = false;
 
-        // Logic to map content to appropriate items
+        // Logic for mapping content to items
         switch (item.slug) {
           case 'sparks-your-digital-superstars':
-            // Add some variety of content
-            shouldMap = index % 3 === 0;
+            // All content goes here with some being featured
+            shouldMap = true;
             displayOrder = index;
-            isFeatured = index < 2;
+            isFeatured = index % 5 === 0; // Every 5th item is featured
             break;
             
           case 'mystery-thriller-collection':
-            shouldMap = genre.includes('Mystery') || genre.includes('Thriller') || genre.includes('Crime');
+            // Only mystery, thriller, crime content
+            shouldMap = genre.some(g => ['Mystery', 'Thriller', 'Crime'].includes(g));
             displayOrder = index;
-            isFeatured = content.title.includes('Detective') || content.title.includes('Mystery');
+            isFeatured = index % 3 === 0;
             break;
             
           case 'trending-now':
-            // Add recent content (2024)
-            shouldMap = content.title.includes('2024') || index < 5;
+            // Recent content (2024) and some 2023
+            shouldMap = content.title.includes('2025') || content.title.includes('Dark Knight') || 
+                       content.title.includes('Tech Titans') || content.title.includes('Space Station') ||
+                       (index < 10 && Math.random() > 0.5);
             displayOrder = index;
-            isFeatured = index < 3;
+            isFeatured = index % 4 === 0;
             break;
             
           case 'action-adventures':
-            shouldMap = genre.includes('Action') || genre.includes('Adventure');
+            // Action and adventure content
+            shouldMap = genre.some(g => ['Action', 'Adventure'].includes(g));
             displayOrder = index;
-            isFeatured = content.title.includes('Hero') || content.title.includes('War');
+            isFeatured = index % 6 === 0;
             break;
             
           case 'comedy-classics':
-            shouldMap = genre.includes('Comedy') || genre.includes('Family');
+            // Comedy content
+            shouldMap = genre.some(g => ['Comedy'].includes(g));
             displayOrder = index;
-            isFeatured = content.title.includes('Laugh') || content.title.includes('Family');
+            isFeatured = index % 2 === 0;
             break;
             
-          case 'thriller-zone':
-            shouldMap = genre.includes('Thriller') || genre.includes('Horror');
+          case 'family-friendly':
+            // Family, G and PG rated content
+            shouldMap = genre.some(g => ['Family'].includes(g)) || 
+                       content.rating === 'G' || content.rating === 'PG';
             displayOrder = index;
-            isFeatured = content.title.includes('Haunted') || content.title.includes('Zombie');
+            isFeatured = false;
             break;
             
-          default:
-            // For other items, add some random content
-            shouldMap = Math.random() < 0.3;
+          case 'sci-fi-fantasy':
+            // Sci-Fi and Fantasy content
+            shouldMap = genre.some(g => ['Sci-Fi', 'Fantasy'].includes(g));
             displayOrder = index;
-            isFeatured = Math.random() < 0.2;
+            isFeatured = index % 3 === 0;
+            break;
+            
+          case 'drama-series':
+            // Drama series only
+            shouldMap = contentType === 'series' && genre.some(g => ['Drama'].includes(g));
+            displayOrder = index;
+            isFeatured = index % 4 === 0;
+            break;
+            
+          case 'documentaries':
+            // Documentary content
+            shouldMap = contentType === 'documentary';
+            displayOrder = index;
+            isFeatured = index % 2 === 0;
+            break;
+            
+          case 'horror-thrills':
+            // Horror content
+            shouldMap = genre.some(g => ['Horror'].includes(g));
+            displayOrder = index;
+            isFeatured = index % 3 === 0;
+            break;
+            
+          case 'romance-movies':
+            // Romance content
+            shouldMap = genre.some(g => ['Romance'].includes(g));
+            displayOrder = index;
+            isFeatured = false;
+            break;
+            
+          case 'latest-releases':
+            // 2024 content
+            shouldMap = content.title.includes('2024') || 
+                       ['Dark Knight Returns', 'Tech Titans', 'Space Station Alpha', 'Medical Miracles'].includes(content.title);
+            displayOrder = index;
+            isFeatured = index % 2 === 0;
+            break;
+            
+          case 'binge-worthy-series':
+            // All series content
+            shouldMap = contentType === 'series';
+            displayOrder = index;
+            isFeatured = index % 5 === 0;
+            break;
+            
+          case 'award-winners':
+            // Select premium content
+            shouldMap = ['The Adventure Begins', 'Dark Knight Returns', 'Medieval Kingdoms', 'Musical Dreams'].includes(content.title);
+            displayOrder = index;
+            isFeatured = true;
+            break;
+            
+          case 'international-content':
+            // Content with multiple subtitle languages
+            shouldMap = index % 3 === 0; // Distribute some content here
+            displayOrder = index;
+            isFeatured = false;
+            break;
         }
 
         if (shouldMap) {
@@ -92,37 +156,9 @@ module.exports = {
       });
     });
 
-    // Ensure each item has at least some content (max 10 per item as requested)
-    const mappingsByItem = {};
-    mappings.forEach(mapping => {
-      if (!mappingsByItem[mapping.itemId]) {
-        mappingsByItem[mapping.itemId] = [];
-      }
-      mappingsByItem[mapping.itemId].push(mapping);
-    });
-
-    // Limit to 10 content per item and ensure proper ordering
-    const finalMappings = [];
-    Object.keys(mappingsByItem).forEach(itemId => {
-      const itemMappings = mappingsByItem[itemId]
-        .sort((a, b) => {
-          // Featured content first, then by display order
-          if (a.isFeatured && !b.isFeatured) return -1;
-          if (!a.isFeatured && b.isFeatured) return 1;
-          return a.displayOrder - b.displayOrder;
-        })
-        .slice(0, 10) // Max 10 content per item
-        .map((mapping, index) => ({
-          ...mapping,
-          displayOrder: index // Re-order from 0 to 9
-        }));
-      
-      finalMappings.push(...itemMappings);
-    });
-
-    if (finalMappings.length > 0) {
-      await queryInterface.bulkInsert('content_item_mappings', finalMappings);
-      console.log(`Created ${finalMappings.length} content-item mappings`);
+    if (mappings.length > 0) {
+      await queryInterface.bulkInsert('content_item_mappings', mappings);
+      console.log(`Created ${mappings.length} content-item mappings`);
     }
   },
 
