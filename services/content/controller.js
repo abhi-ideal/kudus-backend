@@ -1,3 +1,5 @@
+const { Op, sequelize } = require('sequelize');
+const logger = require('./utils/logger');
 const Content = require('./models/Content');
 const Season = require('./models/Season');
 const Episode = require('./models/Episode');
@@ -1081,12 +1083,12 @@ const contentController = {
 
       const topGenres = await Content.findAll({
         attributes: [
-          [db.sequelize.fn('UNNEST', db.sequelize.col('genre')), 'genre'],
-          [db.sequelize.fn('COUNT', '*'), 'count']
+          [sequelize.fn('UNNEST', sequelize.col('genre')), 'genre'],
+          [sequelize.fn('COUNT', '*'), 'count']
         ],
         where: { isActive: true },
-        group: [db.sequelize.fn('UNNEST', db.sequelize.col('genre'))],
-        order: [[db.sequelize.fn('COUNT', '*'), 'DESC']],
+        group: [sequelize.fn('UNNEST', sequelize.col('genre'))],
+        order: [[sequelize.fn('COUNT', '*'), 'DESC']],
         limit: 10,
         raw: true
       });

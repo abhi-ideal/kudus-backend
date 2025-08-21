@@ -187,6 +187,17 @@ describe('Content Service Integration Tests', () => {
         expect(error.response.status).toBe(401);
       }
 
+      // Test malformed authorization header
+      try {
+        await axios.get(`${BASE_URL}/api/content/watchlist`, {
+          headers: {
+            'Authorization': 'InvalidToken'
+          }
+        });
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+      }
+
       // Test missing required fields
       if (testFirebaseToken !== 'your-test-firebase-token') {
         try {
