@@ -72,14 +72,7 @@ const Content = sequelize.define('Content', {
       original: null
     }
   },
-  itemId: {
-    type: DataTypes.UUID,
-    allowNull: true,
-    references: {
-      model: 'content_items',
-      key: 'id'
-    }
-  },
+  
   trailerUrl: {
     type: DataTypes.TEXT,
     allowNull: true
@@ -122,10 +115,12 @@ const Content = sequelize.define('Content', {
 
 // Define associations
 Content.associate = (models) => {
-  if (models.ContentItem) {
-    Content.belongsTo(models.ContentItem, {
-      foreignKey: 'itemId',
-      as: 'item'
+  if (models.ContentItem && models.ContentItemMapping) {
+    Content.belongsToMany(models.ContentItem, {
+      through: models.ContentItemMapping,
+      foreignKey: 'contentId',
+      otherKey: 'itemId',
+      as: 'items'
     });
   }
   

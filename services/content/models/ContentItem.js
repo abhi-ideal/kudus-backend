@@ -37,9 +37,11 @@ const ContentItem = sequelize.define('ContentItem', {
 
 // Define associations
 ContentItem.associate = (models) => {
-  if (models.Content) {
-    ContentItem.hasMany(models.Content, {
+  if (models.Content && models.ContentItemMapping) {
+    ContentItem.belongsToMany(models.Content, {
+      through: models.ContentItemMapping,
       foreignKey: 'itemId',
+      otherKey: 'contentId',
       as: 'content'
     });
   }

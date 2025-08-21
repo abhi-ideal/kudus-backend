@@ -968,8 +968,11 @@ const contentController = {
           {
             model: Content,
             as: 'content',
+            through: {
+              attributes: ['displayOrder', 'isFeatured'],
+              where: {}
+            },
             where: { isActive: true },
-            limit: 10, // Max 10 content per item
             required: false, // Include items even if they have no content
             attributes: [
               'id', 'title', 'description', 'type', 'genre',
@@ -977,8 +980,7 @@ const contentController = {
               'language', 'subtitles', 'cast', 'director',
               'thumbnailUrl', 'posterImages', 'trailerUrl',
               'status', 'createdAt'
-            ],
-            order: [['createdAt', 'DESC']]
+            ]
           }
         ]
       });
@@ -988,17 +990,43 @@ const contentController = {
         where: { isActive: true }
       });
 
-      // Apply profile-based filters if applicable
-      let filteredItems = items;
-      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
-        filteredItems = items.map(item => ({
-          ...item.toJSON(),
-          content: item.content.filter(content =>
+      // Process items to ensure max 10 content per item and apply filters
+      let filteredItems = items.map(item => {
+        let content = item.content || [];
+        
+        // Sort content by featured status and display order
+        content = content.sort((a, b) => {
+          const aMapping = a.ContentItemMapping || {};
+          const bMapping = b.ContentItemMapping || {};
+          
+          // Featured content first
+          if (aMapping.isFeatured && !bMapping.isFeatured) return -1;
+          if (!aMapping.isFeatured && bMapping.isFeatured) return 1;
+          
+          // Then by display order
+          return (aMapping.displayOrder || 0) - (bMapping.displayOrder || 0);
+        });
+
+        // Apply profile-based filters if applicable
+        if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+          content = content.filter(content =>
             ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
             content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
-          )
-        }));
-      }
+          );
+        }
+
+        // Limit to 10 content per item
+        content = content.slice(0, 10);
+
+        return {
+          ...item.toJSON(),
+          content: content.map(c => ({
+            ...c.toJSON(),
+            isFeatured: c.ContentItemMapping?.isFeatured || false,
+            displayOrder: c.ContentItemMapping?.displayOrder || 0
+          }))
+        };
+      });
 
       res.json({
         success: true,
