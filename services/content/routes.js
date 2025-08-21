@@ -116,95 +116,6 @@ router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFil
 
 /**
  * @swagger
- * /api/content/{id}:
- *   get:
- *     summary: Get content by ID
- *     tags: [Content]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Content retrieved successfully
- */
-router.get('/:id', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentById);
-
-/**
- * @swagger
- * /api/content/series/{id}/details:
- *   get:
- *     summary: Get series details with seasons and episodes
- *     tags: [Content]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *       - in: query
- *         name: includeEpisodes
- *         schema:
- *           type: boolean
- *     responses:
- *       200:
- *         description: Series details retrieved successfully
- */
-router.get('/series/:id/details', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeriesDetails);
-
-/**
- * @swagger
- * /api/content/series/{seriesId}/season/{seasonNumber}/episodes:
- *   get:
- *     summary: Get episodes for a specific season
- *     tags: [Content]
- *     parameters:
- *       - in: path
- *         name: seriesId
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: seasonNumber
- *         required: true
- *         schema:
- *           type: integer
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Season episodes retrieved successfully
- */
-router.get('/series/:seriesId/season/:seasonNumber/episodes', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeasonEpisodes);
-
-/**
- * @swagger
- * /api/content/episode/{episodeId}:
- *   get:
- *     summary: Get episode details
- *     tags: [Content]
- *     parameters:
- *       - in: path
- *         name: episodeId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Episode details retrieved successfully
- */
-router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getEpisodeDetails);
-
-/**
- * @swagger
  * /api/content/watchlist:
  *   get:
  *     summary: Get user's watchlist
@@ -292,6 +203,95 @@ router.delete('/watchlist/:contentId', verifyFirebaseToken, profileAuth, childPr
  *         description: Watchlist status retrieved successfully
  */
 router.get('/:contentId/watchlist-status', verifyFirebaseToken, profileAuth, contentController.checkWatchlistStatus);
+
+/**
+ * @swagger
+ * /api/content/series/{id}/details:
+ *   get:
+ *     summary: Get series details with seasons and episodes
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: includeEpisodes
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: Series details retrieved successfully
+ */
+router.get('/series/:id/details', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeriesDetails);
+
+/**
+ * @swagger
+ * /api/content/series/{seriesId}/season/{seasonNumber}/episodes:
+ *   get:
+ *     summary: Get episodes for a specific season
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: seriesId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: seasonNumber
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Season episodes retrieved successfully
+ */
+router.get('/series/:seriesId/season/:seasonNumber/episodes', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeasonEpisodes);
+
+/**
+ * @swagger
+ * /api/content/episode/{episodeId}:
+ *   get:
+ *     summary: Get episode details
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: episodeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Episode details retrieved successfully
+ */
+router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getEpisodeDetails);
+
+/**
+ * @swagger
+ * /api/content/{id}:
+ *   get:
+ *     summary: Get content by ID
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content retrieved successfully
+ */
+router.get('/:id', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentById);
 
 /**
  * @swagger
@@ -403,95 +403,6 @@ router.get('/admin/stats', async (req, res) => {
 // Admin routes (require authentication)
 router.use(verifyFirebaseToken);
 
-/**
- * @swagger
- * /api/content:
- *   post:
- *     summary: Create new content
- *     tags: [Admin Content]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               type:
- *                 type: string
- *               genre:
- *                 type: array
- *                 items:
- *                   type: string
- *     responses:
- *       201:
- *         description: Content created successfully
- */
-router.post('/', validate(schemas.content), contentController.createContent);
-
-/**
- * @swagger
- * /api/content/{id}:
- *   put:
- *     summary: Update content
- *     tags: [Admin Content]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               description:
- *                 type: string
- *               type:
- *                 type: string
- *               genre:
- *                 type: array
- *                 items:
- *                   type: string
- *     responses:
- *       200:
- *         description: Content updated successfully
- */
-router.put('/:id', validate(schemas.content), contentController.updateContent);
-
-/**
- * @swagger
- * /api/content/{id}:
- *   delete:
- *     summary: Delete content (soft delete)
- *     tags: [Admin Content]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Content deleted successfully
- */
-router.delete('/:id', contentController.deleteContent);
-
-// Admin-specific endpoints
 /**
  * @swagger
  * /api/admin/content:
