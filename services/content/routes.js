@@ -116,6 +116,77 @@ router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFil
 
 /**
  * @swagger
+ * /api/content/continue-watching:
+ *   get:
+ *     summary: Get user's continue watching list (incomplete content)
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: watchedAt
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
+ *     responses:
+ *       200:
+ *         description: Continue watching list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     continueWatching:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           watchHistoryId:
+ *                             type: string
+ *                           contentId:
+ *                             type: string
+ *                           watchedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           progressPercentage:
+ *                             type: number
+ *                           resumeType:
+ *                             type: string
+ *                             enum: [movie, episode]
+ *                           content:
+ *                             type: object
+ *                           episode:
+ *                             type: object
+ *                     pagination:
+ *                       type: object
+ *       401:
+ *         description: Profile required
+ */
+router.get('/continue-watching', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.getContinueWatching);
+
+/**
+ * @swagger
  * /api/content/watchlist:
  *   get:
  *     summary: Get user's watchlist

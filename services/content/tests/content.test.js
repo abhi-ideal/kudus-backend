@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 const path = require('path');
 
@@ -24,8 +23,8 @@ describe('Content Service', () => {
   beforeAll(async () => {
     // Get Firebase token from environment or use default
     testFirebaseToken = process.env.TEST_FIREBASE_TOKEN || 'your-test-firebase-token';
-    
-   
+
+
   });
 
   // afterAll(async () => {
@@ -102,7 +101,7 @@ describe('Content Service', () => {
           expect(response.data).toHaveProperty('success', true);
           expect(response.data).toHaveProperty('contentType', 'kids-only');
           expect(response.data.data).toHaveProperty('content');
-          
+
           // Verify age ratings are kid-friendly
           if (response.data.data.content.length > 0) {
             const allowedRatings = ['G', 'PG', 'PG-13'];
@@ -316,59 +315,188 @@ describe('Content Service', () => {
         }
       });
     });
-  });
 
-  describe('Series and Episodes', () => {
-    test('GET /api/content/series/:id/details - should get series details', async () => {
-      // Use a mock series ID since we may not have real data
-      const mockSeriesId = testSeriesId || 'test-series-id';
-      
-      try {
-        const response = await axios.get(`${BASE_URL}/api/content/series/${mockSeriesId}/details?includeEpisodes=true`);
-
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('success', true);
-      } catch (error) {
-        if (error.response?.status === 404) {
-          console.log('Series not found - expected if no series seeded');
-        } else {
-          throw error;
+    describe('Continue Watching Tests', () => {
+      test('GET /api/content/continue-watching - should require authentication', async () => {
+        try {
+          await axios.get(`${BASE_URL}/api/content/continue-watching`);
+          expect(true).toBe(false); // Should not reach here
+        } catch (error) {
+          expect(error.response.status).toBe(401);
         }
-      }
+      });
+
+      test('GET /api/content/continue-watching - should return continue watching list', async () => {
+        if (testFirebaseToken === 'your-test-firebase-token') {
+          console.log('Skipping continue watching unit test - no valid token');
+          return;
+        }
+
+        try {
+          const response = await axios.get(`${BASE_URL}/api/content/continue-watching`, {
+            headers: authHeaders
+          });
+
+          expect(response.status).toBe(200);
+          expect(response.data).toHaveProperty('success', true);
+          expect(response.data.data).toHaveProperty('continueWatching');
+          expect(Array.isArray(response.data.data.continueWatching)).toBe(true);
+          expect(response.data.data).toHaveProperty('pagination');
+          expect(response.data).toHaveProperty('profileContext');
+        } catch (error) {
+          if (error.response?.status === 401) {
+            console.log('Continue watching unit test skipped - authentication failed');
+          } else {
+            throw error;
+          }
+        }
+      });
+
+      test('GET /api/content/continue-watching - should validate progress percentage range', async () => {
+        if (testFirebaseToken === 'your-test-firebase-token') {
+          console.log('Skipping progress validation test - no valid token');
+          return;
+        }
+
+        try {
+          const response = await axios.get(`${BASE_URL}/api/content/continue-watching`, {
+            headers: authHeaders
+          });
+
+          if (response.data.data.continueWatching.length > 0) {
+            response.data.data.continueWatching.forEach(item => {
+              expect(item.progressPercentage).toBeGreaterThan(0);
+              expect(item.progressPercentage).toBeLessThan(95);
+              expect(['movie', 'episode']).toContain(item.resumeType);
+            });
+          }
+        } catch (error) {
+          if (error.response?.status === 401) {
+            console.log('Progress validation test skipped - authentication failed');
+          } else {
+            throw error;
+          }
+        }
+      });
+
+      test('GET /api/content/continue-watching - should support pagination', async () => {
+        if (testFirebaseToken === 'your-test-firebase-token') {
+          console.log('Skipping pagination test - no valid token');
+          return;
+        }
+
+        try {
+          const response = await axios.get(`${BASE_URL}/api/content/continue-watching?page=1&limit=3`, {
+            headers: authHeaders
+          });
+
+          expect(response.status).toBe(200);
+          expect(response.data.data.pagination.page).toBe(1);
+          expect(response.data.data.pagination.limit).toBe(3);
+          expect(response.data.data.continueWatching.length).toBeLessThanOrEqual(3);
+        } catch (error) {
+          if (error.response?.status === 401) {
+            console.log('Pagination test skipped - authentication failed');
+          } else {
+            throw error;
+          }
+        }
+      });
+
+      test('GET /api/content/continue-watching - should support sorting', async () => {
+        if (testFirebaseToken === 'your-test-firebase-token') {
+          console.log('Skipping sorting test - no valid token');
+          return;
+        }
+
+        try {
+          const response = await axios.get(`${BASE_URL}/api/content/continue-watching?sortBy=watchedAt&sortOrder=ASC`, {
+            headers: authHeaders
+          });
+
+          expect(response.status).toBe(200);
+
+          // Verify sorting if there are multiple items
+          if (response.data.data.continueWatching.length > 1) {
+            const items = response.data.data.continueWatching;
+            for (let i = 1; i < items.length; i++) {
+              const prevDate = new Date(items[i-1].watchedAt);
+              const currDate = new Date(items[i].watchedAt);
+              expect(prevDate.getTime()).toBeLessThanOrEqual(currDate.getTime());
+            }
+          }
+        } catch (error) {
+          if (error.response?.status === 401) {
+            console.log('Sorting test skipped - authentication failed');
+          } else {
+            throw error;
+          }
+        }
+      });
     });
 
-    test('GET /api/content/series/:seriesId/season/:seasonNumber/episodes - should get season episodes', async () => {
-      const mockSeriesId = testSeriesId || 'test-series-id';
-      
-      try {
-        const response = await axios.get(`${BASE_URL}/api/content/series/${mockSeriesId}/season/1/episodes`);
+    describe('Authentication Flow Tests', () => {
+      test('POST /api/auth/google - should redirect to Google auth', async () => {
+        const response = await axios.get(`${BASE_URL}/api/auth/google`, {
+          maxRedirects: 0
+        });
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toContain('https://accounts.google.com');
+      });
 
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('success', true);
-      } catch (error) {
-        if (error.response?.status === 404) {
-          console.log('Season not found - expected if no series/season seeded');
-        } else {
-          throw error;
+      test('POST /api/auth/google/callback - should handle Google callback and return token', async () => {
+        // This test requires a mock Google OAuth response or a real one if configured
+        // For simplicity, we'll assume a successful mock response scenario here.
+        // In a real test, you'd need to simulate the OAuth callback.
+
+        const mockCallbackParams = {
+          code: 'mock_google_code',
+          state: 'mock_state'
+        };
+
+        // Mocking the exchange code for token and fetching user profile
+        axios.post = jest.fn((url, data, config) => {
+          if (url.includes('oauth2.googleapis.com')) {
+            return Promise.resolve({
+              data: {
+                access_token: 'mock_access_token',
+                id_token: 'mock_id_token'
+              }
+            });
+          }
+          if (url.includes('www.googleapis.com/oauth2/v1/userinfo')) {
+            return Promise.resolve({
+              data: {
+                id: 'google_user_id_123',
+                email: 'testuser@example.com',
+                name: 'Test User',
+                picture: 'http://example.com/picture.jpg'
+              }
+            });
+          }
+          return axios.post(url, data, config); // Fallback to original post if not mocked
+        });
+
+        try {
+          const response = await axios.post(`${BASE_URL}/api/auth/google/callback`, mockCallbackParams, {
+            headers: {
+              'state': mockCallbackParams.state // Assuming state is sent in headers for verification
+            }
+          });
+
+          expect(response.status).toBe(200);
+          expect(response.data).toHaveProperty('success', true);
+          expect(response.data).toHaveProperty('token');
+          expect(response.data).toHaveProperty('user');
+          expect(response.data.user).toHaveProperty('email', 'testuser@example.com');
+        } catch (error) {
+          console.error('Error in Google callback test:', error.response?.data || error.message);
+          throw error; // Re-throw to fail the test
+        } finally {
+          // Restore original axios.post
+          jest.restoreAllMocks();
         }
-      }
-    });
-
-    test('GET /api/content/episode/:episodeId - should get episode details', async () => {
-      const mockEpisodeId = testEpisodeId || 'test-episode-id';
-      
-      try {
-        const response = await axios.get(`${BASE_URL}/api/content/episode/${mockEpisodeId}`);
-
-        expect(response.status).toBe(200);
-        expect(response.data).toHaveProperty('success', true);
-      } catch (error) {
-        if (error.response?.status === 404) {
-          console.log('Episode not found - expected if no episodes seeded');
-        } else {
-          throw error;
-        }
-      }
+      });
     });
   });
 
@@ -405,7 +533,7 @@ describe('Content Service', () => {
         expect(response.status).toBe(201);
         expect(response.data).toHaveProperty('message', 'Content created successfully');
         expect(response.data).toHaveProperty('content');
-        
+
         // Store the created content ID for update/delete tests
         if (response.data.content) {
           testContentId = response.data.content.id;

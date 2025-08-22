@@ -1083,6 +1083,140 @@ const contentController = {
     }
   },
 
+  async getContinueWatching(req, res) {
+    try {
+      const profileId = req.activeProfile?.id;
+      const {
+        page = 1,
+        limit = 20,
+        sortBy = 'watchedAt',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const offset = (page - 1) * limit;
+
+      // Get watch history where content is not completed
+      const continueWatchingData = await WatchHistory.findAndCountAll({
+        where: {
+          profileId,
+          isCompleted: false,
+          progressPercentage: {
+            [Op.gt]: 0, // Only show content that has been started
+            [Op.lt]: 95 // Consider 95%+ as completed
+          }
+        },
+        include: [
+          {
+            model: Content,
+            as: 'content',
+            where: { isActive: true },
+            attributes: [
+              'id', 'title', 'description', 'type', 'genre',
+              'duration', 'releaseYear', 'rating', 'ageRating',
+              'language', 'thumbnailUrl', 'trailerUrl', 'status'
+            ],
+            include: req.contentFilter && req.contentFilter.excludeAdultContent ? [] : []
+          },
+          {
+            model: Episode,
+            as: 'episode',
+            required: false,
+            where: { isActive: true },
+            attributes: [
+              'id', 'title', 'episodeNumber', 'seasonId', 'seriesId',
+              'duration', 'thumbnailUrl', 'description'
+            ],
+            include: [
+              {
+                model: Season,
+                as: 'season',
+                attributes: ['id', 'seasonNumber', 'title']
+              }
+            ]
+          }
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        distinct: true
+      });
+
+      // Apply content filtering for child profiles
+      let filteredData = continueWatchingData.rows;
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        filteredData = filteredData.filter(item => {
+          const content = item.content;
+          return content && 
+                 ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
+                 content.genre.some(g => req.contentFilter.allowedGenres.includes(g));
+        });
+      }
+
+      // Format response data
+      const continueWatchingList = filteredData.map(item => {
+        const baseData = {
+          watchHistoryId: item.id,
+          contentId: item.contentId,
+          watchedAt: item.watchedAt,
+          watchDuration: item.watchDuration,
+          totalDuration: item.totalDuration,
+          progressPercentage: parseFloat(item.progressPercentage),
+          deviceType: item.deviceType,
+          content: item.content
+        };
+
+        // Add episode information if it's a series
+        if (item.episodeId && item.episode) {
+          baseData.episode = {
+            id: item.episode.id,
+            title: item.episode.title,
+            episodeNumber: item.episode.episodeNumber,
+            duration: item.episode.duration,
+            thumbnailUrl: item.episode.thumbnailUrl,
+            description: item.episode.description,
+            season: item.episode.season
+          };
+          baseData.resumeType = 'episode';
+        } else {
+          baseData.resumeType = 'movie';
+        }
+
+        return baseData;
+      });
+
+      res.json({
+        success: true,
+        data: {
+          continueWatching: continueWatchingList,
+          pagination: {
+            total: continueWatchingData.count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(continueWatchingData.count / limit)
+          }
+        },
+        profileContext: {
+          profileId: profileId,
+          isChildProfile: req.activeProfile?.isChild || false
+        }
+      });
+    } catch (error) {
+      logger.error('Get continue watching error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch continue watching list',
+        message: error.message
+      });
+    }
+  },
+
   async getContentStatistics(req, res) {
     try {
       const totalContent = await Content.count({

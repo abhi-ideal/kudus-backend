@@ -1,4 +1,3 @@
-
 const axios = require('axios');
 const path = require('path');
 
@@ -128,7 +127,7 @@ describe('Content Service Integration Tests', () => {
         const createResponse = await axios.post(`${BASE_URL}/api/content`, newContent, {
           headers: adminHeaders
         });
-        
+
         if (createResponse.status === 201) {
           createdContentId = createResponse.data.content.id;
           expect(createResponse.data.content.title).toBe('Integration Test Movie');
@@ -203,12 +202,12 @@ describe('Content Service Integration Tests', () => {
       expect(kidsResponse.status).toBe(200);
       expect(kidsResponse.data.success).toBe(true);
       expect(kidsResponse.data.contentType).toBe('kids-only');
-      
+
       // Verify all content is kid-appropriate
       if (kidsResponse.data.data.content.length > 0) {
         kidsResponse.data.data.content.forEach(content => {
           expect(['G', 'PG', 'PG-13']).toContain(content.ageRating);
-          expect(content.genre.some(g => 
+          expect(content.genre.some(g =>
             ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'].includes(g)
           )).toBe(true);
         });
@@ -231,6 +230,144 @@ describe('Content Service Integration Tests', () => {
       }
 
       console.log('✅ Error scenarios handled correctly');
+    });
+  });
+
+  // Test Kids Content
+  describe('GET /api/content/kids', () => {
+    test('should get kids-only content', async () => {
+      const response = await axios.get(`${BASE_URL}/api/content/kids?page=1&limit=10`);
+
+      expect(response.status).toBe(200);
+      expect(response.data).toHaveProperty('success', true);
+      expect(response.data.data).toHaveProperty('content');
+      expect(response.data).toHaveProperty('contentType', 'kids-only');
+      expect(response.data).toHaveProperty('appliedFilters');
+
+      // Verify all content is kid-friendly
+      if (response.data.data.content.length > 0) {
+        response.data.data.content.forEach(content => {
+          expect(['G', 'PG', 'PG-13']).toContain(content.ageRating);
+          expect(content.genre.some(g =>
+            ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'].includes(g)
+          )).toBe(true);
+        });
+      }
+    });
+  });
+
+  // Test Continue Watching
+  describe('GET /api/content/continue-watching', () => {
+    test('should require authentication for continue watching', async () => {
+      try {
+        await axios.get(`${BASE_URL}/api/content/continue-watching`);
+        // If we reach here, the test should fail
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error.response.status).toBe(401);
+      }
+    });
+
+    test('should get continue watching list for authenticated user', async () => {
+      if (testFirebaseToken === 'your-test-firebase-token') {
+        console.log('Skipping continue watching test - no valid Firebase token');
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${BASE_URL}/api/content/continue-watching?page=1&limit=10`, {
+          headers: {
+            'Authorization': `Bearer ${testFirebaseToken}`
+          }
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data).toHaveProperty('success', true);
+        expect(response.data.data).toHaveProperty('continueWatching');
+        expect(response.data.data).toHaveProperty('pagination');
+        expect(response.data).toHaveProperty('profileContext');
+
+        // Verify structure of continue watching items
+        if (response.data.data.continueWatching.length > 0) {
+          const item = response.data.data.continueWatching[0];
+          expect(item).toHaveProperty('watchHistoryId');
+          expect(item).toHaveProperty('contentId');
+          expect(item).toHaveProperty('watchedAt');
+          expect(item).toHaveProperty('progressPercentage');
+          expect(item).toHaveProperty('resumeType');
+          expect(item).toHaveProperty('content');
+          expect(['movie', 'episode']).toContain(item.resumeType);
+
+          // Progress should be between 0 and 95%
+          expect(item.progressPercentage).toBeGreaterThan(0);
+          expect(item.progressPercentage).toBeLessThan(95);
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
+          console.log('Continue watching test skipped - authentication failed');
+        } else {
+          throw error;
+        }
+      }
+    });
+
+    test('should handle pagination for continue watching', async () => {
+      if (testFirebaseToken === 'your-test-firebase-token') {
+        console.log('Skipping continue watching pagination test - no valid Firebase token');
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${BASE_URL}/api/content/continue-watching?page=1&limit=5`, {
+          headers: {
+            'Authorization': `Bearer ${testFirebaseToken}`
+          }
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.data.data.pagination).toHaveProperty('page', 1);
+        expect(response.data.data.pagination).toHaveProperty('limit', 5);
+        expect(response.data.data.pagination).toHaveProperty('total');
+        expect(response.data.data.pagination).toHaveProperty('totalPages');
+      } catch (error) {
+        if (error.response?.status === 401) {
+          console.log('Continue watching pagination test skipped - authentication failed');
+        } else {
+          throw error;
+        }
+      }
+    });
+
+    test('should filter continue watching for child profiles', async () => {
+      if (testFirebaseToken === 'your-test-firebase-token') {
+        console.log('Skipping child profile continue watching test - no valid Firebase token');
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${BASE_URL}/api/content/continue-watching`, {
+          headers: {
+            'Authorization': `Bearer ${testFirebaseToken}`,
+            'X-Profile-Context': JSON.stringify({ isChild: true })
+          }
+        });
+
+        expect(response.status).toBe(200);
+
+        // Verify all content is child-appropriate
+        if (response.data.data.continueWatching.length > 0) {
+          response.data.data.continueWatching.forEach(item => {
+            const content = item.content;
+            expect(['G', 'PG', 'PG-13']).toContain(content.ageRating);
+          });
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
+          console.log('Child profile continue watching test skipped - authentication failed');
+        } else {
+          throw error;
+        }
+      }
     });
   });
 });
