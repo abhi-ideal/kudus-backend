@@ -1,6 +1,7 @@
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
+const sequelize = require('./config/database');
 require('dotenv').config();
 
 const commonRoutes = require('./routes');
@@ -40,10 +41,24 @@ app.use((err, req, res, next) => {
 // Lambda handler
 module.exports.handler = serverless(app);
 
+// Export app for testing
+module.exports = app;
+
 // For local development
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.COMMON_SERVICE_PORT || 3007;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🔧 Common Service running on port ${PORT}`);
-  });
+  sequelize.authenticate()
+    .then(() => {
+      console.log('Common Service: Database connected successfully');
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🔧 Common Service running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('Common Service: Unable to connect to database:', err);
+      // Still start the service even if database connection fails
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🔧 Common Service running on port ${PORT} (without database)`);
+      });
+    });
 }
