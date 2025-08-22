@@ -1,4 +1,3 @@
-
 const path = require('path');
 
 // Load test environment variables
@@ -82,32 +81,6 @@ afterAll(async () => {
   await sequelize.close();
 });
 
-module.exports = { sequelize };
-const sequelize = require('../config/database');
-
-// Set test environment
-process.env.NODE_ENV = 'test';
-
-// Setup database connection for tests
-beforeAll(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Test database connection established successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the test database:', error);
-  }
-});
-
-// Clean up after all tests
-afterAll(async () => {
-  try {
-    await sequelize.close();
-    console.log('Test database connection closed.');
-  } catch (error) {
-    console.error('Error closing test database connection:', error);
-  }
-});
-
 // Global test utilities
 global.testHelpers = {
   createMockUser: () => ({
@@ -116,3 +89,5 @@ global.testHelpers = {
     displayName: 'Test User'
   })
 };
+
+module.exports = { sequelize };
