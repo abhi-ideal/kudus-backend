@@ -1,38 +1,32 @@
 
 require('dotenv').config();
 
-// Remove quotes from password if present
 const getPassword = (password) => {
   if (!password) return 'password';
   return password.replace(/^['"]|['"]$/g, '');
 };
 
+const baseConfig = {
+  username: process.env.DB_USER || 'root',
+  password: getPassword(process.env.DB_PASSWORD),
+  database: process.env.DB_NAME || 'ott_common',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  dialect: 'mysql'
+};
+
 module.exports = {
   development: {
-    username: process.env.DB_USER || 'root',
-    password: getPassword(process.env.DB_PASSWORD),
-    database: process.env.DB_NAME || 'ott_common',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
+    ...baseConfig,
     logging: console.log
   },
   test: {
-    username: process.env.DB_USER || 'root',
-    password: getPassword(process.env.DB_PASSWORD),
-    database: process.env.DB_NAME ? process.env.DB_NAME + '_test' : 'ott_common_test',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
+    ...baseConfig,
+    database: (process.env.DB_NAME || 'ott_users') + '_test',
     logging: false
   },
   production: {
-    username: process.env.DB_USER || 'root',
-    password: getPassword(process.env.DB_PASSWORD),
-    database: process.env.DB_NAME || 'ott_common',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
+    ...baseConfig,
     logging: false,
     pool: {
       max: 10,
