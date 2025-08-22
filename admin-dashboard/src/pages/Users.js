@@ -55,10 +55,11 @@ const Users = () => {
       console.log('Loading users with params:', params);
       const response = await adminAPI.getUsers(params);
       console.log('API Response:', response.data);
+       
       
       // Handle the response format from the updated API
-      if (response.data && response.data.users) {
-        const { users: userData, pagination: paginationData } = response.data;
+      if (response.data && response.data.data.users) {
+        const { users: userData, pagination: paginationData } = response.data.data;
         
         setUsers(userData || []);
         setPagination(prev => ({
