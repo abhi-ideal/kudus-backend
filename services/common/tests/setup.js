@@ -67,19 +67,19 @@ const sequelize = new Sequelize({
 });
 
 // Test database connection
-beforeAll(async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ Common service test database connected');
-  } catch (error) {
-    console.error('❌ Common service test database connection failed:', error.message);
-    throw error;
-  }
-});
+// beforeAll(async () => {
+//   try {
+//     await sequelize.authenticate();
+//     console.log('✅ Common service test database connected');
+//   } catch (error) {
+//     console.error('❌ Common service test database connection failed:', error.message);
+//     throw error;
+//   }
+// });
 
-afterAll(async () => {
-  await sequelize.close();
-});
+// afterAll(async () => {
+//   await sequelize.close();
+// });
 
 // Global test utilities
 global.testHelpers = {

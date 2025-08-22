@@ -113,11 +113,11 @@ adminRouter.get('/stats', standardAdminEndpoints.stats);
 
 // Add user-specific admin endpoints
 adminRouter.get('/users', controller.getUsers);
+adminRouter.get('/users/statistics', controller.getUserStatistics);
 adminRouter.get('/users/:id', controller.getUserById);
 adminRouter.patch('/users/:id/block', controller.blockUser);
 adminRouter.patch('/users/:id/unblock', controller.unblockUser);
 adminRouter.patch('/users/:id/subscription', controller.updateUserSubscription);
-adminRouter.get('/users/statistics', controller.getUserStatistics);
 
 router.use('/admin', adminRouter);
 
