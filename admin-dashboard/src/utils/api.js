@@ -1,14 +1,14 @@
 import axios from 'axios';
 import { message } from 'antd';
 
-// Individual microservice URLs
-const AUTH_SERVICE_URL = process.env.REACT_APP_AUTH_SERVICE_URL || 'http://0.0.0.0:3001';
-const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3002';
-const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://0.0.0.0:3003';
-const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004';
-const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005';
-const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006';
-const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007';
+// Individual microservice URLs with admin paths
+const AUTH_SERVICE_URL = process.env.REACT_APP_AUTH_SERVICE_URL || 'http://0.0.0.0:3001/api/auth/admin';
+const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3002/api/users/admin';
+const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://0.0.0.0:3003/api/content/admin';
+const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
+const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
+const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006/api/admin';
+const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007/api/common/admin';
 
 // Create service-specific API instances
 const createServiceAPI = (baseURL) => axios.create({
@@ -68,28 +68,28 @@ const setupInterceptors = (apiInstance) => {
 // Admin endpoints object with all admin API functions
 const adminEndpoints = {
   // Users API - using userAPI for user-related operations
-  getUsers: (params) => userAPI.get('/api/admin/users', { params }),
-  getUserById: (userId) => userAPI.get(`/api/admin/users/${userId}`),
-  blockUser: (userId, reason) => userAPI.patch(`/api/admin/users/${userId}/block`, { reason }),
-  unblockUser: (userId) => userAPI.patch(`/api/admin/users/${userId}/unblock`),
-  updateUserSubscription: (userId, data) => userAPI.patch(`/api/admin/users/${userId}/subscription`, data),
-  getUserStatistics: () => userAPI.get('/api/admin/users/statistics'),
+  getUsers: (params) => userAPI.get('/users', { params }),
+  getUserById: (userId) => userAPI.get(`/users/${userId}`),
+  blockUser: (userId, reason) => userAPI.patch(`/users/${userId}/block`, { reason }),
+  unblockUser: (userId) => userAPI.patch(`/users/${userId}/unblock`),
+  updateUserSubscription: (userId, data) => userAPI.patch(`/users/${userId}/subscription`, data),
+  getUserStatistics: () => userAPI.get('/users/statistics'),
 
   // Content API
-  getContent: (params) => contentAPI.get('/api/admin/content', { params }),
-  getContentById: (contentId) => contentAPI.get(`/api/admin/content/${contentId}`),
-  createContent: (data) => contentAPI.post('/api/admin/content', data),
-  updateContent: (contentId, data) => contentAPI.put(`/api/admin/content/${contentId}`, data),
-  deleteContent: (contentId) => contentAPI.delete(`/api/admin/content/${contentId}`),
-  getContentStatistics: () => contentAPI.get('/api/admin/content/statistics'),
+  getContent: (params) => contentAPI.get('/content', { params }),
+  getContentById: (contentId) => contentAPI.get(`/content/${contentId}`),
+  createContent: (data) => contentAPI.post('/content', data),
+  updateContent: (contentId, data) => contentAPI.put(`/content/${contentId}`, data),
+  deleteContent: (contentId) => contentAPI.delete(`/content/${contentId}`),
+  getContentStatistics: () => contentAPI.get('/content/statistics'),
 
   // Season management
-  createSeason: (data) => contentAPI.post('/api/admin/content/seasons', data),
-  updateSeason: (id, data) => contentAPI.put(`/api/admin/content/seasons/${id}`, data),
+  createSeason: (data) => contentAPI.post('/content/seasons', data),
+  updateSeason: (id, data) => contentAPI.put(`/content/seasons/${id}`, data),
 
   // Episode management
-  createEpisode: (data) => contentAPI.post('/api/admin/content/episodes', data),
-  updateEpisode: (id, data) => contentAPI.put(`/api/admin/content/episodes/${id}`, data),
+  createEpisode: (data) => contentAPI.post('/content/episodes', data),
+  updateEpisode: (id, data) => contentAPI.put(`/content/episodes/${id}`, data),
 };
 
 // Export individual service APIs for direct access if needed
