@@ -178,6 +178,7 @@ const authController = {
           message: 'Firebase auth token is required in Authorization header'
         });
       }
+      const { displayName } = req.body;
 
       const idToken = authHeader.split(' ')[1];
 
@@ -200,9 +201,9 @@ const authController = {
           message: 'User with this Firebase UID already exists in database'
         });
       }
-
+      console.log('displayName', displayName, 'userEmail', userEmail, 'userRecord.displayName', userRecord.displayName);
       // Generate a default username from email
-      const defaultUsername = authController.generateDefaultUsername(userEmail || userRecord.displayName);
+      const defaultUsername =  displayName || userEmail || userRecord.displayName;
 
       try {
         // Create default profile in user service
