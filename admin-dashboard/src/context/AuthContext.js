@@ -1,22 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
-// Firebase configuration - these should be in your .env file
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Firebase is already initialized in firebase.js
 
 const AuthContext = createContext();
 
@@ -40,13 +27,13 @@ export const AuthProvider = ({ children }) => {
           // Get the ID token and check for admin claims
           const idToken = await firebaseUser.getIdToken();
           const tokenResult = await firebaseUser.getIdTokenResult();
-          
+
           // Check if user has admin role
           if (tokenResult.claims.admin) {
             setUser(firebaseUser);
             setToken(idToken);
             localStorage.setItem('adminToken', idToken);
-            
+
             // Set default authorization header for all API calls
             const { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI } = await import('../utils/api');
             [authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI].forEach(api => {
@@ -82,27 +69,27 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { email, password } = credentials;
-      
+
       // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
-      
+
       // Get the ID token and check for admin claims
       const idToken = await firebaseUser.getIdToken();
       const tokenResult = await firebaseUser.getIdTokenResult();
-      
+
       // Check if user has admin role
       if (!tokenResult.claims.admin) {
         await signOut(auth);
         message.error('Admin access required. Please contact your administrator.');
         return false;
       }
-      
+
       message.success('Login successful');
       return true;
     } catch (error) {
       console.error('Login error:', error);
-      
+
       // Handle specific Firebase auth errors
       switch (error.code) {
         case 'auth/user-not-found':
@@ -142,13 +129,13 @@ export const AuthProvider = ({ children }) => {
         const newToken = await auth.currentUser.getIdToken(true);
         setToken(newToken);
         localStorage.setItem('adminToken', newToken);
-        
+
         // Update authorization headers
         const { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI } = await import('../utils/api');
         [authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI].forEach(api => {
           api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         });
-        
+
         return newToken;
       } catch (error) {
         console.error('Token refresh error:', error);
