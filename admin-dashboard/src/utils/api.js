@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { message } from 'antd';
 
-// Individual microservice URLs with admin paths
+// Individual microservice URLs - use dedicated admin service for user management
 const AUTH_SERVICE_URL = process.env.REACT_APP_AUTH_SERVICE_URL || 'http://0.0.0.0:3001/api/auth/admin';
-const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3002/api/users/admin';
+const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3006/api/admin'; // Use admin service for user management
 const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://0.0.0.0:3003/api/content/admin';
 const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
 const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
@@ -94,7 +94,7 @@ const setupInterceptors = (apiInstance) => {
 
 // Admin endpoints object with all admin API functions
 const adminEndpoints = {
-  // Users API - using userAPI for user-related operations
+  // Users API - using userAPI which now points to admin service
   getUsers: (params) => userAPI.get('/users', { params }),
   getUserById: (userId) => userAPI.get(`/users/${userId}`),
   blockUser: (userId, reason) => userAPI.patch(`/users/${userId}/block`, { reason }),
