@@ -41,25 +41,9 @@ const contentController = {
         };
 
         // Enforce child-appropriate genres only
-        whereClause[Op.and] = whereClause[Op.and] || [];
-        whereClause[Op.and].push(
-          sequelize.where(
-            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
-            {
-              [Op.regexp]: '(Family|Animation|Comedy|Adventure|Fantasy)'
-            }
-          )
-        );
-
-        // Block restricted genres
-        whereClause[Op.and].push(
-          sequelize.where(
-            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
-            {
-              [Op.notRegexp]: '(Horror|Thriller|Crime|Drama|Romance)'
-            }
-          )
-        );
+        whereClause.genre = {
+          [Op.overlap]: req.contentFilter.allowedGenres
+        };
 
         // Check if requested genre is allowed for child profiles
         if (genre && !req.contentFilter.allowedGenres.includes(genre)) {
@@ -79,12 +63,16 @@ const contentController = {
           // Globally available content not restricted in user's country
           {
             isGloballyAvailable: true,
-            [Op.not]: sequelize.literal(`JSON_CONTAINS(restrictedCountries, '"US"')`)
+            restrictedCountries: {
+              [Op.notLike]: `%${userCountry}%`
+            }
           },
           // Content specifically available in user's country
           {
             isGloballyAvailable: false,
-            availableCountries: sequelize.literal(`JSON_CONTAINS(availableCountries, '"US"')`)
+            availableCountries: {
+              [Op.like]: `%${userCountry}%`
+            }
           }
         ];
       }
@@ -367,15 +355,10 @@ const contentController = {
         ageRating: {
           [Op.in]: ['G', 'PG', 'PG-13']
         },
-        // Only kid-friendly genres - use proper array overlap
-        [Op.and]: [
-          sequelize.where(
-            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
-            {
-              [Op.regexp]: '(Family|Animation|Comedy|Adventure|Fantasy)'
-            }
-          )
-        ]
+        // Only kid-friendly genres - use JSON overlap for array fields
+        genre: {
+          [Op.overlap]: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy']
+        }
       };
 
       // Apply geo-restrictions if applicable
@@ -399,9 +382,9 @@ const contentController = {
         // Ensure requested genre is kid-friendly
         const kidFriendlyGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         if (kidFriendlyGenres.includes(genre)) {
-          whereClause[Op.and].push(
-            sequelize.literal(`JSON_CONTAINS(genre, '"${genre}"')`)
-          );
+          whereClause.genre = {
+            [Op.contains]: [genre]
+          };
         } else {
           return res.status(400).json({
             success: false,
