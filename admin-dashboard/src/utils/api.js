@@ -75,6 +75,12 @@ const setupInterceptors = (apiInstance) => {
         return Promise.reject(error);
       }
 
+      // Don't show error messages for Chrome extension errors
+      if (error.message && error.message.includes('message port closed')) {
+        console.warn('Chrome extension interference detected, ignoring error');
+        return Promise.reject(error);
+      }
+
       const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
       message.error(errorMessage);
 

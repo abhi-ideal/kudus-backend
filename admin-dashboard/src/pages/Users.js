@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   Button,
@@ -43,9 +43,9 @@ const Users = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [pagination.current, pagination.pageSize, filters]);
+  }, [loadUsers]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -54,20 +54,33 @@ const Users = () => {
         ...filters,
       };
       
+      console.log('Loading users with params:', params);
       const response = await adminAPI.getUsers(params);
-      const { users: userData, pagination: paginationData } = response.data;
+      console.log('API Response:', response.data);
       
-      setUsers(userData);
-      setPagination({
-        ...pagination,
-        total: paginationData.totalItems,
-      });
+      // Handle the response format from the updated API
+      if (response.data && response.data.users) {
+        const { users: userData, pagination: paginationData } = response.data;
+        
+        setUsers(userData || []);
+        setPagination(prev => ({
+          ...prev,
+          total: paginationData?.totalItems || paginationData?.total || 0,
+          current: paginationData?.currentPage || prev.current,
+          pageSize: prev.pageSize
+        }));
+      } else {
+        console.error('Unexpected API response format:', response.data);
+        setUsers([]);
+      }
     } catch (error) {
-      message.error('Failed to load users');
+      console.error('Error loading users:', error);
+      message.error(`Failed to load users: ${error.response?.data?.message || error.message}`);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.current, pagination.pageSize, filters, loading]);
 
   const handleTableChange = (paginationData, filtersData) => {
     setPagination({
@@ -147,24 +160,30 @@ const Users = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status?.toUpperCase() || 'UNKNOWN'}
-        </Tag>
-      ),
+      render: (status, record) => {
+        const userStatus = status || (record.isActive ? 'active' : 'inactive');
+        return (
+          <Tag color={userStatus === 'active' ? 'green' : 'red'}>
+            {userStatus?.toUpperCase() || 'UNKNOWN'}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Subscription',
       dataIndex: 'subscription',
       key: 'subscription',
-      render: (subscription) => (
-        <Tag color={
-          subscription === 'premium' ? 'gold' : 
-          subscription === 'family' ? 'purple' : 'default'
-        }>
-          {subscription?.toUpperCase() || 'FREE'}
-        </Tag>
-      ),
+      render: (subscription, record) => {
+        const subType = subscription || record.subscriptionType || 'free';
+        return (
+          <Tag color={
+            subType === 'premium' ? 'gold' : 
+            subType === 'family' ? 'purple' : 'default'
+          }>
+            {subType?.toUpperCase()}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Profiles',
