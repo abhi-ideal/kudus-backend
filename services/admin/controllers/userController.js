@@ -16,57 +16,49 @@ WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 const userController = {
   async getUsers(req, res) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        role,
-        status,
-        subscription,
-        startDate,
-        endDate,
-        search
-      } = req.query;
-
+      const { page = 1, limit = 10, status, subscription, search } = req.query;
       const offset = (page - 1) * limit;
-      const where = {};
 
-      // Apply filters
-      if (role) where.role = role;
+      const whereClause = {};
+
       if (status) {
-        // Map status to isActive since User model uses isActive
-        if (status === 'active') where.isActive = true;
-        if (status === 'inactive' || status === 'blocked') where.isActive = false;
+        whereClause.isActive = status === 'active';
       }
-      if (subscription) where.subscriptionType = subscription;
-      if (startDate && endDate) {
-        where.createdAt = {
-          [Op.between]: [new Date(startDate), new Date(endDate)]
-        };
+
+      if (subscription) {
+        whereClause.subscriptionType = subscription;
       }
+
       if (search) {
-        where[Op.or] = [
-          { firstName: { [Op.like]: `%${search}%` } },
-          { lastName: { [Op.like]: `%${search}%` } },
-          { email: { [Op.like]: `%${search}%` } }
+        whereClause[Op.or] = [
+          { email: { [Op.like]: `%${search}%` } },
+          { displayName: { [Op.like]: `%${search}%` } }
         ];
       }
 
-      const { count, rows } = await User.findAndCountAll({
-        where,
+      const { count, rows: users } = await User.findAndCountAll({
+        where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']],
-        include: [
-          {
-            model: UserProfile,
-            as: 'profiles'
-          }
-        ],
-        attributes: { exclude: ['password'] } // Exclude sensitive data
+        include: [{
+          model: UserProfile,
+          as: 'profiles',
+          required: false
+        }]
       });
 
       res.json({
-        users: rows,
+        users: users.map(user => ({
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          status: user.isActive ? 'active' : 'inactive',
+          subscription: user.subscriptionType || 'free',
+          subscriptionEndDate: user.subscriptionEndDate,
+          createdAt: user.createdAt,
+          profiles: user.profiles || []
+        })),
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(count / limit),
