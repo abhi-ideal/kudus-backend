@@ -738,12 +738,12 @@ const controller = {
   // Admin methods
   async getUsers(req, res) {
     try {
-      const { page = 1, limit = 10, status, subscription } = req.query;
+      const { page = 1, limit = 10, isActive, subscription } = req.query;
       const offset = (page - 1) * limit;
 
       const whereClause = {};
-      if (status) whereClause.status = status;
-      if (subscription) whereClause.subscription = subscription;
+      if (isActive !== undefined) whereClause.isActive = isActive === 'true';
+      if (subscription) whereClause.subscriptionType = subscription;
 
       const { count, rows: users } = await User.findAndCountAll({
         where: whereClause,
@@ -834,9 +834,12 @@ const controller = {
       }
 
       await user.update({
-        status: 'blocked',
-        blockedReason: reason,
-        blockedAt: new Date()
+        isActive: false,
+        preferences: {
+          ...user.preferences,
+          blockedReason: reason,
+          blockedAt: new Date()
+        }
       });
 
       res.json({
@@ -863,10 +866,13 @@ const controller = {
         });
       }
 
+      const updatedPreferences = { ...user.preferences };
+      delete updatedPreferences.blockedReason;
+      delete updatedPreferences.blockedAt;
+
       await user.update({
-        status: 'active',
-        blockedReason: null,
-        blockedAt: null
+        isActive: true,
+        preferences: updatedPreferences
       });
 
       res.json({
@@ -895,8 +901,9 @@ const controller = {
       }
 
       await user.update({
-        subscription,
-        subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate) : null
+        subscriptionType: subscription,
+        subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate) : null,
+        subscriptionStatus: subscription === 'free' ? 'inactive' : 'active'
       });
 
       res.json({
@@ -916,18 +923,20 @@ const controller = {
   async getUserStatistics(req, res) {
     try {
       const totalUsers = await User.count();
-      const activeUsers = await User.count({ where: { status: 'active' } });
-      const blockedUsers = await User.count({ where: { status: 'blocked' } });
-      const premiumUsers = await User.count({ where: { subscription: 'premium' } });
-      const familyUsers = await User.count({ where: { subscription: 'family' } });
+      const activeUsers = await User.count({ where: { isActive: true } });
+      const inactiveUsers = await User.count({ where: { isActive: false } });
+      const premiumUsers = await User.count({ where: { subscriptionType: 'premium' } });
+      const familyUsers = await User.count({ where: { subscriptionType: 'family' } });
+      const basicUsers = await User.count({ where: { subscriptionType: 'basic' } });
 
       const statistics = {
         totalUsers,
         activeUsers,
-        blockedUsers,
+        inactiveUsers,
         premiumUsers,
         familyUsers,
-        freeUsers: totalUsers - premiumUsers - familyUsers
+        basicUsers,
+        freeUsers: totalUsers - premiumUsers - familyUsers - basicUsers
       };
 
       res.json({
