@@ -74,6 +74,27 @@ const schemas = {
     duration: Joi.number().positive().required(),
     thumbnailUrl: Joi.string().uri(),
     videoUrl: Joi.string().uri()
+  }),
+
+  // Admin content creation schema (more flexible)
+  content: Joi.object({
+    title: Joi.string().min(1).max(255).required(),
+    description: Joi.string().max(2000),
+    type: Joi.string().valid('movie', 'series', 'documentary').required(),
+    genre: Joi.array().items(Joi.string()).min(1).required(),
+    duration: Joi.number().positive(),
+    releaseYear: Joi.number().integer().min(1900).max(new Date().getFullYear() + 5),
+    ageRating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17'),
+    language: Joi.string().max(10),
+    cast: Joi.array().items(Joi.string()),
+    director: Joi.string().max(255),
+    thumbnailUrl: Joi.string().uri(),
+    trailerUrl: Joi.string().uri(),
+    poster: Joi.string().uri(),
+    thumbnail: Joi.string().uri(),
+    availableCountries: Joi.array().items(Joi.string().length(2)),
+    restrictedCountries: Joi.array().items(Joi.string().length(2)),
+    isGloballyAvailable: Joi.boolean()
   })
 };
 
