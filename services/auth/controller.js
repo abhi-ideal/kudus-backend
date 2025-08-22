@@ -113,6 +113,21 @@ const authController = {
           isActive: true
         });
 
+        // Set Firebase custom claims with default profile (first profile or most recent)
+        const defaultProfile = profiles.length > 0 ? profiles[0] : null;
+        if (defaultProfile) {
+          const customClaims = {
+            profile_id: defaultProfile.id,
+            child: defaultProfile.isKidsProfile || false,
+            default_profile_id: defaultProfile.id,
+            role: 'user',
+            logged_in_at: Math.floor(Date.now() / 1000)
+          };
+
+          await admin.auth().setCustomUserClaims(user.firebaseUid, customClaims);
+          logger.info(`Custom claims set for user ${user.firebaseUid}:`, customClaims);
+        }
+
         // Generate tokens (not stored in DB)
         const accessToken = jwt.sign(
           {
@@ -200,6 +215,7 @@ const authController = {
           default_profile_id: defaultProfile.id,
           username: defaultUsername,
           role: 'user',
+          child: defaultProfile.isKidsProfile || false,
           registered: true
         };
 
@@ -226,6 +242,7 @@ const authController = {
           created_at: Math.floor(Date.now() / 1000),
           username: defaultUsername,
           role: 'user',
+          child: false, // Default to false when profile creation fails
           registered: true
         };
 
@@ -468,9 +485,43 @@ const authController = {
         });
       }
 
-      // Set custom claims with profile_id
+      // Get profile details to determine if it's a child profile
+      // We need to call user service to get profile information
+      let isChildProfile = false;
+      try {
+        // Find user by Firebase UID to get user ID
+        const user = await User.findOne({ where: { firebaseUid: uid } });
+        if (user) {
+          const profile = await UserProfile.findOne({
+            where: { 
+              id: profileId,
+              userId: user.id,
+              isActive: true 
+            }
+          });
+          if (profile) {
+            isChildProfile = profile.isKidsProfile || false;
+          } else {
+            return res.status(404).json({
+              error: 'Profile not found',
+              message: 'Profile not found or does not belong to user'
+            });
+          }
+        } else {
+          return res.status(404).json({
+            error: 'User not found',
+            message: 'User record not found'
+          });
+        }
+      } catch (dbError) {
+        logger.warn('Could not fetch profile details for child check:', dbError.message);
+        // Continue with default false value
+      }
+
+      // Set custom claims with profile_id and child flag
       const customClaims = {
         profile_id: profileId,
+        child: isChildProfile,
         switched_at: Math.floor(Date.now() / 1000)
       };
 
@@ -479,15 +530,16 @@ const authController = {
       // Revoke existing tokens to force refresh
       await admin.auth().revokeRefreshTokens(uid);
 
-      console.log(`Profile switched for user ${uid} to profile ${profileId}`);
+      logger.info(`Profile switched for user ${uid} to profile ${profileId}, child: ${isChildProfile}`);
 
       res.status(200).json({
         message: 'Profile switched successfully',
         profileId: profileId,
+        isChild: isChildProfile,
         note: 'Please refresh your token to get updated claims'
       });
     } catch (error) {
-      console.error('Switch profile error:', error);
+      logger.error('Switch profile error:', error);
       res.status(500).json({
         error: 'Failed to switch profile',
         message: error.message
@@ -598,7 +650,7 @@ const authController = {
         userId: user.id,
         name: username,
         avatar: null,
-        isKidsProfile: false,
+        isKidsProfile: false, // Default profile is not a kids profile
         ageRating: 'R',
         language: 'en',
         autoplayNext: true,
@@ -619,7 +671,7 @@ const authController = {
         id: defaultProfile.id,
         name: defaultProfile.name,
         userId: user.id,
-        isKidsProfile: defaultProfile.isKidsProfile,
+        isKidsProfile: defaultProfile.isKidsProfile || false,
         avatar: defaultProfile.avatar
       };
 
