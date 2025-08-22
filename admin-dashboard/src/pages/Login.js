@@ -104,7 +104,7 @@ const Login = () => {
         </Form>
 
         <div style={{ textAlign: 'center', marginTop: 16, fontSize: '12px', color: '#999' }}>
-          Demo credentials: any email/password combination
+          Use your Firebase admin credentials to sign in
         </div>
       </Card>
     </div>

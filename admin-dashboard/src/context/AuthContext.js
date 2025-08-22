@@ -1,6 +1,22 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
-import { authAPI } from '../utils/api';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+
+// Firebase configuration - these should be in your .env file
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const AuthContext = createContext();
 
@@ -15,45 +31,140 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      authAPI.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // You can validate token here if needed
-      setUser({ token });
-    }
-    setLoading(false);
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get the ID token and check for admin claims
+          const idToken = await firebaseUser.getIdToken();
+          const tokenResult = await firebaseUser.getIdTokenResult();
+          
+          // Check if user has admin role
+          if (tokenResult.claims.admin) {
+            setUser(firebaseUser);
+            setToken(idToken);
+            localStorage.setItem('adminToken', idToken);
+            
+            // Set default authorization header for all API calls
+            const { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI } = await import('../utils/api');
+            [authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI].forEach(api => {
+              api.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
+            });
+          } else {
+            // User doesn't have admin role
+            message.error('Admin access required');
+            await signOut(auth);
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('adminToken');
+          }
+        } catch (error) {
+          console.error('Error getting token:', error);
+          message.error('Authentication error');
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem('adminToken');
+        }
+      } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('adminToken');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (credentials) => {
     try {
-      // Mock login since your backend uses Firebase Auth
-      // In a real scenario, you'd call your auth API
-      const mockToken = 'admin-mock-token-' + Date.now();
-      localStorage.setItem('adminToken', mockToken);
-      authAPI.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
-      setUser({ token: mockToken, ...credentials });
+      setLoading(true);
+      const { email, password } = credentials;
+      
+      // Sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+      
+      // Get the ID token and check for admin claims
+      const idToken = await firebaseUser.getIdToken();
+      const tokenResult = await firebaseUser.getIdTokenResult();
+      
+      // Check if user has admin role
+      if (!tokenResult.claims.admin) {
+        await signOut(auth);
+        message.error('Admin access required. Please contact your administrator.');
+        return false;
+      }
+      
       message.success('Login successful');
       return true;
     } catch (error) {
-      message.error('Login failed');
+      console.error('Login error:', error);
+      
+      // Handle specific Firebase auth errors
+      switch (error.code) {
+        case 'auth/user-not-found':
+          message.error('No user found with this email address');
+          break;
+        case 'auth/wrong-password':
+          message.error('Incorrect password');
+          break;
+        case 'auth/invalid-email':
+          message.error('Invalid email address');
+          break;
+        case 'auth/too-many-requests':
+          message.error('Too many failed attempts. Please try again later');
+          break;
+        default:
+          message.error('Login failed. Please check your credentials');
+      }
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('adminToken');
-    delete authAPI.defaults.headers.common['Authorization'];
-    setUser(null);
-    message.success('Logged out successfully');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      message.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      message.error('Error logging out');
+    }
+  };
+
+  const refreshToken = async () => {
+    if (auth.currentUser) {
+      try {
+        const newToken = await auth.currentUser.getIdToken(true);
+        setToken(newToken);
+        localStorage.setItem('adminToken', newToken);
+        
+        // Update authorization headers
+        const { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI } = await import('../utils/api');
+        [authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI].forEach(api => {
+          api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        });
+        
+        return newToken;
+      } catch (error) {
+        console.error('Token refresh error:', error);
+        throw error;
+      }
+    }
+    return null;
   };
 
   const value = {
     user,
+    token,
     login,
     logout,
-    loading
+    loading,
+    refreshToken
   };
 
   return (

@@ -48,10 +48,31 @@ const setupInterceptors = (apiInstance) => {
     (response) => {
       return response;
     },
-    (error) => {
-      if (error.response?.status === 401) {
+    async (error) => {
+      const originalRequest = error.config;
+
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        try {
+          // Try to refresh the token
+          const { getAuth } = await import('firebase/auth');
+          const auth = getAuth();
+          
+          if (auth.currentUser) {
+            const newToken = await auth.currentUser.getIdToken(true);
+            localStorage.setItem('adminToken', newToken);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return apiInstance(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+        }
+
+        // If refresh fails, redirect to login
         localStorage.removeItem('adminToken');
         window.location.href = '/login';
+        return Promise.reject(error);
       }
 
       const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
