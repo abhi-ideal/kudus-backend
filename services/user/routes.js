@@ -104,6 +104,23 @@ router.post('/profiles', verifyFirebaseToken, controller.createOrUpdateProfile);
  */
 router.post('/create-user', controller.createUser);
 
+// Admin Routes - Must come before parameterized routes
+const adminRouter = createAdminRouter('User Service');
+
+// Add standard admin endpoints
+adminRouter.get('/health', standardAdminEndpoints.health);
+adminRouter.get('/stats', standardAdminEndpoints.stats);
+
+// Add user-specific admin endpoints
+adminRouter.get('/users', controller.getUsers);
+adminRouter.get('/users/:id', controller.getUserById);
+adminRouter.patch('/users/:id/block', controller.blockUser);
+adminRouter.patch('/users/:id/unblock', controller.unblockUser);
+adminRouter.patch('/users/:id/subscription', controller.updateUserSubscription);
+adminRouter.get('/users/statistics', controller.getUserStatistics);
+
+router.use('/admin', adminRouter);
+
 /**
  * @swagger
  * /api/users/{id}:
@@ -330,24 +347,6 @@ router.post('/feed/generate', verifyFirebaseToken, controller.generateFeed);
  */
 router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, controller.markFeedViewed);
 
-// Admin Routes
-// Add admin routes
-const adminRouter = createAdminRouter('User Service');
-
-// Add standard admin endpoints
-adminRouter.get('/health', standardAdminEndpoints.health);
-adminRouter.get('/stats', standardAdminEndpoints.stats);
-
-// Add user-specific admin endpoints
-adminRouter.get('/users/', controller.getUsers);
-adminRouter.get('/users/:id', controller.getUserById);
-adminRouter.patch('/users/:id/block', controller.blockUser);
-adminRouter.patch('/users/:id/unblock', controller.unblockUser);
-adminRouter.patch('/users/:id/subscription', controller.updateUserSubscription);
-adminRouter.get('/users/statistics', controller.getUserStatistics);
-
-router.use('/admin', adminRouter);
-
 /**
  * @swagger
  * /api/users/logout:
@@ -361,7 +360,5 @@ router.use('/admin', adminRouter);
  *         description: User logged out successfully
  */
 router.post('/logout', controller.logout);
-
-router.get('/admin/users', controller.getUsers);
 
 module.exports = router;
