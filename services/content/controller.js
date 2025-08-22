@@ -377,7 +377,7 @@ const contentController = {
       }
 
       if (type) whereClause.type = type;
-      
+
       if (genre) {
         // Ensure requested genre is kid-friendly
         const kidFriendlyGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
@@ -1153,7 +1153,7 @@ const contentController = {
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         filteredData = filteredData.filter(item => {
           const content = item.content;
-          return content && 
+          return content &&
                  ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
                  content.genre.some(g => req.contentFilter.allowedGenres.includes(g));
         });

@@ -152,32 +152,27 @@ router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFil
  *             schema:
  *               type: object
  *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     continueWatching:
- *                       type: array
- *                       items:
+ *                 continueWatching:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       watchHistoryId:
+ *                         type: string
+ *                       contentId:
+ *                         type: string
+ *                       watchedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       progressPercentage:
+ *                         type: number
+ *                       resumeType:
+ *                         type: string
+ *                         enum: [movie, episode]
+ *                       content:
  *                         type: object
- *                         properties:
- *                           watchHistoryId:
- *                             type: string
- *                           contentId:
- *                             type: string
- *                           watchedAt:
- *                             type: string
- *                             format: date-time
- *                           progressPercentage:
- *                             type: number
- *                           resumeType:
- *                             type: string
- *                             enum: [movie, episode]
- *                           content:
- *                             type: object
- *                           episode:
- *                             type: object
+ *                       episode:
+ *                         type: object
  *                     pagination:
  *                       type: object
  *       401:
