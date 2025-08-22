@@ -41,11 +41,9 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
-
   const loadUsers = useCallback(async () => {
+    if (loading) return; // Prevent double calls
+    
     try {
       setLoading(true);
       const params = {
@@ -80,7 +78,11 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, filters, loading]);
+  }, [pagination.current, pagination.pageSize, filters]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleTableChange = (paginationData, filtersData) => {
     setPagination({
