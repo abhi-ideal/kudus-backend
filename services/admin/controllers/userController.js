@@ -41,6 +41,7 @@ const userController = {
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']],
+        attributes: { exclude: ['password', 'firebaseUid'] },
         include: [{
           model: UserProfile,
           as: 'profiles',
@@ -52,7 +53,7 @@ const userController = {
         users: users.map(user => ({
           id: user.id,
           email: user.email,
-          displayName: user.displayName,
+          displayName: user.displayName || user.email.split('@')[0],
           status: user.isActive ? 'active' : 'inactive',
           subscription: user.subscriptionType || 'free',
           subscriptionEndDate: user.subscriptionEndDate,
