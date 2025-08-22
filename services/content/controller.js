@@ -33,28 +33,42 @@ const contentController = {
       const offset = (page - 1) * limit;
       const whereClause = { isActive: true };
 
-      // Apply profile-based content filtering
-      if (req.contentFilter) {
-        if (req.contentFilter.excludeAdultContent) {
-          whereClause.ageRating = {
-            [Op.in]: ['G', 'PG', 'PG-13']
-          };
-        }
+      // Apply profile-based content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.enforceChildSafety) {
+        // Strict age rating filtering for child profiles
+        whereClause.ageRating = {
+          [Op.in]: req.contentFilter.allowedAgeRatings
+        };
 
-        if (req.contentFilter.allowedGenres) {
-          if (genre) {
-            // Check if requested genre is allowed for child profiles
-            if (!req.contentFilter.allowedGenres.includes(genre)) {
-              return res.status(403).json({
-                success: false,
-                error: 'Content type not allowed for child profile'
-              });
+        // Enforce child-appropriate genres only
+        whereClause[Op.and] = whereClause[Op.and] || [];
+        whereClause[Op.and].push(
+          sequelize.where(
+            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
+            {
+              [Op.regexp]: '(Family|Animation|Comedy|Adventure|Fantasy)'
             }
-          }
-          // Filter to only show child-appropriate genres
-          whereClause.genre = {
-            [Op.overlap]: req.contentFilter.allowedGenres
-          };
+          )
+        );
+
+        // Block restricted genres
+        whereClause[Op.and].push(
+          sequelize.where(
+            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
+            {
+              [Op.notRegexp]: '(Horror|Thriller|Crime|Drama|Romance)'
+            }
+          )
+        );
+
+        // Check if requested genre is allowed for child profiles
+        if (genre && !req.contentFilter.allowedGenres.includes(genre)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Content type not allowed for child profile',
+            requestedGenre: genre,
+            allowedGenres: req.contentFilter.allowedGenres
+          });
         }
       }
 
@@ -353,22 +367,46 @@ const contentController = {
         ageRating: {
           [Op.in]: ['G', 'PG', 'PG-13']
         },
-        // Only kid-friendly genres
-        genre: {
-          [Op.overlap]: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy']
-        }
+        // Only kid-friendly genres - use proper array overlap
+        [Op.and]: [
+          sequelize.where(
+            sequelize.fn('JSON_EXTRACT', sequelize.col('genre'), '$'),
+            {
+              [Op.regexp]: '(Family|Animation|Comedy|Adventure|Fantasy)'
+            }
+          )
+        ]
       };
 
+      // Apply geo-restrictions if applicable
+      if (req.geoFilter && req.userCountry) {
+        const userCountry = req.userCountry;
+        whereClause[Op.or] = [
+          {
+            isGloballyAvailable: true,
+            [Op.not]: sequelize.literal(`JSON_CONTAINS(restrictedCountries, '"${userCountry}"')`)
+          },
+          {
+            isGloballyAvailable: false,
+            [Op.and]: sequelize.literal(`JSON_CONTAINS(availableCountries, '"${userCountry}"')`)
+          }
+        ];
+      }
+
       if (type) whereClause.type = type;
+      
       if (genre) {
         // Ensure requested genre is kid-friendly
         const kidFriendlyGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         if (kidFriendlyGenres.includes(genre)) {
-          whereClause.genre = { [Op.contains]: [genre] };
+          whereClause[Op.and].push(
+            sequelize.literal(`JSON_CONTAINS(genre, '"${genre}"')`)
+          );
         } else {
           return res.status(400).json({
             success: false,
-            error: 'Requested genre is not available for kids content'
+            error: 'Requested genre is not available for kids content',
+            allowedGenres: kidFriendlyGenres
           });
         }
       }
@@ -400,14 +438,16 @@ const contentController = {
         contentType: 'kids-only',
         appliedFilters: {
           ageRatings: ['G', 'PG', 'PG-13'],
-          allowedGenres: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy']
+          allowedGenres: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'],
+          excludedGenres: ['Horror', 'Thriller', 'Crime', 'Drama', 'Romance']
         }
       });
     } catch (error) {
-      console.error('Get kids content error:', error);
+      logger.error('Get kids content error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch kids content'
+        error: 'Failed to fetch kids content',
+        message: error.message
       });
     }
   },

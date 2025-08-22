@@ -198,6 +198,22 @@ describe('Content Service Integration Tests', () => {
         expect(error.response.status).toBe(401);
       }
 
+      // Test kids content endpoint
+      const kidsResponse = await axios.get(`${BASE_URL}/api/content/kids`);
+      expect(kidsResponse.status).toBe(200);
+      expect(kidsResponse.data.success).toBe(true);
+      expect(kidsResponse.data.contentType).toBe('kids-only');
+      
+      // Verify all content is kid-appropriate
+      if (kidsResponse.data.data.content.length > 0) {
+        kidsResponse.data.data.content.forEach(content => {
+          expect(['G', 'PG', 'PG-13']).toContain(content.ageRating);
+          expect(content.genre.some(g => 
+            ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'].includes(g)
+          )).toBe(true);
+        });
+      }
+
       // Test missing required fields
       if (testFirebaseToken !== 'your-test-firebase-token') {
         try {

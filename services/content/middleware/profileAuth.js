@@ -1,9 +1,7 @@
 
-const { verifyFirebaseToken } = require('./auth');
-
 /**
  * Middleware to validate profile ownership and child profile restrictions
- * Content service specific implementation
+ * Content service specific implementation - SECURE VERSION
  */
 const profileAuth = async (req, res, next) => {
   try {
@@ -21,37 +19,31 @@ const profileAuth = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const userId = decodedToken.uid;
 
-    // Priority order: token claims > query/body parameters
-    let activeProfileId = decodedToken.profile_id || decodedToken.default_profile_id;
-    
-    // Fallback to query/body parameters if not in token
+    // SECURITY: Only trust profile_id from Firebase custom claims, never from request
+    const activeProfileId = decodedToken.profile_id;
+    const isChildProfile = decodedToken.child === true; // Explicit boolean check
+
+    // If no profile in claims, this is optional for some endpoints
     if (!activeProfileId) {
-      const { profile_id } = req.query || req.body;
-      activeProfileId = profile_id;
+      req.user = decodedToken;
+      return next(); // Continue without profile context
     }
 
-    if (!activeProfileId) {
-      return next(); // Profile ID is optional, continue without profile context
-    }
-
-    // Basic profile validation - ensure profile_id format is valid
+    // Validate profile_id format for security
     if (!activeProfileId.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid profile ID format'
+        error: 'Invalid profile ID in token claims'
       });
     }
 
-    // Check if it's a child profile
-    const isChildProfile = activeProfileId.toLowerCase().includes('child');
-
-    // Add profile context to request
+    // Add secure profile context to request
     req.activeProfile = {
       id: activeProfileId,
       userId: userId,
       isChild: isChildProfile,
       preferences: {},
-      fromToken: !!(decodedToken.profile_id || decodedToken.default_profile_id) // Indicates if profile came from token
+      fromToken: true // Always from token in secure implementation
     };
 
     req.user = decodedToken;
@@ -86,17 +78,19 @@ const profileAuth = async (req, res, next) => {
 
 /**
  * Middleware to enforce child profile content restrictions
- * Content service specific implementation
+ * Content service specific implementation - SECURE VERSION
  */
 const childProfileFilter = (req, res, next) => {
-  if (req.activeProfile && req.activeProfile.isChild) {
-    // Add child profile filtering context for content queries
+  // Check if this is a child profile from Firebase custom claims
+  if (req.activeProfile && req.activeProfile.isChild === true) {
+    // Add strict child profile filtering context for content queries
     req.contentFilter = {
       excludeAdultContent: true,
       maxAgeRating: 'PG-13',
       allowedAgeRatings: ['G', 'PG', 'PG-13'],
       allowedGenres: ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'],
-      restrictAdultGenres: ['Horror', 'Thriller', 'Crime', 'Drama', 'Romance']
+      restrictedGenres: ['Horror', 'Thriller', 'Crime', 'Drama', 'Romance'],
+      enforceChildSafety: true
     };
   }
   next();

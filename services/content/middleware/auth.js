@@ -16,20 +16,58 @@ if (!admin.apps.length) {
 
 const verifyFirebaseToken = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-
-    if (!token) {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
-        error: 'No token provided'
+        error: 'No authentication token provided'
       });
     }
 
+    const token = authHeader.replace('Bearer ', '');
     const decodedToken = await admin.auth().verifyIdToken(token);
+    
+    // Validate required claims structure
+    if (decodedToken.profile_id) {
+      // Validate profile_id format
+      if (!decodedToken.profile_id.match(/^[a-zA-Z0-9-_]{10,50}$/)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid profile_id format in token claims'
+        });
+      }
+      
+      // Validate child claim is a boolean
+      if (decodedToken.child !== undefined && typeof decodedToken.child !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid child claim format in token'
+        });
+      }
+    }
+    
     req.user = decodedToken;
     next();
   } catch (error) {
     logger.error('Token verification failed:', error);
+    
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token expired',
+        message: 'Please refresh your token and try again'
+      });
+    }
+    
+    if (error.code === 'auth/invalid-id-token' || error.code === 'auth/argument-error') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'The provided token is invalid'
+      });
+    }
+    
     res.status(401).json({
       success: false,
       error: 'Invalid token'
