@@ -12,7 +12,7 @@ require('dotenv').config({
 const app = require('../index');
 
 // Base URL for axios requests
-const BASE_URL = 'http://0.0.0.0:3002';
+const BASE_URL = 'http://0.0.0.0:3003';
 
 describe('Content Service', () => {
   let server;

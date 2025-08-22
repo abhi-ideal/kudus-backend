@@ -9,7 +9,7 @@ require('dotenv').config({
 });
 
 describe('Content Service Integration Tests', () => {
-  const BASE_URL = 'http://0.0.0.0:3002';
+  const BASE_URL = 'http://0.0.0.0:3003';
   let testFirebaseToken;
 
   beforeAll(() => {
