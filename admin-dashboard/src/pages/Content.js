@@ -48,8 +48,8 @@ const Content = () => {
   const [selectedContent, setSelectedContent] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState(undefined);
-  const [genreFilter, setGenreFilter] = useState(undefined);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState('');
 
   useEffect(() => {
     loadContent();
@@ -61,10 +61,22 @@ const Content = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
-        search: searchText,
-        status: statusFilter,
-        genre: genreFilter,
       };
+
+      // Add search parameter
+      if (searchText.trim()) {
+        params.search = searchText.trim();
+      }
+
+      // Add status filter
+      if (statusFilter) {
+        params.status = statusFilter;
+      }
+
+      // Add genre filter
+      if (genreFilter) {
+        params.genre = genreFilter;
+      }
 
       const response = await adminAPI.getContent(params);
       const { content: contentData, pagination: paginationData } = response.data.data;
@@ -149,24 +161,24 @@ const Content = () => {
 
   const handleSearch = (value) => {
     setSearchText(value);
-    setPagination({ ...pagination, current: 1 }); // Reset to first page on search
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
   };
 
   const handleStatusFilter = (value) => {
     setStatusFilter(value);
-    setPagination({ ...pagination, current: 1 }); // Reset to first page on filter
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
   };
 
   const handleGenreFilter = (value) => {
     setGenreFilter(value);
-    setPagination({ ...pagination, current: 1 }); // Reset to first page on filter
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
   };
 
   const handleClearFilters = () => {
     setSearchText('');
-    setStatusFilter(undefined);
-    setGenreFilter(undefined);
-    setPagination({ ...pagination, current: 1 }); // Reset to first page on clearing filters
+    setStatusFilter('');
+    setGenreFilter('');
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const columns = [
