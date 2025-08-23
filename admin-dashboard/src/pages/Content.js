@@ -59,7 +59,7 @@ const Content = () => {
       };
       
       const response = await adminAPI.getContent(params);
-      const { content: contentData, pagination: paginationData } = response.data;
+      const { content: contentData, pagination: paginationData } = response.data.data;
       
       setContent(contentData);
       setPagination({
