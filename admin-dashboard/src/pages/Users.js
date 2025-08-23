@@ -14,6 +14,8 @@ import {
   Typography,
   Card,
   Popconfirm,
+  Row,
+  Col,
 } from 'antd';
 import {
   EyeOutlined,
@@ -21,6 +23,7 @@ import {
   CheckOutlined,
   EditOutlined,
   ReloadOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 import moment from 'moment';
@@ -38,6 +41,9 @@ const Users = () => {
     total: 0,
   });
   const [filters, setFilters] = useState({});
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [subscriptionFilter, setSubscriptionFilter] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('view');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -53,6 +59,21 @@ const Users = () => {
         limit: pagination.pageSize,
         ...filters,
       };
+
+      // Add search parameter
+      if (searchText.trim()) {
+        params.search = searchText.trim();
+      }
+
+      // Add status filter
+      if (statusFilter) {
+        params.status = statusFilter;
+      }
+
+      // Add subscription filter
+      if (subscriptionFilter) {
+        params.subscription = subscriptionFilter;
+      }
       
       console.log('Loading users with params:', params);
       const response = await adminAPI.getUsers(params);
@@ -81,7 +102,7 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.current, pagination.pageSize, filters]);
+  }, [pagination.current, pagination.pageSize, filters, searchText, statusFilter, subscriptionFilter]);
 
   useEffect(() => {
     loadUsers();
@@ -93,6 +114,28 @@ const Users = () => {
       current: paginationData.current,
       pageSize: paginationData.pageSize,
     });
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
+  const handleStatusFilter = (value) => {
+    setStatusFilter(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
+  const handleSubscriptionFilter = (value) => {
+    setSubscriptionFilter(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
+  const handleClearFilters = () => {
+    setSearchText('');
+    setStatusFilter('');
+    setSubscriptionFilter('');
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleViewUser = (userId) => {
@@ -246,6 +289,51 @@ const Users = () => {
           Refresh
         </Button>
       </div>
+
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Input.Search
+              placeholder="Search by email or display name"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={handleSearch}
+              allowClear
+              enterButton={<SearchOutlined />}
+            />
+          </Col>
+          <Col xs={24} sm={6} md={4} lg={3}>
+            <Select
+              placeholder="Status"
+              value={statusFilter}
+              onChange={handleStatusFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="active">Active</Option>
+              <Option value="inactive">Inactive</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={6} md={4} lg={3}>
+            <Select
+              placeholder="Subscription"
+              value={subscriptionFilter}
+              onChange={handleSubscriptionFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="free">Free</Option>
+              <Option value="premium">Premium</Option>
+              <Option value="family">Family</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4} lg={3}>
+            <Button onClick={handleClearFilters}>
+              Clear Filters
+            </Button>
+          </Col>
+        </Row>
+      </Card>
 
       <Card>
         <Table
