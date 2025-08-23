@@ -40,7 +40,7 @@ import {
   UserOutlined,
   ClockCircleOutlined
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
 
 const { Sider, Content } = Layout;
@@ -113,7 +113,7 @@ const ContentDetails = () => {
   const loadContent = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getContentById(id);
+      const response = await adminEndpoints.getContentById(id);
       const contentData = response.data.content || response.data.data;
       setContent(contentData);
       
@@ -143,7 +143,7 @@ const ContentDetails = () => {
           : values.cast
       };
 
-      await adminAPI.updateContent(id, updateData);
+      await adminEndpoints.updateContent(id, updateData);
       message.success('Content updated successfully');
       loadContent();
     } catch (error) {
