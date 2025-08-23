@@ -38,7 +38,8 @@ import {
   ArrowLeftOutlined,
   EyeOutlined,
   UserOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  SafetyOutlined
 } from '@ant-design/icons';
 import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
@@ -176,7 +177,7 @@ const ContentDetails = () => {
     },
     {
       key: 'access-control',
-      icon: <ShieldOutlined />,
+      icon: <SafetyOutlined />,
       label: 'Access Control',
     },
     {
