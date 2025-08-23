@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
@@ -7,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Content from './pages/Content';
 import Login from './pages/Login';
+import ContentDetails from './pages/ContentDetails'; // Import ContentDetails
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -33,6 +33,7 @@ function App() {
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/users" element={<Users />} />
                       <Route path="/content" element={<Content />} />
+                      <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

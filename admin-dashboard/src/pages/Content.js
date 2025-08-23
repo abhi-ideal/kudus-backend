@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   Button,
@@ -32,6 +33,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const Content = () => {
+  const navigate = useNavigate();
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -97,15 +99,8 @@ const Content = () => {
     setModalVisible(true);
   };
 
-  const handleViewContent = async (contentId) => {
-    try {
-      const response = await adminAPI.getContentById(contentId);
-      setSelectedContent(response.data.content);
-      setModalType('view');
-      setModalVisible(true);
-    } catch (error) {
-      message.error('Failed to load content details');
-    }
+  const handleViewContent = (contentId) => {
+    navigate(`/content/${contentId}`);
   };
 
   const handleDeleteContent = async (contentId) => {
