@@ -7,6 +7,7 @@ import Users from './pages/Users';
 import Content from './pages/Content';
 import Login from './pages/Login';
 import ContentDetails from './pages/ContentDetails'; // Import ContentDetails
+import UserDetails from './pages/UserDetails'; // Import UserDetails
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -32,6 +33,7 @@ function App() {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/users" element={<Users />} />
+                      <Route path="/users/:id" element={<UserDetails />} /> {/* Added route for UserDetails */}
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
                     </Routes>

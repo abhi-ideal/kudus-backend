@@ -58,7 +58,7 @@ const setupInterceptors = (apiInstance) => {
           // Try to refresh the token
           const { getAuth } = await import('firebase/auth');
           const auth = getAuth();
-          
+
           if (auth.currentUser) {
             const newToken = await auth.currentUser.getIdToken(true);
             localStorage.setItem('adminToken', newToken);
@@ -99,7 +99,12 @@ const adminEndpoints = {
   getUserById: (userId) => userAPI.get(`/users/${userId}`),
   blockUser: (userId, reason) => userAPI.patch(`/users/${userId}/block`, { reason }),
   unblockUser: (userId) => userAPI.patch(`/users/${userId}/unblock`),
-  updateUserSubscription: (userId, data) => userAPI.patch(`/users/${userId}/subscription`, data),
+  updateUserSubscription: (userId, subscriptionData) =>
+    userAPI.patch(`/users/${userId}/subscription`, subscriptionData),
+
+  getUserActivity: (userId, params = {}) =>
+    userAPI.get(`/users/${userId}/activity`, { params }),
+
   getUserStatistics: () => userAPI.get('/users/statistics'),
 
   // Content API

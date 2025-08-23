@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   Button,
@@ -28,6 +29,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const Users = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -93,15 +95,8 @@ const Users = () => {
     });
   };
 
-  const handleViewUser = async (userId) => {
-    try {
-      const response = await adminAPI.getUserById(userId);
-      setSelectedUser(response.data);
-      setModalType('view');
-      setModalVisible(true);
-    } catch (error) {
-      message.error('Failed to load user details');
-    }
+  const handleViewUser = (userId) => {
+    navigate(`/users/${userId}`);
   };
 
   const handleBlockUser = async (userId) => {
