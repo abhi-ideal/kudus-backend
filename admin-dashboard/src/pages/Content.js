@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +15,8 @@ import {
   Card,
   Popconfirm,
   Upload,
+  Row,
+  Col,
 } from 'antd';
 import {
   PlusOutlined,
@@ -24,6 +25,7 @@ import {
   EyeOutlined,
   ReloadOutlined,
   UploadOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 import moment from 'moment';
@@ -45,10 +47,13 @@ const Content = () => {
   const [modalType, setModalType] = useState('create');
   const [selectedContent, setSelectedContent] = useState(null);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState(undefined);
+  const [genreFilter, setGenreFilter] = useState(undefined);
 
   useEffect(() => {
     loadContent();
-  }, [pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter]);
 
   const loadContent = async () => {
     try {
@@ -56,11 +61,14 @@ const Content = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
+        search: searchText,
+        status: statusFilter,
+        genre: genreFilter,
       };
-      
+
       const response = await adminAPI.getContent(params);
       const { content: contentData, pagination: paginationData } = response.data.data;
-      
+
       setContent(contentData);
       setPagination({
         ...pagination,
@@ -116,11 +124,12 @@ const Content = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
+
       const submitData = {
         ...values,
         genre: Array.isArray(values.genre) ? values.genre : [values.genre],
         cast: Array.isArray(values.cast) ? values.cast : values.cast?.split(',').map(c => c.trim()) || [],
+        isActive: values.isActive === undefined ? true : values.isActive, // Default to active if not provided
       };
 
       if (modalType === 'create') {
@@ -130,12 +139,34 @@ const Content = () => {
         await adminAPI.updateContent(selectedContent.id, submitData);
         message.success('Content updated successfully');
       }
-      
+
       setModalVisible(false);
       loadContent();
     } catch (error) {
       message.error(`Failed to ${modalType} content`);
     }
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setPagination({ ...pagination, current: 1 }); // Reset to first page on search
+  };
+
+  const handleStatusFilter = (value) => {
+    setStatusFilter(value);
+    setPagination({ ...pagination, current: 1 }); // Reset to first page on filter
+  };
+
+  const handleGenreFilter = (value) => {
+    setGenreFilter(value);
+    setPagination({ ...pagination, current: 1 }); // Reset to first page on filter
+  };
+
+  const handleClearFilters = () => {
+    setSearchText('');
+    setStatusFilter(undefined);
+    setGenreFilter(undefined);
+    setPagination({ ...pagination, current: 1 }); // Reset to first page on clearing filters
   };
 
   const columns = [
@@ -244,6 +275,61 @@ const Content = () => {
         </Space>
       </div>
 
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Input.Search
+              placeholder="Search by title or description"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={handleSearch}
+              allowClear
+              enterButton={<SearchOutlined />}
+            />
+          </Col>
+          <Col xs={24} sm={6} md={4} lg={3}>
+            <Select
+              placeholder="Status"
+              value={statusFilter}
+              onChange={handleStatusFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="active">Active</Option>
+              <Option value="inactive">Inactive</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={6} md={4} lg={3}>
+            <Select
+              placeholder="Genre"
+              value={genreFilter}
+              onChange={handleGenreFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="action">Action</Option>
+              <Option value="comedy">Comedy</Option>
+              <Option value="drama">Drama</Option>
+              <Option value="horror">Horror</Option>
+              <Option value="romance">Romance</Option>
+              <Option value="sci-fi">Sci-Fi</Option>
+              <Option value="thriller">Thriller</Option>
+              <Option value="documentary">Documentary</Option>
+              <Option value="family">Family</Option>
+              <Option value="fantasy">Fantasy</Option>
+              <Option value="mystery">Mystery</Option>
+              <Option value="crime">Crime</Option>
+              <Option value="adventure">Adventure</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4} lg={3}>
+            <Button onClick={handleClearFilters}>
+              Clear Filters
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
       <Card>
         <Table
           columns={columns}
@@ -296,6 +382,7 @@ const Content = () => {
             <p><strong>Language:</strong> {selectedContent.language}</p>
             <p><strong>Age Rating:</strong> {selectedContent.ageRating}</p>
             <p><strong>Views:</strong> {(selectedContent.views || 0).toLocaleString()}</p>
+            <p><strong>Status:</strong> {selectedContent.isActive ? 'Active' : 'Inactive'}</p>
             <p><strong>Created:</strong> {moment(selectedContent.createdAt).format('MMM DD, YYYY HH:mm')}</p>
           </div>
         ) : (
@@ -394,6 +481,17 @@ const Content = () => {
                 <Option value="PG-13">PG-13</Option>
                 <Option value="R">R</Option>
                 <Option value="NC-17">NC-17</Option>
+              </Select>
+            </Form.Item>
+            
+            <Form.Item
+              name="isActive"
+              label="Status"
+              valuePropName="checked"
+            >
+              <Select placeholder="Select status">
+                <Option value={true}>Active</Option>
+                <Option value={false}>Inactive</Option>
               </Select>
             </Form.Item>
           </Form>
