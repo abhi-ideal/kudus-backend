@@ -933,53 +933,85 @@ const contentController = {
     try {
       const {
         page = 1,
-        limit = 20,
+        limit = 10,
         type,
         genre,
-        status,
-        sortBy = 'createdAt',
-        sortOrder = 'DESC'
+        ageRating,
+        search,
+        isActive = true
       } = req.query;
 
       const offset = (page - 1) * limit;
-      const whereClause = {};
+      const where = { isActive };
 
-      if (type) whereClause.type = type;
-      if (genre) whereClause.genre = { [Op.contains]: [genre] };
-      if (status) whereClause.status = status;
+      // Add filters
+      if (type) {
+        const typeArray = type.split(',').map(t => t.trim());
+        where.type = { [Op.in]: typeArray };
+      }
 
-      const { count, rows: content } = await Content.findAndCountAll({
-        where: whereClause,
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        // Use MySQL JSON_CONTAINS for genre filtering
+        const genreConditions = genreArray.map(g =>
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (ageRating) {
+        const ageRatingArray = ageRating.split(',').map(r => r.trim());
+        where.ageRating = { [Op.in]: ageRatingArray };
+      }
+
+      if (search) {
+        where[Op.or] = [
+          { title: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows } = await Content.findAndCountAll({
+        where,
         limit: parseInt(limit),
-        offset: offset,
-        order: [[sortBy, sortOrder]],
-        attributes: [
-          'id', 'title', 'description', 'type', 'genre',
-          'duration', 'releaseYear', 'rating', 'ageRating',
-          'language', 'subtitles', 'cast', 'director',
-          'thumbnailUrl', 'trailerUrl', 'status', 'createdAt',
-          'isActive', 'isGloballyAvailable', 'availableCountries',
-          'restrictedCountries'
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']],
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            required: false,
+            include: [
+              {
+                model: Episode,
+                as: 'episodes',
+                required: false
+              }
+            ]
+          }
         ]
       });
 
       res.json({
         success: true,
-        data: {
-          content,
-          pagination: {
-            total: count,
-            page: parseInt(page),
-            limit: parseInt(limit),
-            totalPages: Math.ceil(count / limit)
-          }
+        content: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          pages: Math.ceil(count / limit)
         }
       });
     } catch (error) {
-      logger.error('Admin get content error:', error);
+      logger.error('Get content error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch content for admin'
+        error: 'Failed to retrieve content'
       });
     }
   },
