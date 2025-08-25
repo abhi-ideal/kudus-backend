@@ -28,8 +28,9 @@ const Dashboard = () => {
         adminAPI.getUserStatistics(),
         // You can add content stats API call here when available
       ]);
-      
-      setUserStats(userStatsRes.data);
+      console.log("userStatsRes");
+      console.log(userStatsRes.data.data);
+      setUserStats(userStatsRes.data.data);
       
       // Mock content stats for now
       setContentStats({
@@ -86,7 +87,7 @@ const Dashboard = () => {
           <Card>
             <Statistic
               title="Total Users"
-              value={userStats?.overview?.totalUsers || 0}
+              value={userStats?.totalUsers || 0}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -96,7 +97,7 @@ const Dashboard = () => {
           <Card>
             <Statistic
               title="Active Users"
-              value={userStats?.overview?.activeUsers || 0}
+              value={userStats?.activeUsers || 0}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -187,7 +188,7 @@ const Dashboard = () => {
               <Col span={12}>
                 <div className="stats-card">
                   <div className="stats-number">
-                    {userStats?.overview?.blockedUsers || 0}
+                    {userStats?.inactiveUsers || 0}
                   </div>
                   <div>Blocked Users</div>
                 </div>

@@ -52,7 +52,7 @@ const UserDetails = () => {
       
       // Load user basic info
       const userResponse = await adminEndpoints.getUserById(id);
-      setUser(userResponse.data.user || userResponse.data);
+      setUser(userResponse.data.data.user || userResponse.data.data);
       
       // Load user activity (watch history)
       const activityResponse = await adminEndpoints.getUserActivity(id);
