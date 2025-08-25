@@ -86,14 +86,17 @@ const contentController = {
       
       if (genre) {
         const genreArray = genre.split(',').map(g => g.trim());
-        // Build MySQL JSON_CONTAINS conditions manually
-        const genreConditionsSQL = genreArray.map(g => 
-          `JSON_CONTAINS(genre, '"${g}"')`
-        ).join(' OR ');
+        // Use raw SQL with proper MySQL JSON syntax
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
         
-        // Add the raw SQL condition to where clause
-        where[Sequelize.Op.and] = where[Sequelize.Op.and] || [];
-        where[Sequelize.Op.and].push(Sequelize.literal(`(${genreConditionsSQL})`));
+        // Add as a raw where condition
+        if (where[Op.and]) {
+          where[Op.and].push(Sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [Sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
       }
       
       if (ageRating) {
