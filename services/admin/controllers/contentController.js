@@ -86,12 +86,20 @@ const contentController = {
       
       if (genre) {
         const genreArray = genre.split(',').map(g => g.trim());
-        // Use JSON_CONTAINS for MySQL
+        // Use JSON_CONTAINS for MySQL - create OR conditions for multiple genres
         const genreConditions = genreArray.map(g => 
           Sequelize.literal(`JSON_CONTAINS(genre, '"${g}"')`)
         );
-        where[Op.or] = where[Op.or] || [];
-        where[Op.or].push(...genreConditions);
+        
+        if (genreConditions.length === 1) {
+          where[Op.and] = where[Op.and] || [];
+          where[Op.and].push(genreConditions[0]);
+        } else {
+          where[Op.and] = where[Op.and] || [];
+          where[Op.and].push({
+            [Op.or]: genreConditions
+          });
+        }
       }
       
       if (ageRating) {
