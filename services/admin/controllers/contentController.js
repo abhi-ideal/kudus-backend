@@ -1,7 +1,7 @@
 const Content = require('../../content/models/Content');
 const Season = require('../../content/models/Season');
 const Episode = require('../../content/models/Episode');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 const logger = require('../utils/logger');
 
 const contentController = {
@@ -85,12 +85,21 @@ const contentController = {
       }
       
       if (genre) {
-        const genreArray = genre.split(',');
-        where.genre = { [Op.overlap]: genreArray };
+        const genreArray = genre.split(',').map(g => g.trim());
+        // Use JSON_OVERLAPS for MySQL 8.0+ or JSON_CONTAINS for older versions
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, '"${g}"')`
+        );
+        where[Op.and] = where[Op.and] || [];
+        where[Op.and].push({
+          [Op.or]: genreConditions.map(condition => 
+            Sequelize.literal(condition)
+          )
+        });
       }
       
       if (ageRating) {
-        const ageRatingArray = ageRating.split(',');
+        const ageRatingArray = ageRating.split(',').map(ar => ar.trim());
         where.ageRating = { [Op.in]: ageRatingArray };
       }
       
