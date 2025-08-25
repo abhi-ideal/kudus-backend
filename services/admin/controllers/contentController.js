@@ -86,16 +86,12 @@ const contentController = {
       
       if (genre) {
         const genreArray = genre.split(',').map(g => g.trim());
-        // Use JSON_OVERLAPS for MySQL 8.0+ or JSON_CONTAINS for older versions
+        // Use JSON_CONTAINS for MySQL
         const genreConditions = genreArray.map(g => 
-          `JSON_CONTAINS(genre, '"${g}"')`
+          Sequelize.literal(`JSON_CONTAINS(genre, '"${g}"')`)
         );
-        where[Op.and] = where[Op.and] || [];
-        where[Op.and].push({
-          [Op.or]: genreConditions.map(condition => 
-            Sequelize.literal(condition)
-          )
-        });
+        where[Op.or] = where[Op.or] || [];
+        where[Op.or].push(...genreConditions);
       }
       
       if (ageRating) {
