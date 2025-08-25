@@ -86,10 +86,17 @@ router.post('/', validate(schemas.content), contentController.createContent);
  *         name: type
  *         schema:
  *           type: string
+ *           description: Comma-separated list of content types (movie,series,documentary,short)
  *       - in: query
  *         name: genre
  *         schema:
  *           type: string
+ *           description: Comma-separated list of genres
+ *       - in: query
+ *         name: ageRating
+ *         schema:
+ *           type: string
+ *           description: Comma-separated list of age ratings (G,PG,PG-13,R,NC-17,U,12A,15,18)
  *       - in: query
  *         name: search
  *         schema:

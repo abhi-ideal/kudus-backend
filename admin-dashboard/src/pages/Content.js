@@ -49,11 +49,13 @@ const Content = () => {
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [genreFilter, setGenreFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState([]);
+  const [typeFilter, setTypeFilter] = useState([]);
+  const [ageRatingFilter, setAgeRatingFilter] = useState([]);
 
   useEffect(() => {
     loadContent();
-  }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter]);
+  }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter, typeFilter, ageRatingFilter]);
 
   const loadContent = async () => {
     try {
@@ -73,9 +75,19 @@ const Content = () => {
         params.status = statusFilter;
       }
 
-      // Add genre filter
-      if (genreFilter) {
-        params.genre = genreFilter;
+      // Add genre filter (multiple selection)
+      if (genreFilter && genreFilter.length > 0) {
+        params.genre = genreFilter.join(',');
+      }
+
+      // Add type filter (multiple selection)
+      if (typeFilter && typeFilter.length > 0) {
+        params.type = typeFilter.join(',');
+      }
+
+      // Add age rating filter (multiple selection)
+      if (ageRatingFilter && ageRatingFilter.length > 0) {
+        params.ageRating = ageRatingFilter.join(',');
       }
 
       const response = await adminAPI.getContent(params);
@@ -174,10 +186,22 @@ const Content = () => {
     setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
   };
 
+  const handleTypeFilter = (value) => {
+    setTypeFilter(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
+  const handleAgeRatingFilter = (value) => {
+    setAgeRatingFilter(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
   const handleClearFilters = () => {
     setSearchText('');
     setStatusFilter('');
-    setGenreFilter('');
+    setGenreFilter([]);
+    setTypeFilter([]);
+    setAgeRatingFilter([]);
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
@@ -221,6 +245,16 @@ const Content = () => {
       title: 'Year',
       dataIndex: 'releaseYear',
       key: 'releaseYear',
+    },
+    {
+      title: 'Age Rating',
+      dataIndex: 'ageRating',
+      key: 'ageRating',
+      render: (ageRating) => (
+        <Tag color="orange" size="small">
+          {ageRating || 'NR'}
+        </Tag>
+      ),
     },
     {
       title: 'Views',
@@ -311,8 +345,24 @@ const Content = () => {
               <Option value="inactive">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={6} md={4} lg={3}>
+          <Col xs={24} sm={8} md={6} lg={4}>
             <Select
+              mode="multiple"
+              placeholder="Type"
+              value={typeFilter}
+              onChange={handleTypeFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="movie">Movie</Option>
+              <Option value="series">Series</Option>
+              <Option value="documentary">Documentary</Option>
+              <Option value="short">Short</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={8} md={6} lg={4}>
+            <Select
+              mode="multiple"
               placeholder="Genre"
               value={genreFilter}
               onChange={handleGenreFilter}
@@ -332,6 +382,26 @@ const Content = () => {
               <Option value="mystery">Mystery</Option>
               <Option value="crime">Crime</Option>
               <Option value="adventure">Adventure</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={8} md={6} lg={4}>
+            <Select
+              mode="multiple"
+              placeholder="Age Rating"
+              value={ageRatingFilter}
+              onChange={handleAgeRatingFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="G">G</Option>
+              <Option value="PG">PG</Option>
+              <Option value="PG-13">PG-13</Option>
+              <Option value="R">R</Option>
+              <Option value="NC-17">NC-17</Option>
+              <Option value="U">U</Option>
+              <Option value="12A">12A</Option>
+              <Option value="15">15</Option>
+              <Option value="18">18</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4} lg={3}>

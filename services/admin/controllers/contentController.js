@@ -79,9 +79,21 @@ const contentController = {
       const where = {};
 
       // Apply filters
-      if (type) where.type = type;
-      if (genre) where.genre = { [Op.contains]: [genre] };
-      if (ageRating) where.ageRating = ageRating;
+      if (type) {
+        const typeArray = type.split(',');
+        where.type = { [Op.in]: typeArray };
+      }
+      
+      if (genre) {
+        const genreArray = genre.split(',');
+        where.genre = { [Op.overlap]: genreArray };
+      }
+      
+      if (ageRating) {
+        const ageRatingArray = ageRating.split(',');
+        where.ageRating = { [Op.in]: ageRatingArray };
+      }
+      
       if (language) where.language = language;
       if (isActive !== undefined) where.isActive = isActive === 'true';
       if (search) {
@@ -106,12 +118,15 @@ const contentController = {
       });
 
       res.json({
-        content: rows,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          totalItems: count,
-          itemsPerPage: parseInt(limit)
+        success: true,
+        data: {
+          content: rows,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit)
+          }
         }
       });
     } catch (error) {
