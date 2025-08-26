@@ -487,11 +487,11 @@ const authController = {
       }
 
       // Get profile details to determine if it's a child profile
-      // We need to call user service to get profile information
       let isChildProfile = false;
+      let user = null;
       try {
         // Find user by Firebase UID to get user ID
-        const user = await User.findOne({ where: { firebaseUid: uid } });
+        user = await User.findOne({ where: { firebaseUid: uid } });
         if (user) {
           const profile = await UserProfile.findOne({
             where: { 
@@ -516,32 +516,57 @@ const authController = {
         }
       } catch (dbError) {
         logger.warn('Could not fetch profile details for child check:', dbError.message);
-        // Continue with default false value
+        return res.status(500).json({
+          error: 'Database error',
+          message: 'Failed to validate profile'
+        });
       }
 
       // Set custom claims with profile_id and child flag
       const customClaims = {
         profile_id: profileId,
         child: isChildProfile,
-        switched_at: Math.floor(Date.now() / 1000)
+        switched_at: Math.floor(Date.now() / 1000),
+        role: 'user'
       };
 
       await admin.auth().setCustomUserClaims(uid, customClaims);
 
-      // Revoke existing tokens to force refresh
-      await admin.auth().revokeRefreshTokens(uid);
+      // Generate new custom token with updated claims
+      const customToken = await admin.auth().createCustomToken(uid, customClaims);
+
+      // Generate new JWT token for API access
+      const accessToken = jwt.sign(
+        {
+          userId: user.id,
+          firebaseUid: uid,
+          email: user.email,
+          profileId: profileId,
+          isChild: isChildProfile
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+      );
 
       logger.info(`Profile switched for user ${uid} to profile ${profileId}, child: ${isChildProfile}`);
 
       res.status(200).json({
+        success: true,
         message: 'Profile switched successfully',
         profileId: profileId,
         isChild: isChildProfile,
-        note: 'Please refresh your token to get updated claims'
+        customToken: customToken,
+        accessToken: accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName
+        }
       });
     } catch (error) {
       logger.error('Switch profile error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to switch profile',
         message: error.message
       });
