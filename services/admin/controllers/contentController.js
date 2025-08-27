@@ -137,14 +137,16 @@ const contentController = {
 
       res.json({
         success: true,
-        data: {
-          content: rows,
-          pagination: {
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(count / limit),
-            totalItems: count,
-            itemsPerPage: parseInt(limit)
-          }
+        content: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          pages: Math.ceil(count / limit),
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(count / limit),
+          totalItems: count,
+          itemsPerPage: parseInt(limit)
         }
       });
     } catch (error) {
