@@ -113,7 +113,8 @@ const adminEndpoints = {
   createContent: (data) => contentAPI.post('/content', data),
   updateContent: (contentId, data) => contentAPI.put(`/content/${contentId}`, data),
   deleteContent: (contentId) => contentAPI.delete(`/content/${contentId}`),
-  getContentStatistics: () => contentAPI.get('/content/statistics'),
+  featureContent: (id) => contentAPI.put(`/content/${id}/feature`),
+  unfeatureContent: (id) => contentAPI.put(`/content/${id}/unfeature`),
 
   // Season management
   createSeason: (data) => contentAPI.post('/content/seasons', data),

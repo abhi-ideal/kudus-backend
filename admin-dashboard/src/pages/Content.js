@@ -26,6 +26,8 @@ import {
   ReloadOutlined,
   UploadOutlined,
   SearchOutlined,
+  StarOutlined,
+  StarFilled,
 } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 import moment from 'moment';
@@ -52,10 +54,11 @@ const Content = () => {
   const [genreFilter, setGenreFilter] = useState([]);
   const [typeFilter, setTypeFilter] = useState([]);
   const [ageRatingFilter, setAgeRatingFilter] = useState([]);
+  const [featuredFilter, setFeaturedFilter] = useState('');
 
   useEffect(() => {
     loadContent();
-  }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter, typeFilter, ageRatingFilter]);
+  }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter, typeFilter, ageRatingFilter, featuredFilter]);
 
   const loadContent = async () => {
     try {
@@ -88,6 +91,11 @@ const Content = () => {
       // Add age rating filter (multiple selection)
       if (ageRatingFilter && ageRatingFilter.length > 0) {
         params.ageRating = ageRatingFilter.join(',');
+      }
+
+      // Add featured filter
+      if (featuredFilter) {
+        params.featured = featuredFilter;
       }
 
       const response = await adminAPI.getContent(params);
@@ -145,6 +153,21 @@ const Content = () => {
     }
   };
 
+  const handleFeatureContent = async (contentId, isFeatured) => {
+    try {
+      if (isFeatured) {
+        await adminAPI.unfeatureContent(contentId);
+        message.success('Content unfeatured successfully');
+      } else {
+        await adminAPI.featureContent(contentId);
+        message.success('Content featured successfully');
+      }
+      loadContent();
+    } catch (error) {
+      message.error(`Failed to ${isFeatured ? 'unfeature' : 'feature'} content`);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -196,12 +219,18 @@ const Content = () => {
     setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
   };
 
+  const handleFeaturedFilter = (value) => {
+    setFeaturedFilter(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
+  };
+
   const handleClearFilters = () => {
     setSearchText('');
     setStatusFilter('');
     setGenreFilter([]);
     setTypeFilter([]);
     setAgeRatingFilter([]);
+    setFeaturedFilter('');
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
@@ -273,6 +302,16 @@ const Content = () => {
       ),
     },
     {
+      title: 'Featured',
+      dataIndex: 'isFeatured',
+      key: 'isFeatured',
+      render: (isFeatured) => (
+        <Tag color={isFeatured ? 'gold' : 'default'}>
+          {isFeatured ? 'FEATURED' : 'NOT FEATURED'}
+        </Tag>
+      ),
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
@@ -287,6 +326,18 @@ const Content = () => {
             icon={<EditOutlined />}
             onClick={() => handleEditContent(record)}
           />
+          <Popconfirm
+            title={record.isFeatured ? 'Remove this content from featured list?' : 'Add this content to featured list?'}
+            onConfirm={() => handleFeatureContent(record.id, record.isFeatured)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button 
+              type="text" 
+              icon={record.isFeatured ? <StarFilled /> : <StarOutlined />}
+              style={{ color: record.isFeatured ? '#faad14' : '#666' }}
+            />
+          </Popconfirm>
           <Popconfirm
             title="Are you sure you want to delete this content?"
             onConfirm={() => handleDeleteContent(record.id)}
@@ -402,6 +453,18 @@ const Content = () => {
               <Option value="12A">12A</Option>
               <Option value="15">15</Option>
               <Option value="18">18</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={6} md={4} lg={3}>
+            <Select
+              placeholder="Featured"
+              value={featuredFilter}
+              onChange={handleFeaturedFilter}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              <Option value="featured">Featured</Option>
+              <Option value="not-featured">Not Featured</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4} lg={3}>
