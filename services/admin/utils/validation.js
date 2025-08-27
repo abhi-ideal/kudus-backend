@@ -25,6 +25,7 @@ const schemas = {
   updateContent: Joi.object({
     title: Joi.string().min(1).max(255),
     description: Joi.string().max(2000),
+    type: Joi.string().valid('movie', 'series', 'documentary', 'short'),
     genre: Joi.array().items(Joi.string()),
     ageRating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17'),
     duration: Joi.number().positive(),
