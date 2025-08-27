@@ -1336,6 +1336,24 @@ const contentController = {
         where.id = { [Op.notIn]: req.geoFilter.restrictedContent };
       }
 
+      // Apply child profile filtering at database level
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        // Add genre filter for child profiles
+        if (req.contentFilter.allowedGenres && req.contentFilter.allowedGenres.length > 0) {
+          const allowedGenreConditions = req.contentFilter.allowedGenres.map(g => 
+            `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+          );
+          
+          if (where[Op.and]) {
+            where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+          } else {
+            where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+          }
+        }
+      }
+
       // Apply filters
       if (type) {
         const typeArray = type.split(',');
@@ -1380,19 +1398,10 @@ const contentController = {
         ]
       });
 
-      // Apply child profile filtering if needed
-      let filteredRows = rows;
-      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
-        filteredRows = rows.filter(content =>
-          ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
-          content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
-        );
-      }
-
       res.json({
         success: true,
         data: {
-          featuredContent: filteredRows,
+          featuredContent: rows,
           pagination: {
             currentPage: parseInt(page),
             totalPages: Math.ceil(count / limit),
