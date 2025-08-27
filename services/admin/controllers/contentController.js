@@ -419,7 +419,6 @@ const contentController = {
       }
 
       await content.update({
-        isFeatured: true,
         featuredAt: new Date()
       });
 
@@ -452,7 +451,6 @@ const contentController = {
       }
 
       await content.update({
-        isFeatured: false,
         featuredAt: null
       });
 
@@ -483,7 +481,7 @@ const contentController = {
 
       const offset = (page - 1) * limit;
       const where = {
-        isFeatured: true,
+        featuredAt: { [Op.not]: null },
         isActive: true
       };
 

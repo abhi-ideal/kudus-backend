@@ -1327,7 +1327,7 @@ const contentController = {
 
       const offset = (page - 1) * limit;
       const where = {
-        isFeatured: true,
+        featuredAt: { [Op.not]: null },
         isActive: true
       };
 
