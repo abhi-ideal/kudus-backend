@@ -72,7 +72,8 @@ const contentController = {
         ageRating,
         language,
         isActive,
-        search
+        search,
+        featured
       } = req.query;
 
       const offset = (page - 1) * limit;
@@ -106,6 +107,13 @@ const contentController = {
       
       if (language) where.language = language;
       if (isActive !== undefined) where.isActive = isActive === 'true';
+      if (featured !== undefined) {
+        if (featured === 'featured') {
+          where.isFeatured = true;
+        } else if (featured === 'not-featured') {
+          where.isFeatured = false;
+        }
+      }
       if (search) {
         where[Op.or] = [
           { title: { [Op.like]: `%${search}%` } },

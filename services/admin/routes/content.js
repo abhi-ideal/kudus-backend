@@ -192,11 +192,44 @@ router.delete('/:id', contentController.deleteContent);
 router.post('/seasons', validate(schemas.season), contentController.createSeason);
 router.put('/seasons/:id', validate(schemas.updateSeason), contentController.updateSeason);
 
+// Feature management routes (must be before :id routes)
+/**
+ * @swagger
+ * /api/admin/content/featured:
+ *   get:
+ *     summary: Get all featured content (admin view)
+ *     tags: [Admin - Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Featured content retrieved successfully
+ */
+router.get('/featured', contentController.getFeaturedContent);
+
 // Episode management routes
 router.post('/episodes', validate(schemas.episode), contentController.createEpisode);
 router.put('/episodes/:id', validate(schemas.updateEpisode), contentController.updateEpisode);
 
-// Feature management routes
 /**
  * @swagger
  * /api/admin/content/{id}/feature:
@@ -240,38 +273,5 @@ router.post('/:id/feature', contentController.featureContent);
  *         description: Content not found
  */
 router.post('/:id/unfeature', contentController.unfeatureContent);
-
-/**
- * @swagger
- * /api/admin/content/featured:
- *   get:
- *     summary: Get all featured content (admin view)
- *     tags: [Admin - Content]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *       - in: query
- *         name: type
- *         schema:
- *           type: string
- *       - in: query
- *         name: genre
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Featured content retrieved successfully
- */
-router.get('/featured', contentController.getFeaturedContent);
 
 module.exports = router;
