@@ -104,6 +104,16 @@ const Content = sequelize.define('Content', {
     defaultValue: true,
     comment: 'If true, content is available globally unless restricted'
   },
+  isFeatured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether this content is featured by admin'
+  },
+  featuredAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'When this content was featured'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

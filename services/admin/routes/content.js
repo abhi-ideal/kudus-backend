@@ -196,4 +196,82 @@ router.put('/seasons/:id', validate(schemas.updateSeason), contentController.upd
 router.post('/episodes', validate(schemas.episode), contentController.createEpisode);
 router.put('/episodes/:id', validate(schemas.updateEpisode), contentController.updateEpisode);
 
+// Feature management routes
+/**
+ * @swagger
+ * /api/admin/content/{id}/feature:
+ *   post:
+ *     summary: Feature content
+ *     tags: [Admin - Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content featured successfully
+ *       404:
+ *         description: Content not found
+ */
+router.post('/:id/feature', contentController.featureContent);
+
+/**
+ * @swagger
+ * /api/admin/content/{id}/unfeature:
+ *   post:
+ *     summary: Unfeature content
+ *     tags: [Admin - Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content unfeatured successfully
+ *       404:
+ *         description: Content not found
+ */
+router.post('/:id/unfeature', contentController.unfeatureContent);
+
+/**
+ * @swagger
+ * /api/admin/content/featured:
+ *   get:
+ *     summary: Get all featured content (admin view)
+ *     tags: [Admin - Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Featured content retrieved successfully
+ */
+router.get('/featured', contentController.getFeaturedContent);
+
 module.exports = router;

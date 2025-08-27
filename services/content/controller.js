@@ -1251,59 +1251,164 @@ const contentController = {
 
   async getContentStatistics(req, res) {
     try {
+      const Content = require('./models/Content');
+      const WatchHistory = require('./models/WatchHistory');
+
+      // Get total content count
       const totalContent = await Content.count({
         where: { isActive: true }
       });
 
-      const totalMovies = await Content.count({
-        where: { type: 'movie', isActive: true }
-      });
-
-      const totalSeries = await Content.count({
-        where: { type: 'series', isActive: true }
-      });
-
-      // Note: Views are now tracked in episodes table, not content table
-      // For now, we'll set totalViews to 0 until we implement episode aggregation
-      const totalViews = 0;
-
-      // Note: Ratings should be implemented in a separate ratings table
-      // For now, we'll set average rating to 0
-      const averageRating = { avgRating: 0 };
-
-      const topGenres = await Content.findAll({
-        attributes: [
-          [sequelize.fn('UNNEST', sequelize.col('genre')), 'genre'],
-          [sequelize.fn('COUNT', '*'), 'count']
-        ],
+      // Get content by type
+      const contentByType = await Content.findAll({
         where: { isActive: true },
-        group: [sequelize.fn('UNNEST', sequelize.col('genre'))],
-        order: [[sequelize.fn('COUNT', '*'), 'DESC']],
-        limit: 10,
-        raw: true
+        attributes: [
+          'type',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: ['type']
       });
+
+      // Get total views from watch history
+      const totalViews = await WatchHistory.count();
+
+      // Get top genres (requires JSON handling)
+      const topGenres = await sequelize.query(`
+        SELECT 
+          genre_item,
+          COUNT(*) as count
+        FROM (
+          SELECT JSON_UNQUOTE(JSON_EXTRACT(genre, CONCAT('$[', numbers.n, ']'))) as genre_item
+          FROM content
+          CROSS JOIN (
+            SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+          ) numbers
+          WHERE JSON_EXTRACT(genre, CONCAT('$[', numbers.n, ']')) IS NOT NULL
+          AND isActive = true
+        ) genre_extracted
+        WHERE genre_item IS NOT NULL
+        GROUP BY genre_item
+        ORDER BY count DESC
+        LIMIT 10
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      const stats = {
+        totalContent,
+        contentByType: contentByType.reduce((acc, item) => {
+          acc[item.type] = parseInt(item.dataValues.count);
+          return acc;
+        }, {}),
+        totalViews,
+        topGenres: topGenres || []
+      };
+
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      logger.error('Get content statistics error:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve content statistics',
+        message: error.message
+      });
+    }
+  },
+
+  async getFeaturedContent(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre,
+        language
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {
+        isFeatured: true,
+        isActive: true
+      };
+
+      // Apply geo-restriction filter if available
+      if (req.geoFilter && req.geoFilter.restrictedContent) {
+        where.id = { [Op.notIn]: req.geoFilter.restrictedContent };
+      }
+
+      // Apply filters
+      if (type) {
+        const typeArray = type.split(',');
+        where.type = { [Op.in]: typeArray };
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      const { count, rows } = await Content.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['featuredAt', 'DESC']],
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            where: { isActive: true },
+            required: false,
+            include: [{
+              model: Episode,
+              as: 'episodes',
+              where: { isActive: true },
+              required: false
+            }]
+          }
+        ]
+      });
+
+      // Apply child profile filtering if needed
+      let filteredRows = rows;
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        filteredRows = rows.filter(content =>
+          ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
+          content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
+        );
+      }
 
       res.json({
         success: true,
         data: {
-          overview: {
-            totalContent,
-            totalMovies,
-            totalSeries,
-            totalViews,
-            averageRating: parseFloat(averageRating?.avgRating || 0).toFixed(2)
-          },
-          topGenres: topGenres || []
+          featuredContent: filteredRows,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit)
+          }
         }
       });
     } catch (error) {
-      logger.error('Content statistics error:', error);
+      logger.error('Get featured content error:', error);
       res.status(500).json({
-        success: false,
-        error: 'Failed to fetch content statistics'
+        error: 'Failed to retrieve featured content',
+        message: error.message
       });
     }
-  }
+  },
 };
 
 module.exports = contentController;

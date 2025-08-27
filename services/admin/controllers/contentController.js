@@ -395,6 +395,142 @@ const contentController = {
         message: error.message
       });
     }
+  },
+
+  // Feature/Unfeature content
+  async featureContent(req, res) {
+    try {
+      const { id } = req.params;
+
+      const content = await Content.findByPk(id);
+
+      if (!content) {
+        return res.status(404).json({
+          error: 'Content not found'
+        });
+      }
+
+      await content.update({
+        isFeatured: true,
+        featuredAt: new Date()
+      });
+
+      logger.info(`Admin featured content: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content featured successfully',
+        content
+      });
+    } catch (error) {
+      logger.error('Feature content error:', error);
+      res.status(500).json({
+        error: 'Failed to feature content',
+        message: error.message
+      });
+    }
+  },
+
+  async unfeatureContent(req, res) {
+    try {
+      const { id } = req.params;
+
+      const content = await Content.findByPk(id);
+
+      if (!content) {
+        return res.status(404).json({
+          error: 'Content not found'
+        });
+      }
+
+      await content.update({
+        isFeatured: false,
+        featuredAt: null
+      });
+
+      logger.info(`Admin unfeatured content: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content unfeatured successfully',
+        content
+      });
+    } catch (error) {
+      logger.error('Unfeature content error:', error);
+      res.status(500).json({
+        error: 'Failed to unfeature content',
+        message: error.message
+      });
+    }
+  },
+
+  async getFeaturedContent(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {
+        isFeatured: true,
+        isActive: true
+      };
+
+      // Apply filters
+      if (type) {
+        const typeArray = type.split(',');
+        where.type = { [Op.in]: typeArray };
+      }
+      
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+        
+        if (where[Op.and]) {
+          where[Op.and].push(Sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [Sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      const { count, rows } = await Content.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['featuredAt', 'DESC']],
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            include: [{ model: Episode, as: 'episodes' }]
+          }
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          featuredContent: rows,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Get featured content error:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve featured content',
+        message: error.message
+      });
+    }
   }
 };
 

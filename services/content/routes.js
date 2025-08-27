@@ -67,6 +67,59 @@ router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsCont
 
 /**
  * @swagger
+ * /api/content/featured:
+ *   get:
+ *     summary: Get featured content
+ *     tags: [Content]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           description: Comma-separated content types (movie,series,documentary)
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Featured content retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     featuredContent:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ */
+router.get('/featured', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getFeaturedContent);
+
+/**
+ * @swagger
  * /api/content/items:
  *   get:
  *     summary: Get content grouped by items (max 10 content per item)
