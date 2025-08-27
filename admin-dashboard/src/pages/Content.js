@@ -17,6 +17,7 @@ import {
   Upload,
   Row,
   Col,
+  Switch,
 } from 'antd';
 import {
   PlusOutlined,
@@ -305,10 +306,16 @@ const Content = () => {
       title: 'Featured',
       dataIndex: 'isFeatured',
       key: 'isFeatured',
-      render: (isFeatured) => (
-        <Tag color={isFeatured ? 'gold' : 'default'}>
-          {isFeatured ? 'FEATURED' : 'NOT FEATURED'}
-        </Tag>
+      width: 100,
+      align: 'center',
+      render: (isFeatured, record) => (
+        <Switch
+          checked={isFeatured}
+          onChange={(checked) => handleFeatureContent(record.id, isFeatured)}
+          checkedChildren="★"
+          unCheckedChildren="☆"
+          style={{ backgroundColor: isFeatured ? '#faad14' : undefined }}
+        />
       ),
     },
     {
@@ -335,7 +342,11 @@ const Content = () => {
             <Button 
               type="text" 
               icon={record.isFeatured ? <StarFilled /> : <StarOutlined />}
-              style={{ color: record.isFeatured ? '#faad14' : '#666' }}
+              style={{ 
+                color: record.isFeatured ? '#faad14' : '#666',
+                fontSize: '16px'
+              }}
+              title={record.isFeatured ? 'Click to unfeature' : 'Click to feature'}
             />
           </Popconfirm>
           <Popconfirm
