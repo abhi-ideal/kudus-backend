@@ -819,7 +819,6 @@ const contentController = {
       const {
         page = 1,
         limit = 20,
-        type,
         sortBy = 'addedAt',
         sortOrder = 'DESC'
       } = req.query;
@@ -928,35 +927,40 @@ const contentController = {
     }
   },
 
-  // Admin functions
+  // Admin content management - includes inactive content
   async getContent(req, res) {
     try {
       const {
         page = 1,
-        limit = 10,
+        limit = 20,
         type,
         genre,
         ageRating,
+        language,
+        isActive,
         search,
-        isActive = true
+        featured,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC'
       } = req.query;
 
       const offset = (page - 1) * limit;
-      const where = { isActive };
+      const where = {};
 
-      // Add filters
+      // Apply filters
       if (type) {
-        const typeArray = type.split(',').map(t => t.trim());
+        const typeArray = type.split(',');
         where.type = { [Op.in]: typeArray };
       }
 
       if (genre) {
         const genreArray = genre.split(',').map(g => g.trim());
-        // Use MySQL JSON_CONTAINS for genre filtering
-        const genreConditions = genreArray.map(g =>
+        // Use raw SQL with proper MySQL JSON syntax
+        const genreConditions = genreArray.map(g => 
           `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
         );
 
+        // Add as a raw where condition
         if (where[Op.and]) {
           where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
         } else {
@@ -965,10 +969,19 @@ const contentController = {
       }
 
       if (ageRating) {
-        const ageRatingArray = ageRating.split(',').map(r => r.trim());
+        const ageRatingArray = ageRating.split(',').map(ar => ar.trim());
         where.ageRating = { [Op.in]: ageRatingArray };
       }
 
+      if (language) where.language = language;
+      if (isActive !== undefined) where.isActive = isActive === 'true';
+      if (featured !== undefined) {
+        if (featured === 'featured') {
+          where.featuredAt = { [Op.not]: null };
+        } else if (featured === 'not-featured') {
+          where.featuredAt = null;
+        }
+      }
       if (search) {
         where[Op.or] = [
           { title: { [Op.like]: `%${search}%` } },
@@ -980,19 +993,12 @@ const contentController = {
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']],
+        order: [[sortBy, sortOrder]],
         include: [
           {
             model: Season,
             as: 'seasons',
-            required: false,
-            include: [
-              {
-                model: Episode,
-                as: 'episodes',
-                required: false
-              }
-            ]
+            include: [{ model: Episode, as: 'episodes' }]
           }
         ]
       });
@@ -1004,14 +1010,18 @@ const contentController = {
           page: parseInt(page),
           limit: parseInt(limit),
           total: count,
-          pages: Math.ceil(count / limit)
+          pages: Math.ceil(count / limit),
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(count / limit),
+          totalItems: count,
+          itemsPerPage: parseInt(limit)
         }
       });
     } catch (error) {
-      logger.error('Get content error:', error);
+      logger.error('Get admin content error:', error);
       res.status(500).json({
-        success: false,
-        error: 'Failed to retrieve content'
+        error: 'Failed to retrieve content',
+        message: error.message
       });
     }
   },
@@ -1339,13 +1349,13 @@ const contentController = {
       // Apply child profile filtering at database level
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         // Add genre filter for child profiles
         if (req.contentFilter.allowedGenres && req.contentFilter.allowedGenres.length > 0) {
           const allowedGenreConditions = req.contentFilter.allowedGenres.map(g => 
             `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
           );
-          
+
           if (where[Op.and]) {
          //   where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
           } else {
