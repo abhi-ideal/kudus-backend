@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Table,
   Button,
@@ -38,7 +37,6 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const Content = () => {
-  const navigate = useNavigate();
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -53,13 +51,22 @@ const Content = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState([]);
-  const [typeFilter, setTypeFilter] = useState([]);
+  const [typeFilter, setTypeFilter] = useState('');
   const [ageRatingFilter, setAgeRatingFilter] = useState([]);
   const [featuredFilter, setFeaturedFilter] = useState('');
+  const [genres, setGenres] = useState([]);
+  const [genresLoading, setGenresLoading] = useState(false);
+  const [isGenreModalVisible, setIsGenreModalVisible] = useState(false);
+  const [genreForm] = Form.useForm();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadContent();
   }, [pagination.current, pagination.pageSize, searchText, statusFilter, genreFilter, typeFilter, ageRatingFilter, featuredFilter]);
+
+  useEffect(() => {
+    fetchGenres();
+  }, []);
 
   const loadContent = async () => {
     try {
@@ -111,6 +118,25 @@ const Content = () => {
       message.error('Failed to load content');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGenres = async () => {
+    setGenresLoading(true);
+    try {
+      const response = await adminAPI.getGenres({ active: true, limit: 100 });
+
+      if (response.data && response.data.genres) {
+        setGenres(response.data.genres);
+      } else {
+        setGenres([]);
+      }
+    } catch (error) {
+      console.error('Error fetching genres:', error);
+      message.error('Failed to fetch genres');
+      setGenres([]);
+    } finally {
+      setGenresLoading(false);
     }
   };
 
@@ -195,6 +221,32 @@ const Content = () => {
     }
   };
 
+  const handleCreateGenre = async (values) => {
+    try {
+      await adminAPI.createGenre(values);
+      message.success('Genre created successfully');
+      setIsGenreModalVisible(false);
+      genreForm.resetFields();
+      fetchGenres(); // Refresh genres list
+    } catch (error) {
+      console.error('Error creating genre:', error);
+      if (error.response?.status === 409) {
+        message.error('Genre already exists');
+      } else {
+        message.error('Failed to create genre');
+      }
+    }
+  };
+
+  const showGenreModal = () => {
+    setIsGenreModalVisible(true);
+  };
+
+  const handleGenreModalCancel = () => {
+    setIsGenreModalVisible(false);
+    genreForm.resetFields();
+  };
+
   const handleSearch = (value) => {
     setSearchText(value);
     setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page
@@ -229,7 +281,7 @@ const Content = () => {
     setSearchText('');
     setStatusFilter('');
     setGenreFilter([]);
-    setTypeFilter([]);
+    setTypeFilter('');
     setAgeRatingFilter([]);
     setFeaturedFilter('');
     setPagination(prev => ({ ...prev, current: 1 }));
@@ -339,10 +391,10 @@ const Content = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={record.isFeatured ? <StarFilled /> : <StarOutlined />}
-              style={{ 
+              style={{
                 color: record.isFeatured ? '#faad14' : '#666',
                 fontSize: '16px'
               }}
@@ -373,6 +425,13 @@ const Content = () => {
             onClick={handleCreateContent}
           >
             Add Content
+          </Button>
+          <Button
+            type="default"
+            icon={<PlusOutlined />}
+            onClick={showGenreModal}
+          >
+            Add Genre
           </Button>
           <Button
             icon={<ReloadOutlined />}
@@ -430,20 +489,13 @@ const Content = () => {
               onChange={handleGenreFilter}
               allowClear
               style={{ width: '100%' }}
+              loading={genresLoading}
             >
-              <Option value="action">Action</Option>
-              <Option value="comedy">Comedy</Option>
-              <Option value="drama">Drama</Option>
-              <Option value="horror">Horror</Option>
-              <Option value="romance">Romance</Option>
-              <Option value="sci-fi">Sci-Fi</Option>
-              <Option value="thriller">Thriller</Option>
-              <Option value="documentary">Documentary</Option>
-              <Option value="family">Family</Option>
-              <Option value="fantasy">Fantasy</Option>
-              <Option value="mystery">Mystery</Option>
-              <Option value="crime">Crime</Option>
-              <Option value="adventure">Adventure</Option>
+              {genres.map(genre => (
+                <Option key={genre.id} value={genre.slug}>
+                  {genre.name}
+                </Option>
+              ))}
             </Select>
           </Col>
           <Col xs={24} sm={8} md={6} lg={4}>
@@ -572,17 +624,18 @@ const Content = () => {
             <Form.Item
               name="genre"
               label="Genre"
-              rules={[{ required: true, message: 'Please select at least one genre' }]}
+              rules={[{ required: true, message: 'Please select at least one genre!' }]}
             >
-              <Select mode="multiple" placeholder="Select genres">
-                <Option value="action">Action</Option>
-                <Option value="comedy">Comedy</Option>
-                <Option value="drama">Drama</Option>
-                <Option value="horror">Horror</Option>
-                <Option value="romance">Romance</Option>
-                <Option value="sci-fi">Sci-Fi</Option>
-                <Option value="thriller">Thriller</Option>
-                <Option value="documentary">Documentary</Option>
+              <Select
+                mode="multiple"
+                placeholder="Select genres"
+                loading={genresLoading}
+              >
+                {genres.map(genre => (
+                  <Option key={genre.id} value={genre.slug}>
+                    {genre.name}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 
@@ -605,7 +658,7 @@ const Content = () => {
               label="Duration (minutes)"
             >
               <InputNumber min={1} placeholder="Enter duration in minutes" style={{ width: '100%' }} />
-            </Form.Item>
+            </Form.Form.Item>
 
             <Form.Item
               name="releaseYear"
@@ -639,7 +692,7 @@ const Content = () => {
                 <Option value="NC-17">NC-17</Option>
               </Select>
             </Form.Item>
-            
+
             <Form.Item
               name="isActive"
               label="Status"
@@ -652,6 +705,49 @@ const Content = () => {
             </Form.Item>
           </Form>
         )}
+      </Modal>
+
+      <Modal
+        title="Add New Genre"
+        open={isGenreModalVisible}
+        onCancel={handleGenreModalCancel}
+        footer={
+          <Space>
+            <Button onClick={handleGenreModalCancel}>Cancel</Button>
+            <Button type="primary" onClick={() => genreForm.submit()}>
+              Add Genre
+            </Button>
+          </Space>
+        }
+        width={500}
+      >
+        <Form form={genreForm} layout="vertical" onFinish={handleCreateGenre}>
+          <Form.Item
+            name="name"
+            label="Genre Name"
+            rules={[{ required: true, message: 'Please enter genre name' }]}
+          >
+            <Input placeholder="Enter genre name" />
+          </Form.Item>
+          <Form.Item
+            name="slug"
+            label="Genre Slug"
+            rules={[
+              { required: true, message: 'Please enter genre slug' },
+              { pattern: /^[a-z0-9-]+$/, message: 'Slug can only contain lowercase letters, numbers, and hyphens' }
+            ]}
+          >
+            <Input placeholder="Enter genre slug (e.g., science-fiction)" />
+          </Form.Item>
+          <Form.Item
+            name="active"
+            label="Status"
+            valuePropName="checked"
+            initialValue={true}
+          >
+            <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

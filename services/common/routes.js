@@ -2,7 +2,7 @@
 const express = require('express');
 const commonController = require('./controller');
 const { validate } = require('./utils/validation');
-const { verifyFirebaseToken } = require('./middleware/auth');
+const { verifyFirebaseToken, verifyAdmin } = require('./middleware/auth');
 
 const router = express.Router();
 
@@ -129,7 +129,7 @@ router.get('/genres', commonController.getAllGenres);
  *       201:
  *         description: Genre created successfully
  */
-router.post('/genres', verifyFirebaseToken, validate('genre'), commonController.createGenre);
+router.post('/genres', verifyFirebaseToken, verifyAdmin, validate('genre'), commonController.createGenre);
 
 /**
  * @swagger
@@ -180,7 +180,7 @@ router.get('/genres/:id', commonController.getGenreById);
  *       200:
  *         description: Genre updated successfully
  */
-router.put('/genres/:id', verifyFirebaseToken, validate('genreUpdate'), commonController.updateGenre);
+router.put('/genres/:id', verifyFirebaseToken, verifyAdmin, validate('genreUpdate'), commonController.updateGenre);
 
 /**
  * @swagger
@@ -200,7 +200,7 @@ router.put('/genres/:id', verifyFirebaseToken, validate('genreUpdate'), commonCo
  *       200:
  *         description: Genre deleted successfully
  */
-router.delete('/genres/:id', verifyFirebaseToken, commonController.deleteGenre);
+router.delete('/genres/:id', verifyFirebaseToken, verifyAdmin, commonController.deleteGenre);
 
 // Support/Contact Form Routes
 /**

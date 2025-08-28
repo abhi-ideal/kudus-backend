@@ -8,7 +8,7 @@ const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http:/
 const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
 const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
 const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006/api/admin';
-const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007/api/common/admin';
+const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007/api/common'; // Updated to not include /admin
 
 // Create service-specific API instances
 const createServiceAPI = (baseURL) => axios.create({
@@ -25,7 +25,7 @@ const contentAPI = createServiceAPI(CONTENT_SERVICE_URL);
 const streamingAPI = createServiceAPI(STREAMING_SERVICE_URL);
 const recommendationAPI = createServiceAPI(RECOMMENDATION_SERVICE_URL);
 const adminAPI = createServiceAPI(ADMIN_SERVICE_URL);
-const commonAPI = createServiceAPI(COMMON_SERVICE_URL);
+const commonAPI = createServiceAPI(COMMON_SERVICE_URL); // Use the base common service URL
 
 // Setup interceptors for all service APIs
 const setupInterceptors = (apiInstance) => {
@@ -123,6 +123,10 @@ const adminEndpoints = {
   // Episode management
   createEpisode: (data) => contentAPI.post('/content/episodes', data),
   updateEpisode: (id, data) => contentAPI.put(`/content/episodes/${id}`, data),
+
+  // Common Service Endpoints
+  getGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/genres
+  addGenre: (genreData) => commonAPI.post('/genres', genreData), // POST {{commonServiceUrl}}/api/common/genres (Admin only)
 };
 
 // Export individual service APIs for direct access if needed
