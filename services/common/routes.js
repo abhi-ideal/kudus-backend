@@ -231,76 +231,7 @@ router.delete('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, commonContr
  */
 router.post('/genres', verifyFirebaseToken, verifyAdmin, validate('genre'), commonController.createGenre);
 
-/**
- * @swagger
- * /api/common/genres/{id}:
- *   get:
- *     summary: Get genre by ID
- *     tags: [Common]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Genre details
- */
-router.get('/genres/:id', commonController.getGenreById);
 
-/**
- * @swagger
- * /api/common/genres/{id}:
- *   put:
- *     summary: Update genre
- *     tags: [Common]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               isActive:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Genre updated successfully
- */
-router.put('/genres/:id', verifyFirebaseToken, verifyAdmin, validate('genreUpdate'), commonController.updateGenre);
-
-/**
- * @swagger
- * /api/common/genres/{id}:
- *   delete:
- *     summary: Delete genre
- *     tags: [Common]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Genre deleted successfully
- */
-router.delete('/genres/:id', verifyFirebaseToken, verifyAdmin, commonController.deleteGenre);
 
 // Support/Contact Form Routes
 /**
