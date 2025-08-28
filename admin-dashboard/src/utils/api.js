@@ -134,6 +134,13 @@ const adminEndpoints = {
     return commonAPI.put(`/genres/${id}`, updateData);
   }, // PUT {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
   deleteGenre: (id) => commonAPI.delete(`/genres/${id}`), // DELETE {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
+
+  // Content Items API
+  getContentItems: (params) => contentAPI.get('/items', { params }),
+  createContentItem: (data) => contentAPI.post('/items', data),
+  updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
+  deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
+  updateContentItemOrder: (id, position) => contentAPI.patch(`/items/${id}/order`, { position }),
 };
 
 // Content Items API (for drag and drop functionality)
