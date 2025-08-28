@@ -1641,33 +1641,66 @@ console.log('where================',where);
       });
     }
   },
+
+  async updateContentItemOrder(req, res) {
+    try {
+      const { id } = req.params;
+      const { position } = req.body;
+
+      const contentItem = await ContentItem.findByPk(id);
+
+      if (!contentItem) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      await contentItem.update({ displayOrder: position });
+
+      logger.info(`Admin updated content item order: ${id} to position ${position}`);
+
+      res.json({
+        success: true,
+        message: 'Content item order updated successfully',
+        data: contentItem
+      });
+    } catch (error) {
+      logger.error('Update content item order error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update content item order',
+        message: error.message
+      });
+    }
+  },
 };
 
 module.exports = {
-  getAllContent,
-  getContentById,
-  createContent,
-  updateContent,
-  deleteContent,
-  getStreamingUrl,
-  getKidsContent,
-  getSeriesDetails,
-  getSeasonEpisodes,
-  getEpisodeDetails,
-  addToWatchlist,
-  removeFromWatchlist,
-  getWatchlist,
-  checkWatchlistStatus,
-  getContent,
-  createContentItem,
-  getAllContentItems,
-  getContentItemById,
-  updateContentItem,
-  deleteContentItem,
-  getContentGroupedByItems,
-  getContinueWatching,
-  getContentStatistics,
-  getFeaturedContent,
-  updateContentItemOrder, // Added for drag and drop functionality
-  getContentItems // Added for content items management
+  getAllContent: contentController.getAllContent,
+  getContentById: contentController.getContentById,
+  createContent: contentController.createContent,
+  updateContent: contentController.updateContent,
+  deleteContent: contentController.deleteContent,
+  getStreamingUrl: contentController.getStreamingUrl,
+  getKidsContent: contentController.getKidsContent,
+  getSeriesDetails: contentController.getSeriesDetails,
+  getSeasonEpisodes: contentController.getSeasonEpisodes,
+  getEpisodeDetails: contentController.getEpisodeDetails,
+  addToWatchlist: contentController.addToWatchlist,
+  removeFromWatchlist: contentController.removeFromWatchlist,
+  getWatchlist: contentController.getWatchlist,
+  checkWatchlistStatus: contentController.checkWatchlistStatus,
+  getContent: contentController.getContent,
+  createContentItem: contentController.createContentItem,
+  getAllContentItems: contentController.getAllContentItems,
+  getContentItemById: contentController.getContentItemById,
+  updateContentItem: contentController.updateContentItem,
+  deleteContentItem: contentController.deleteContentItem,
+  getContentGroupedByItems: contentController.getContentGroupedByItems,
+  getContinueWatching: contentController.getContinueWatching,
+  getContentStatistics: contentController.getContentStatistics,
+  getFeaturedContent: contentController.getFeaturedContent,
+  updateContentItemOrder: contentController.updateContentItemOrder,
+  getContentItems: contentController.getAllContentItems // Alias for content items management
 };
