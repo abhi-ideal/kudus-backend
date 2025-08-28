@@ -222,31 +222,7 @@ const Content = () => {
     }
   };
 
-  const handleCreateGenre = async (values) => {
-    try {
-      await adminAPI.createGenre(values);
-      message.success('Genre created successfully');
-      setIsGenreModalVisible(false);
-      genreForm.resetFields();
-      fetchGenres(); // Refresh genres list
-    } catch (error) {
-      console.error('Error creating genre:', error);
-      if (error.response?.status === 409) {
-        message.error('Genre already exists');
-      } else {
-        message.error('Failed to create genre');
-      }
-    }
-  };
-
-  const showGenreModal = () => {
-    setIsGenreModalVisible(true);
-  };
-
-  const handleGenreModalCancel = () => {
-    setIsGenreModalVisible(false);
-    genreForm.resetFields();
-  };
+  
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -708,48 +684,7 @@ const Content = () => {
         )}
       </Modal>
 
-      <Modal
-        title="Add New Genre"
-        open={isGenreModalVisible}
-        onCancel={handleGenreModalCancel}
-        footer={
-          <Space>
-            <Button onClick={handleGenreModalCancel}>Cancel</Button>
-            <Button type="primary" onClick={() => genreForm.submit()}>
-              Add Genre
-            </Button>
-          </Space>
-        }
-        width={500}
-      >
-        <Form form={genreForm} layout="vertical" onFinish={handleCreateGenre}>
-          <Form.Item
-            name="name"
-            label="Genre Name"
-            rules={[{ required: true, message: 'Please enter genre name' }]}
-          >
-            <Input placeholder="Enter genre name" />
-          </Form.Item>
-          <Form.Item
-            name="slug"
-            label="Genre Slug"
-            rules={[
-              { required: true, message: 'Please enter genre slug' },
-              { pattern: /^[a-z0-9-]+$/, message: 'Slug can only contain lowercase letters, numbers, and hyphens' }
-            ]}
-          >
-            <Input placeholder="Enter genre slug (e.g., science-fiction)" />
-          </Form.Item>
-          <Form.Item
-            name="active"
-            label="Status"
-            valuePropName="checked"
-            initialValue={true}
-          >
-            <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      
     </div>
   );
 };

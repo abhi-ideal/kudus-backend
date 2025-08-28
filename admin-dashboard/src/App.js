@@ -8,6 +8,7 @@ import Content from './pages/Content';
 import Login from './pages/Login';
 import ContentDetails from './pages/ContentDetails'; // Import ContentDetails
 import UserDetails from './pages/UserDetails'; // Import UserDetails
+import Genres from './pages/Genres'; // Import Genres
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -36,6 +37,7 @@ function App() {
                       <Route path="/users/:id" element={<UserDetails />} /> {/* Added route for UserDetails */}
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
+                      <Route path="/genres" element={<Genres />} /> {/* Added route for Genres */}
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

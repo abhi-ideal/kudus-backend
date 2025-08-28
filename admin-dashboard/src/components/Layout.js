@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Avatar, Dropdown } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -34,7 +33,11 @@ const Layout = ({ children }) => {
     {
       key: '/content',
       icon: <VideoCameraOutlined />,
-      label: 'Content',
+      label: 'Content Management',
+    },
+    {
+      key: '/genres',
+      label: 'Genre Management',
     },
   ];
 
