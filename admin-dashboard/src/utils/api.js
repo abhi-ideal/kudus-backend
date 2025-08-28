@@ -125,7 +125,7 @@ const adminEndpoints = {
   updateEpisode: (id, data) => contentAPI.put(`/content/episodes/${id}`, data),
 
   // Common Service Endpoints
-  getGenres: () => commonAPI.get('/admin/genres'), // GET {{commonServiceUrl}}/api/common/admin/genres (Admin)
+  getGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/admin/genres (Admin)
   getUserGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/genres (User)
   createGenre: (genreData) => commonAPI.post('/genres', genreData), // POST {{commonServiceUrl}}/api/common/genres (Admin only)
   updateGenre: (id, genreData) => commonAPI.put(`/genres/${id}`, genreData), // PUT {{commonServiceUrl}}/api/common/genres/:id (Admin only)
