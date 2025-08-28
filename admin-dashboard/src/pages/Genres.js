@@ -140,7 +140,9 @@ const Genres = () => {
   const handleToggleStatus = async (genre) => {
     try {
       await adminAPI.updateGenre(genre.id, {
-        ...genre,
+        name: genre.name,
+        slug: genre.slug,
+        description: genre.description,
         isActive: !genre.isActive
       });
       message.success(`Genre ${genre.isActive ? 'deactivated' : 'activated'} successfully`);
