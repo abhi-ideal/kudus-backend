@@ -1221,62 +1221,94 @@ const contentController = {
         limit = 10,
         genre,
         type,
-        sortBy = 'name',
+        sortBy = 'displayOrder',
         sortOrder = 'ASC'
       } = req.query;
 
       const offset = (page - 1) * limit;
-      const contentWhere = {}; // This was intended for filtering content within items
+
+      // Build content where clause for filtering
+      const contentWhere = { isActive: true };
 
       // Apply genre and type filters to content
       if (genre) {
         const genreArray = genre.split(',').map(g => g.trim());
-        contentWhere.genre = { [Op.overlap]: genreArray };
+        // Use proper JSON syntax for MySQL
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+        contentWhere[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
       }
+      
       if (type) {
         const typeArray = type.split(',');
         contentWhere.type = { [Op.in]: typeArray };
       }
 
-      // Determine content item filtering based on profile type
-      const contentItemWhere = { isActive: true };
-
-      // If this is a child profile, apply additional restrictions
+      // For child profiles, add content filtering
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
-        // For kids profiles, only show content items that have at least one kid-friendly content
-        // This will be handled by the content filtering below
+        contentWhere.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
       }
 
-      // Get all active content items with their associated content
+      // Get content items with their mappings and content
       const contentItems = await ContentItem.findAll({
-        where: contentItemWhere,
+        where: { isActive: true },
         order: [[sortBy, sortOrder]],
         include: [{
-          model: Content,
-          through: ContentItemMapping,
-          as: 'content',
-          where: contentWhere,
+          model: ContentItemMapping,
+          as: 'itemMappings',
           required: false,
-          limit: 10 // Limit to 10 content per item
+          include: [{
+            model: Content,
+            as: 'content',
+            where: contentWhere,
+            required: true,
+            attributes: [
+              'id', 'title', 'description', 'type', 'genre',
+              'duration', 'releaseYear', 'rating', 'ageRating',
+              'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
+              'status', 'createdAt'
+            ]
+          }],
+          order: [['displayOrder', 'ASC']],
+          limit: 10
         }]
       });
 
-      // Filter items that have content
-      let itemsWithContent = contentItems.filter(item => item.content && item.content.length > 0);
+      // Filter items that have content and transform data
+      let itemsWithContent = contentItems
+        .filter(item => item.itemMappings && item.itemMappings.length > 0)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          slug: item.slug,
+          description: item.description,
+          displayOrder: item.displayOrder,
+          contentCount: item.itemMappings.length,
+          content: item.itemMappings.map(mapping => mapping.content).filter(Boolean)
+        }));
 
-      // For child profiles, filter out content items that don't have any kid-friendly content
+      // For child profiles, apply additional filtering
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        
         itemsWithContent = itemsWithContent.filter(item => {
           const hasKidFriendlyContent = item.content.some(content => {
-            const allowedRatings = ['G', 'PG', 'PG-13'];
-            const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
-
-            return allowedRatings.includes(content.ageRating) && 
-                   content.genre && 
-                   content.genre.some(g => allowedGenres.includes(g));
+            return content.genre && content.genre.some(g => allowedGenres.includes(g));
           });
           return hasKidFriendlyContent;
         });
+
+        // Also filter content within each item
+        itemsWithContent = itemsWithContent.map(item => ({
+          ...item,
+          content: item.content.filter(content => 
+            content.genre && content.genre.some(g => allowedGenres.includes(g))
+          ),
+          contentCount: item.content.filter(content => 
+            content.genre && content.genre.some(g => allowedGenres.includes(g))
+          ).length
+        }));
       }
 
       const totalItems = itemsWithContent.length;
@@ -1284,21 +1316,10 @@ const contentController = {
       const endIndex = startIndex + parseInt(limit);
       const paginatedItems = itemsWithContent.slice(startIndex, endIndex);
 
-      // Format the response
-      const filteredItems = paginatedItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        description: item.description,
-        displayOrder: item.displayOrder,
-        contentCount: item.content ? item.content.length : 0,
-        content: item.content || []
-      }));
-
       res.json({
         success: true,
         data: {
-          items: filteredItems,
+          items: paginatedItems,
           pagination: {
             currentPage: parseInt(page),
             totalPages: Math.ceil(totalItems / limit),
@@ -1308,7 +1329,7 @@ const contentController = {
         }
       });
     } catch (error) {
-      console.error('Get content grouped by items error:', error);
+      logger.error('Get content grouped by items error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to retrieve content grouped by items',
