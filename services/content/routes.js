@@ -323,6 +323,13 @@ router.delete('/admin/items/:id', verifyAdminToken, contentController.deleteCont
  */
 router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentGroupedByItems);
 
+// Admin routes for content items management
+router.get('/admin/items', adminAuth, contentController.getContentItems);
+router.post('/admin/items', adminAuth, contentController.createContentItem);
+router.put('/admin/items/:id', adminAuth, contentController.updateContentItem);
+router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem);
+router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
+
 /**
  * @swagger
  * /api/content/continue-watching:

@@ -122,7 +122,60 @@ const schemas = {
   }),
 
   watchlist: Joi.object({
-  })
+  }),
+
+  contentUpdate: Joi.object({
+    title: Joi.string().min(1).max(200).optional(),
+    description: Joi.string().min(1).max(1000).optional(),
+    genre: Joi.array().items(Joi.string()).optional(),
+    type: Joi.string().valid('movie', 'series', 'documentary', 'short').optional(),
+    duration: Joi.number().integer().min(1).optional(),
+    releaseYear: Joi.number().integer().min(1900).max(new Date().getFullYear()).optional(),
+    rating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17').optional(),
+    ageRating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17').optional(),
+    language: Joi.string().min(2).max(50).optional(),
+    subtitles: Joi.array().items(Joi.string()).optional(),
+    cast: Joi.array().items(Joi.string()).optional(),
+    characters: Joi.array().items(Joi.string()).optional(),
+    director: Joi.string().min(1).max(100).optional(),
+    thumbnailUrl: Joi.alternatives().try(
+      Joi.string().uri(),
+      Joi.object()
+    ).optional(),
+    posterImages: Joi.alternatives().try(
+      Joi.string().uri(),
+      Joi.object()
+    ).optional(),
+    videoUrl: Joi.string().uri().optional(),
+    trailerUrl: Joi.string().uri().optional(),
+    isActive: Joi.boolean().optional(),
+    restrictedCountries: Joi.array().items(Joi.string().length(2)).optional(),
+    availableCountries: Joi.array().items(Joi.string().length(2)).optional()
+  }),
+
+  contentItemCreate: Joi.object({
+    name: Joi.string().required().min(2).max(100),
+    slug: Joi.string().required().min(2).max(100).pattern(/^[a-z0-9-]+$/),
+    description: Joi.string().max(500).optional(),
+    displayOrder: Joi.number().integer().min(0).optional(),
+    isActive: Joi.boolean().optional()
+  }),
+
+  contentItemUpdate: Joi.object({
+    id: Joi.string().uuid().optional(),
+    name: Joi.string().min(2).max(100).optional(),
+    slug: Joi.string().min(2).max(100).pattern(/^[a-z0-9-]+$/).optional(),
+    description: Joi.string().max(500).optional(),
+    displayOrder: Joi.number().integer().min(0).optional(),
+    isActive: Joi.boolean().optional(),
+    createdAt: Joi.date().optional(),
+    updatedAt: Joi.date().optional()
+  }).options({ stripUnknown: true }),
+
+  contentItemOrder: Joi.object({
+    newOrder: Joi.number().integer().min(0).required(),
+    oldOrder: Joi.number().integer().min(0).required()
+  }),
 };
 
 module.exports = {

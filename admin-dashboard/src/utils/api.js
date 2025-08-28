@@ -136,8 +136,15 @@ const adminEndpoints = {
   deleteGenre: (id) => commonAPI.delete(`/genres/${id}`), // DELETE {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
 };
 
+// Content Items API (for drag and drop functionality)
+const contentItemsAPI = {
+  getContentItems: (params) => contentAPI.get('/content-items', { params }),
+  updateContentItemPosition: (id, position) => contentAPI.put(`/content-items/${id}/position`, { position }),
+};
+
 // Export individual service APIs for direct access if needed
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
+export { contentItemsAPI };
 
 // Export adminEndpoints and adminAPI for backward compatibility
 export { adminEndpoints };

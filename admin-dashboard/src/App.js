@@ -6,9 +6,10 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Content from './pages/Content';
 import Login from './pages/Login';
-import ContentDetails from './pages/ContentDetails'; // Import ContentDetails
-import UserDetails from './pages/UserDetails'; // Import UserDetails
-import Genres from './pages/Genres'; // Import Genres
+import ContentDetails from './pages/ContentDetails';
+import UserDetails from './pages/UserDetails';
+import Genres from './pages/Genres';
+import ContentItems from './pages/ContentItems';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -38,6 +39,7 @@ function App() {
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
                       <Route path="/genres" element={<Genres />} /> {/* Added route for Genres */}
+                      <Route path="/content-items" element={<ContentItems />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

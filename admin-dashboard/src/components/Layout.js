@@ -39,6 +39,10 @@ const Layout = ({ children }) => {
       key: '/genres',
       label: 'Genre Management',
     },
+    {
+      key: '/content-items',
+      label: 'Content Items',
+    },
   ];
 
   const userMenuItems = [

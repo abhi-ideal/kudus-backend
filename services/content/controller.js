@@ -1643,4 +1643,31 @@ console.log('where================',where);
   },
 };
 
-module.exports = contentController;
+module.exports = {
+  getAllContent,
+  getContentById,
+  createContent,
+  updateContent,
+  deleteContent,
+  getStreamingUrl,
+  getKidsContent,
+  getSeriesDetails,
+  getSeasonEpisodes,
+  getEpisodeDetails,
+  addToWatchlist,
+  removeFromWatchlist,
+  getWatchlist,
+  checkWatchlistStatus,
+  getContent,
+  createContentItem,
+  getAllContentItems,
+  getContentItemById,
+  updateContentItem,
+  deleteContentItem,
+  getContentGroupedByItems,
+  getContinueWatching,
+  getContentStatistics,
+  getFeaturedContent,
+  updateContentItemOrder, // Added for drag and drop functionality
+  getContentItems // Added for content items management
+};
