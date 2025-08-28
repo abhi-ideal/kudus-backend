@@ -79,10 +79,24 @@ const Genres = () => {
     setIsModalVisible(true);
   };
 
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    const slug = generateSlug(name);
+    form.setFieldsValue({ slug });
+  };
+
   const handleEdit = (genre) => {
     setEditingGenre(genre);
     form.setFieldsValue({
       name: genre.name,
+      slug: genre.slug,
       description: genre.description,
       isActive: genre.isActive
     });
@@ -306,7 +320,29 @@ const Genres = () => {
               { max: 50, message: 'Genre name must not exceed 50 characters' }
             ]}
           >
-            <Input placeholder="Enter genre name" />
+            <Input 
+              placeholder="Enter genre name" 
+              onChange={handleNameChange}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="slug"
+            label="Slug"
+            rules={[
+              { required: true, message: 'Please enter genre slug' },
+              { min: 2, message: 'Slug must be at least 2 characters' },
+              { max: 50, message: 'Slug must not exceed 50 characters' },
+              { 
+                pattern: /^[a-z0-9-]+$/, 
+                message: 'Slug can only contain lowercase letters, numbers, and hyphens' 
+              }
+            ]}
+          >
+            <Input 
+              placeholder="Enter genre slug (auto-generated from name)" 
+              addonBefore="/"
+            />
           </Form.Item>
 
           <Form.Item

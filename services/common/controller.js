@@ -1,4 +1,3 @@
-
 const Genre = require('./models/Genre');
 const Support = require('./models/Support');
 const PrivacyPolicy = require('./models/PrivacyPolicy');
@@ -11,7 +10,7 @@ const commonController = {
   async generateUploadUrl(req, res) {
     try {
       const { fileType, fileSize, uploadType = 'general' } = req.body;
-      
+
       if (!fileType || !fileSize) {
         return res.status(400).json({
           error: 'Missing required fields',
@@ -20,7 +19,7 @@ const commonController = {
       }
 
       let uploadData;
-      
+
       switch (uploadType) {
         case 'video':
           uploadData = await s3Service.generateVideoUploadUrl(fileSize);
@@ -51,21 +50,15 @@ const commonController = {
   // Genre CRUD Operations
   async createGenre(req, res) {
     try {
-      const { name, description } = req.body;
-      
-      if (!name) {
-        return res.status(400).json({
-          error: 'Missing required field',
-          message: 'name is required'
-        });
-      }
+      const { name, slug, description, isActive } = req.body;
 
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      
+      const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
       const genre = await Genre.create({
         name,
-        slug,
-        description
+        slug: finalSlug,
+        description,
+        isActive: isActive !== undefined ? isActive : true
       });
 
       res.status(201).json({
@@ -74,14 +67,14 @@ const commonController = {
       });
     } catch (error) {
       console.error('Create genre error:', error);
-      
+
       if (error.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({
           error: 'Genre already exists',
           message: 'A genre with this name already exists'
         });
       }
-      
+
       res.status(500).json({
         error: 'Failed to create genre',
         message: error.message
@@ -92,11 +85,11 @@ const commonController = {
   async getUserGenres(req, res) {
     try {
       const { search, limit = 50, offset = 0 } = req.query;
-      
+
       const whereClause = {
         isActive: true // Users can only see active genres
       };
-      
+
       if (search) {
         whereClause.name = {
           [Op.like]: `%${search}%`
@@ -129,14 +122,14 @@ const commonController = {
   async getAdminGenres(req, res) {
     try {
       const { active = 'all', search, limit = 50, offset = 0 } = req.query;
-      
+
       const whereClause = {};
-      
+
       // Admin can filter by active status or see all
       if (active !== 'all') {
         whereClause.isActive = active === 'true';
       }
-      
+
       if (search) {
         whereClause.name = {
           [Op.like]: `%${search}%`
@@ -169,9 +162,9 @@ const commonController = {
   async getGenreById(req, res) {
     try {
       const { id } = req.params;
-      
+
       const genre = await Genre.findByPk(id);
-      
+
       if (!genre) {
         return res.status(404).json({
           error: 'Genre not found',
@@ -193,9 +186,9 @@ const commonController = {
     try {
       const { id } = req.params;
       const { name, description, isActive } = req.body;
-      
+
       const genre = await Genre.findByPk(id);
-      
+
       if (!genre) {
         return res.status(404).json({
           error: 'Genre not found',
@@ -204,12 +197,12 @@ const commonController = {
       }
 
       const updateData = {};
-      
+
       if (name) {
         updateData.name = name;
         updateData.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       }
-      
+
       if (description !== undefined) updateData.description = description;
       if (isActive !== undefined) updateData.isActive = isActive;
 
@@ -221,14 +214,14 @@ const commonController = {
       });
     } catch (error) {
       console.error('Update genre error:', error);
-      
+
       if (error.name === 'SequelizeUniqueConstraintError') {
         return res.status(409).json({
           error: 'Genre name already exists',
           message: 'A genre with this name already exists'
         });
       }
-      
+
       res.status(500).json({
         error: 'Failed to update genre',
         message: error.message
@@ -239,9 +232,9 @@ const commonController = {
   async deleteGenre(req, res) {
     try {
       const { id } = req.params;
-      
+
       const genre = await Genre.findByPk(id);
-      
+
       if (!genre) {
         return res.status(404).json({
           error: 'Genre not found',
@@ -267,7 +260,7 @@ const commonController = {
   async createSupportTicket(req, res) {
     try {
       const { name, email, subject, message, category = 'general' } = req.body;
-      
+
       if (!name || !email || !subject || !message) {
         return res.status(400).json({
           error: 'Missing required fields',
@@ -307,9 +300,9 @@ const commonController = {
   async getSupportTickets(req, res) {
     try {
       const { status, category, limit = 50, offset = 0 } = req.query;
-      
+
       const whereClause = {};
-      
+
       if (status) whereClause.status = status;
       if (category) whereClause.category = category;
 
@@ -339,9 +332,9 @@ const commonController = {
   async getSupportTicketById(req, res) {
     try {
       const { id } = req.params;
-      
+
       const ticket = await Support.findByPk(id);
-      
+
       if (!ticket) {
         return res.status(404).json({
           error: 'Support ticket not found',
@@ -363,9 +356,9 @@ const commonController = {
     try {
       const { id } = req.params;
       const { status, priority, adminResponse } = req.body;
-      
+
       const ticket = await Support.findByPk(id);
-      
+
       if (!ticket) {
         return res.status(404).json({
           error: 'Support ticket not found',
@@ -374,11 +367,11 @@ const commonController = {
       }
 
       const updateData = {};
-      
+
       if (status) updateData.status = status;
       if (priority) updateData.priority = priority;
       if (adminResponse) updateData.adminResponse = adminResponse;
-      
+
       if (status === 'resolved' || status === 'closed') {
         updateData.resolvedAt = new Date();
       }
@@ -403,7 +396,7 @@ const commonController = {
     try {
       const { title, content, version, effectiveDate, isActive = false } = req.body;
       const createdBy = req.user?.email || 'admin';
-      
+
       if (!title || !content || !version || !effectiveDate) {
         return res.status(400).json({
           error: 'Missing required fields',
@@ -436,9 +429,9 @@ const commonController = {
   async getPrivacyPolicies(req, res) {
     try {
       const { active, limit = 10, offset = 0 } = req.query;
-      
+
       const whereClause = {};
-      
+
       if (active !== undefined) {
         whereClause.isActive = active === 'true';
       }
@@ -471,7 +464,7 @@ const commonController = {
         where: { isActive: true },
         order: [['effectiveDate', 'DESC']]
       });
-      
+
       if (!policy) {
         return res.status(404).json({
           error: 'Privacy policy not found',
@@ -493,9 +486,9 @@ const commonController = {
     try {
       const { id } = req.params;
       const { title, content, version, effectiveDate, isActive } = req.body;
-      
+
       const policy = await PrivacyPolicy.findByPk(id);
-      
+
       if (!policy) {
         return res.status(404).json({
           error: 'Privacy policy not found',
@@ -504,7 +497,7 @@ const commonController = {
       }
 
       const updateData = {};
-      
+
       if (title) updateData.title = title;
       if (content) updateData.content = content;
       if (version) updateData.version = version;
@@ -531,7 +524,7 @@ const commonController = {
     try {
       const { title, content, version, effectiveDate, isActive = false } = req.body;
       const createdBy = req.user?.email || 'admin';
-      
+
       if (!title || !content || !version || !effectiveDate) {
         return res.status(400).json({
           error: 'Missing required fields',
@@ -564,9 +557,9 @@ const commonController = {
   async getTermsConditions(req, res) {
     try {
       const { active, limit = 10, offset = 0 } = req.query;
-      
+
       const whereClause = {};
-      
+
       if (active !== undefined) {
         whereClause.isActive = active === 'true';
       }
@@ -599,7 +592,7 @@ const commonController = {
         where: { isActive: true },
         order: [['effectiveDate', 'DESC']]
       });
-      
+
       if (!terms) {
         return res.status(404).json({
           error: 'Terms and conditions not found',
@@ -621,9 +614,9 @@ const commonController = {
     try {
       const { id } = req.params;
       const { title, content, version, effectiveDate, isActive } = req.body;
-      
+
       const terms = await TermsConditions.findByPk(id);
-      
+
       if (!terms) {
         return res.status(404).json({
           error: 'Terms and conditions not found',
@@ -632,7 +625,7 @@ const commonController = {
       }
 
       const updateData = {};
-      
+
       if (title) updateData.title = title;
       if (content) updateData.content = content;
       if (version) updateData.version = version;
