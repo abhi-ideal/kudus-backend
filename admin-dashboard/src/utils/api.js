@@ -128,7 +128,11 @@ const adminEndpoints = {
   getGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/admin/genres (Admin)
   getUserGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/genres (User)
   createGenre: (genreData) => commonAPI.post('/genres', genreData), // POST {{commonServiceUrl}}/api/common/genres (Admin only)
-  updateGenre: (id, genreData) => commonAPI.put(`/genres/${id}`, genreData), // PUT {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
+  updateGenre: (id, genreData) => {
+    // Remove id from data if it exists to avoid validation error
+    const { id: _, ...updateData } = genreData;
+    return commonAPI.put(`/genres/${id}`, updateData);
+  }, // PUT {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
   deleteGenre: (id) => commonAPI.delete(`/genres/${id}`), // DELETE {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
 };
 

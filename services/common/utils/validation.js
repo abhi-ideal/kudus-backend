@@ -35,6 +35,7 @@ const schemas = {
   }),
 
   genreUpdate: Joi.object({
+    id: Joi.string().uuid().optional(),
     name: Joi.string().min(2).max(50).optional(),
     description: Joi.string().max(500).optional(),
     isActive: Joi.boolean().optional()
