@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const contentController = require('./controller');
-const { authenticate } = require('./middleware/auth');
+const { verifyFirebaseToken: authenticate } = require('./middleware/auth');
 const { authAdmin: adminAuth } = require('./middleware/adminAuth');
 const { validate, schemas } = require('./utils/validation');
 
