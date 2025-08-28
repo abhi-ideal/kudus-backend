@@ -89,12 +89,50 @@ const commonController = {
     }
   },
 
-  async getAllGenres(req, res) {
+  async getUserGenres(req, res) {
     try {
-      const { active = true, search, limit = 50, offset = 0 } = req.query;
+      const { search, limit = 50, offset = 0 } = req.query;
+      
+      const whereClause = {
+        isActive: true // Users can only see active genres
+      };
+      
+      if (search) {
+        whereClause.name = {
+          [Op.like]: `%${search}%`
+        };
+      }
+
+      const genres = await Genre.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['name', 'ASC']]
+      });
+
+      res.status(200).json({
+        success: true,
+        genres: genres.rows,
+        total: genres.count,
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+    } catch (error) {
+      console.error('Get user genres error:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve genres',
+        message: error.message
+      });
+    }
+  },
+
+  async getAdminGenres(req, res) {
+    try {
+      const { active = 'all', search, limit = 50, offset = 0 } = req.query;
       
       const whereClause = {};
       
+      // Admin can filter by active status or see all
       if (active !== 'all') {
         whereClause.isActive = active === 'true';
       }
@@ -113,13 +151,14 @@ const commonController = {
       });
 
       res.status(200).json({
+        success: true,
         genres: genres.rows,
         total: genres.count,
         limit: parseInt(limit),
         offset: parseInt(offset)
       });
     } catch (error) {
-      console.error('Get genres error:', error);
+      console.error('Get admin genres error:', error);
       res.status(500).json({
         error: 'Failed to retrieve genres',
         message: error.message

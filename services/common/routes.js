@@ -78,8 +78,35 @@ router.post('/upload-url', verifyFirebaseToken, validate('uploadUrl'), commonCon
  * @swagger
  * /api/common/genres:
  *   get:
- *     summary: Get all genres
+ *     summary: Get active genres for users
  *     tags: [Common]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: number
+ *     responses:
+ *       200:
+ *         description: List of active genres
+ */
+router.get('/genres', commonController.getUserGenres);
+
+/**
+ * @swagger
+ * /api/common/admin/genres:
+ *   get:
+ *     summary: Get all genres for admin (including inactive)
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: active
@@ -100,9 +127,9 @@ router.post('/upload-url', verifyFirebaseToken, validate('uploadUrl'), commonCon
  *           type: number
  *     responses:
  *       200:
- *         description: List of genres
+ *         description: List of genres for admin
  */
-router.get('/genres', commonController.getAllGenres);
+router.get('/admin/genres', verifyFirebaseToken, verifyAdmin, commonController.getAdminGenres);
 
 /**
  * @swagger
