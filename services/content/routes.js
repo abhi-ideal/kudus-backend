@@ -1,11 +1,11 @@
 const express = require('express');
-const contentController = require('./controller');
-const { verifyFirebaseToken } = require('./middleware/auth');
-const { detectCountry, applyGeoFilter } = require('./middleware/geoRestriction');
-const { validate, schemas } = require('./utils/validation');
-const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
-
 const router = express.Router();
+const contentController = require('./controller');
+const { authenticate } = require('./middleware/auth');
+const { authenticateProfile } = require('./middleware/profileAuth');
+const { authAdmin: adminAuth } = require('./middleware/adminAuth');
+const { validate, schemas } = require('./utils/validation');
+const { checkGeoRestriction } = require('./middleware/geoRestriction');
 
 /**
  * @swagger
@@ -34,7 +34,7 @@ const router = express.Router();
  *       200:
  *         description: Content list retrieved successfully
  */
-router.get('/', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getAllContent);
+router.get('/', checkGeoRestriction, authenticateProfile, contentController.getAllContent);
 
 /**
  * @swagger
@@ -63,7 +63,7 @@ router.get('/', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, 
  *       200:
  *         description: Kids content retrieved successfully
  */
-router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsContent);
+router.get('/kids', checkGeoRestriction, contentController.getKidsContent);
 
 /**
  * @swagger
@@ -116,7 +116,7 @@ router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsCont
  *                     pagination:
  *                       type: object
  */
-router.get('/featured', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getFeaturedContent);
+router.get('/featured', checkGeoRestriction, authenticateProfile, contentController.getFeaturedContent);
 
 // Admin-only Content Items CRUD Routes
 /**
@@ -321,7 +321,7 @@ router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem
  *                             type: array
  *                             maxItems: 10
  */
-router.get('/items', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentGroupedByItems);
+router.get('/items', checkGeoRestriction, authenticateProfile, contentController.getContentGroupedByItems);
 
 // Admin routes for content items management
 router.get('/admin/items', adminAuth, contentController.getContentItems);
@@ -394,7 +394,7 @@ router.patch('/admin/items/:id/order', adminAuth, contentController.updateConten
  *       401:
  *         description: Profile required
  */
-router.get('/continue-watching', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.getContinueWatching);
+router.get('/continue-watching', authenticate, authenticateProfile, contentController.getContinueWatching);
 
 /**
  * @swagger
@@ -421,7 +421,7 @@ router.get('/continue-watching', verifyFirebaseToken, profileAuth, childProfileF
  *       200:
  *         description: Watchlist retrieved successfully
  */
-router.get('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.getWatchlist);
+router.get('/watchlist', authenticate, authenticateProfile, contentController.getWatchlist);
 
 /**
  * @swagger
@@ -444,7 +444,7 @@ router.get('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, c
  *       201:
  *         description: Content added to watchlist successfully
  */
-router.post('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.addToWatchlist);
+router.post('/watchlist', authenticate, authenticateProfile, contentController.addToWatchlist);
 
 /**
  * @swagger
@@ -464,7 +464,7 @@ router.post('/watchlist', verifyFirebaseToken, profileAuth, childProfileFilter, 
  *       200:
  *         description: Content removed from watchlist successfully
  */
-router.delete('/watchlist/:contentId', verifyFirebaseToken, profileAuth, childProfileFilter, contentController.removeFromWatchlist);
+router.delete('/watchlist/:contentId', authenticate, authenticateProfile, contentController.removeFromWatchlist);
 
 /**
  * @swagger
@@ -484,7 +484,7 @@ router.delete('/watchlist/:contentId', verifyFirebaseToken, profileAuth, childPr
  *       200:
  *         description: Watchlist status retrieved successfully
  */
-router.get('/:contentId/watchlist-status', verifyFirebaseToken, profileAuth, contentController.checkWatchlistStatus);
+router.get('/:contentId/watchlist-status', authenticate, authenticateProfile, contentController.checkWatchlistStatus);
 
 /**
  * @swagger
@@ -506,7 +506,7 @@ router.get('/:contentId/watchlist-status', verifyFirebaseToken, profileAuth, con
  *       200:
  *         description: Series details retrieved successfully
  */
-router.get('/series/:id/details', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeriesDetails);
+router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, contentController.getSeriesDetails);
 
 /**
  * @swagger
@@ -537,7 +537,7 @@ router.get('/series/:id/details', detectCountry, applyGeoFilter, profileAuth, ch
  *       200:
  *         description: Season episodes retrieved successfully
  */
-router.get('/series/:seriesId/season/:seasonNumber/episodes', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getSeasonEpisodes);
+router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestriction, authenticateProfile, contentController.getSeasonEpisodes);
 
 /**
  * @swagger
@@ -555,7 +555,7 @@ router.get('/series/:seriesId/season/:seasonNumber/episodes', detectCountry, app
  *       200:
  *         description: Episode details retrieved successfully
  */
-router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getEpisodeDetails);
+router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, contentController.getEpisodeDetails);
 
 /**
  * @swagger
@@ -573,7 +573,7 @@ router.get('/episode/:episodeId', detectCountry, applyGeoFilter, profileAuth, ch
  *       200:
  *         description: Content retrieved successfully
  */
-router.get('/:id', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getContentById);
+router.get('/:id', checkGeoRestriction, authenticateProfile, contentController.getContentById);
 
 /**
  * @swagger
@@ -597,7 +597,7 @@ router.get('/:id', detectCountry, applyGeoFilter, profileAuth, childProfileFilte
  *       200:
  *         description: Streaming URL generated successfully
  */
-router.get('/:id/stream', verifyFirebaseToken, detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getStreamingUrl);
+router.get('/:id/stream', authenticate, checkGeoRestriction, authenticateProfile, contentController.getStreamingUrl);
 
 /**
  * @swagger
@@ -683,7 +683,7 @@ router.get('/admin/stats', async (req, res) => {
 });
 
 // Admin routes (require authentication)
-router.use(verifyFirebaseToken);
+router.use(authenticate);
 
 /**
  * @swagger
