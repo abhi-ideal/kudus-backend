@@ -133,6 +133,79 @@ router.get('/admin/genres', verifyFirebaseToken, verifyAdmin, commonController.g
 
 /**
  * @swagger
+ * /api/common/admin/genres/{id}:
+ *   get:
+ *     summary: Get genre by ID (Admin)
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Genre details
+ */
+router.get('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, commonController.getGenreById);
+
+/**
+ * @swagger
+ * /api/common/admin/genres/{id}:
+ *   put:
+ *     summary: Update genre (Admin)
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Genre updated successfully
+ */
+router.put('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, validate('genreUpdate'), commonController.updateGenre);
+
+/**
+ * @swagger
+ * /api/common/admin/genres/{id}:
+ *   delete:
+ *     summary: Delete genre (Admin)
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Genre deleted successfully
+ */
+router.delete('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, commonController.deleteGenre);
+
+/**
+ * @swagger
  * /api/common/genres:
  *   post:
  *     summary: Create a new genre
