@@ -30,7 +30,8 @@ const schemas = {
 
   genre: Joi.object({
     name: Joi.string().min(2).max(50).required(),
-    description: Joi.string().max(500).optional()
+    description: Joi.string().max(500).optional(),
+    isActive: Joi.boolean().optional().default(true)
   }),
 
   genreUpdate: Joi.object({
