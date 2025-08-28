@@ -229,7 +229,7 @@ router.delete('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, commonContr
  *       201:
  *         description: Genre created successfully
  */
-router.post('/genres', verifyFirebaseToken, verifyAdmin, validate('genre'), commonController.createGenre);
+router.post('/admin/genres', verifyFirebaseToken, verifyAdmin, validate('genre'), commonController.createGenre);
 
 
 

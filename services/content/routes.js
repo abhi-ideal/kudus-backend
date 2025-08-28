@@ -150,7 +150,7 @@ router.get('/featured', detectCountry, applyGeoFilter, profileAuth, childProfile
  *       403:
  *         description: Admin access required
  */
-router.post('/admin/items', verifyAdminToken, validate(schemas.contentItem), contentController.createContentItem);
+router.post('/admin/items', adminAuth, validate(schemas.contentItem), contentController.createContentItem);
 
 /**
  * @swagger
@@ -183,7 +183,7 @@ router.post('/admin/items', verifyAdminToken, validate(schemas.contentItem), con
  *       200:
  *         description: Content items retrieved successfully
  */
-router.get('/admin/items', verifyAdminToken, contentController.getAllContentItems);
+router.get('/admin/items', adminAuth, contentController.getAllContentItems);
 
 /**
  * @swagger
@@ -205,7 +205,7 @@ router.get('/admin/items', verifyAdminToken, contentController.getAllContentItem
  *       404:
  *         description: Content item not found
  */
-router.get('/admin/items/:id', verifyAdminToken, contentController.getContentItemById);
+router.get('/admin/items/:id', adminAuth, contentController.getContentItemById);
 
 /**
  * @swagger
@@ -242,7 +242,7 @@ router.get('/admin/items/:id', verifyAdminToken, contentController.getContentIte
  *       404:
  *         description: Content item not found
  */
-router.put('/admin/items/:id', verifyAdminToken, validate(schemas.updateContentItem), contentController.updateContentItem);
+router.put('/admin/items/:id', adminAuth, validate(schemas.updateContentItem), contentController.updateContentItem);
 
 /**
  * @swagger
@@ -264,7 +264,7 @@ router.put('/admin/items/:id', verifyAdminToken, validate(schemas.updateContentI
  *       404:
  *         description: Content item not found
  */
-router.delete('/admin/items/:id', verifyAdminToken, contentController.deleteContentItem);
+router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem);
 
 /**
  * @swagger
