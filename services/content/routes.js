@@ -1,32 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getAllContent,
-  getContentById,
-  createContent,
-  updateContent,
-  deleteContent,
-  getStreamingUrl,
-  getKidsContent,
-  getSeriesDetails,
-  getSeasonEpisodes,
-  getEpisodeDetails,
-  addToWatchlist,
-  removeFromWatchlist,
-  getWatchlist,
-  checkWatchlistStatus,
-  getContent,
-  createContentItem,
-  getAllContentItems,
-  getContentItemById,
-  updateContentItem,
-  deleteContentItem,
-  getContentGroupedByItems,
-  getContinueWatching,
-  getContentStatistics,
-  getFeaturedContent,
-  updateContentItemOrder
-} = require('./controller');
+const contentController = require('./controller');
 const { authenticate } = require('./middleware/auth');
 const { authenticateProfile } = require('./middleware/profileAuth');
 const { authAdmin: adminAuth } = require('./middleware/adminAuth');
@@ -66,7 +40,7 @@ const checkGeoRestriction = (req, res, next) => {
  *       200:
  *         description: Content list retrieved successfully
  */
-router.get('/', checkGeoRestriction, authenticateProfile, getAllContent);
+router.get('/', checkGeoRestriction, authenticateProfile, contentController.getAllContent);
 
 /**
  * @swagger
@@ -95,7 +69,7 @@ router.get('/', checkGeoRestriction, authenticateProfile, getAllContent);
  *       200:
  *         description: Kids content retrieved successfully
  */
-router.get('/kids', checkGeoRestriction, getKidsContent);
+router.get('/kids', checkGeoRestriction, contentController.getKidsContent);
 
 /**
  * @swagger
@@ -148,7 +122,7 @@ router.get('/kids', checkGeoRestriction, getKidsContent);
  *                     pagination:
  *                       type: object
  */
-router.get('/featured', checkGeoRestriction, authenticateProfile, getFeaturedContent);
+router.get('/featured', checkGeoRestriction, authenticateProfile, contentController.getFeaturedContent);
 
 // Admin-only Content Items CRUD Routes
 /**
@@ -182,7 +156,7 @@ router.get('/featured', checkGeoRestriction, authenticateProfile, getFeaturedCon
  *       403:
  *         description: Admin access required
  */
-router.post('/admin/items', adminAuth, validate(schemas.contentItem), createContentItem);
+router.post('/admin/items', adminAuth, validate(schemas.contentItem), contentController.createContentItem);
 
 /**
  * @swagger
@@ -215,7 +189,7 @@ router.post('/admin/items', adminAuth, validate(schemas.contentItem), createCont
  *       200:
  *         description: Content items retrieved successfully
  */
-router.get('/admin/items', adminAuth, getAllContentItems);
+router.get('/admin/items', adminAuth, contentController.getAllContentItems);
 
 /**
  * @swagger
@@ -237,7 +211,7 @@ router.get('/admin/items', adminAuth, getAllContentItems);
  *       404:
  *         description: Content item not found
  */
-router.get('/admin/items/:id', adminAuth, getContentItemById);
+router.get('/admin/items/:id', adminAuth, contentController.getContentItemById);
 
 /**
  * @swagger
@@ -274,7 +248,7 @@ router.get('/admin/items/:id', adminAuth, getContentItemById);
  *       404:
  *         description: Content item not found
  */
-router.put('/admin/items/:id', adminAuth, validate(schemas.updateContentItem), updateContentItem);
+router.put('/admin/items/:id', adminAuth, validate(schemas.updateContentItem), contentController.updateContentItem);
 
 /**
  * @swagger
@@ -296,7 +270,7 @@ router.put('/admin/items/:id', adminAuth, validate(schemas.updateContentItem), u
  *       404:
  *         description: Content item not found
  */
-router.delete('/admin/items/:id', adminAuth, deleteContentItem);
+router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem);
 
 /**
  * @swagger
@@ -353,10 +327,10 @@ router.delete('/admin/items/:id', adminAuth, deleteContentItem);
  *                             type: array
  *                             maxItems: 10
  */
-router.get('/items', checkGeoRestriction, authenticateProfile, getContentGroupedByItems);
+router.get('/items', checkGeoRestriction, authenticateProfile, contentController.getContentGroupedByItems);
 
 // Admin routes for content items management
-router.patch('/admin/items/:id/order', adminAuth, updateContentItemOrder);
+router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
 
 /**
  * @swagger
@@ -422,7 +396,7 @@ router.patch('/admin/items/:id/order', adminAuth, updateContentItemOrder);
  *       401:
  *         description: Profile required
  */
-router.get('/continue-watching', authenticate, authenticateProfile, getContinueWatching);
+router.get('/continue-watching', authenticate, authenticateProfile, contentController.getContinueWatching);
 
 /**
  * @swagger
@@ -449,7 +423,7 @@ router.get('/continue-watching', authenticate, authenticateProfile, getContinueW
  *       200:
  *         description: Watchlist retrieved successfully
  */
-router.get('/watchlist', authenticate, authenticateProfile, getWatchlist);
+router.get('/watchlist', authenticate, authenticateProfile, contentController.getWatchlist);
 
 /**
  * @swagger
@@ -472,7 +446,7 @@ router.get('/watchlist', authenticate, authenticateProfile, getWatchlist);
  *       201:
  *         description: Content added to watchlist successfully
  */
-router.post('/watchlist', authenticate, authenticateProfile, addToWatchlist);
+router.post('/watchlist', authenticate, authenticateProfile, contentController.addToWatchlist);
 
 /**
  * @swagger
@@ -492,7 +466,7 @@ router.post('/watchlist', authenticate, authenticateProfile, addToWatchlist);
  *       200:
  *         description: Content removed from watchlist successfully
  */
-router.delete('/watchlist/:contentId', authenticate, authenticateProfile, removeFromWatchlist);
+router.delete('/watchlist/:contentId', authenticate, authenticateProfile, contentController.removeFromWatchlist);
 
 /**
  * @swagger
@@ -512,7 +486,7 @@ router.delete('/watchlist/:contentId', authenticate, authenticateProfile, remove
  *       200:
  *         description: Watchlist status retrieved successfully
  */
-router.get('/:contentId/watchlist-status', authenticate, authenticateProfile, checkWatchlistStatus);
+router.get('/:contentId/watchlist-status', authenticate, authenticateProfile, contentController.checkWatchlistStatus);
 
 /**
  * @swagger
@@ -534,7 +508,7 @@ router.get('/:contentId/watchlist-status', authenticate, authenticateProfile, ch
  *       200:
  *         description: Series details retrieved successfully
  */
-router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, getSeriesDetails);
+router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, contentController.getSeriesDetails);
 
 /**
  * @swagger
@@ -565,7 +539,7 @@ router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, getS
  *       200:
  *         description: Season episodes retrieved successfully
  */
-router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestriction, authenticateProfile, getSeasonEpisodes);
+router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestriction, authenticateProfile, contentController.getSeasonEpisodes);
 
 /**
  * @swagger
@@ -583,7 +557,7 @@ router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestrictio
  *       200:
  *         description: Episode details retrieved successfully
  */
-router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, getEpisodeDetails);
+router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, contentController.getEpisodeDetails);
 
 /**
  * @swagger
@@ -601,7 +575,7 @@ router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, getE
  *       200:
  *         description: Content retrieved successfully
  */
-router.get('/:id', checkGeoRestriction, authenticateProfile, getContentById);
+router.get('/:id', checkGeoRestriction, authenticateProfile, contentController.getContentById);
 
 /**
  * @swagger
@@ -625,7 +599,7 @@ router.get('/:id', checkGeoRestriction, authenticateProfile, getContentById);
  *       200:
  *         description: Streaming URL generated successfully
  */
-router.get('/:id/stream', authenticate, checkGeoRestriction, authenticateProfile, getStreamingUrl);
+router.get('/:id/stream', authenticate, checkGeoRestriction, authenticateProfile, contentController.getStreamingUrl);
 
 /**
  * @swagger
@@ -777,7 +751,7 @@ router.use(authenticate);
  *                     pagination:
  *                       type: object
  */
-router.get('/admin/content', getContent);
+router.get('/admin/content', contentController.getContent);
 
 /**
  * @swagger
@@ -823,7 +797,7 @@ router.get('/admin/content', getContent);
  *                           count:
  *                             type: integer
  */
-router.get('/admin/content/statistics', getContentStatistics);
+router.get('/admin/content/statistics', contentController.getContentStatistics);
 
 /**
  * @swagger
@@ -845,7 +819,7 @@ router.get('/admin/content/statistics', getContentStatistics);
  *       404:
  *         description: Content not found
  */
-router.get('/admin/content/:id', getContentById);
+router.get('/admin/content/:id', contentController.getContentById);
 
 /**
  * @swagger
@@ -901,7 +875,7 @@ router.get('/admin/content/:id', getContentById);
  *       201:
  *         description: Content created successfully
  */
-router.post('/admin/content', validate(schemas.content), createContent);
+router.post('/admin/content', validate(schemas.content), contentController.createContent);
 
 /**
  * @swagger
@@ -960,7 +934,7 @@ router.post('/admin/content', validate(schemas.content), createContent);
  *       404:
  *         description: Content not found
  */
-router.put('/admin/content/:id', validate(schemas.content), updateContent);
+router.put('/admin/content/:id', validate(schemas.content), contentController.updateContent);
 
 /**
  * @swagger
@@ -982,6 +956,6 @@ router.put('/admin/content/:id', validate(schemas.content), updateContent);
  *       404:
  *         description: Content not found
  */
-router.delete('/admin/content/:id', deleteContent);
+router.delete('/admin/content/:id', contentController.deleteContent);
 
 module.exports = router;
