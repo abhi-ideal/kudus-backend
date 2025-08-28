@@ -1,4 +1,3 @@
-
 const Joi = require('joi');
 
 /**
@@ -95,6 +94,34 @@ const schemas = {
     availableCountries: Joi.array().items(Joi.string().length(2)),
     restrictedCountries: Joi.array().items(Joi.string().length(2)),
     isGloballyAvailable: Joi.boolean()
+  }),
+
+  episode: Joi.object({
+    seasonId: Joi.string().uuid().required(),
+    episodeNumber: Joi.number().integer().min(1).required(),
+    title: Joi.string().required().min(1).max(200),
+    description: Joi.string().max(1000),
+    duration: Joi.number().integer().min(1),
+    releaseDate: Joi.date(),
+    thumbnail: Joi.string().uri(),
+    videoUrl: Joi.string().uri()
+  }),
+
+  contentItem: Joi.object({
+    name: Joi.string().required().min(2).max(100),
+    description: Joi.string().max(500).optional(),
+    isActive: Joi.boolean().optional(),
+    displayOrder: Joi.number().integer().optional()
+  }),
+
+  updateContentItem: Joi.object({
+    name: Joi.string().min(2).max(100).optional(),
+    description: Joi.string().max(500).optional(),
+    isActive: Joi.boolean().optional(),
+    displayOrder: Joi.number().integer().optional()
+  }),
+
+  watchlist: Joi.object({
   })
 };
 

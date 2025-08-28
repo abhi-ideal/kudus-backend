@@ -118,6 +118,154 @@ router.get('/kids', detectCountry, applyGeoFilter, contentController.getKidsCont
  */
 router.get('/featured', detectCountry, applyGeoFilter, profileAuth, childProfileFilter, contentController.getFeaturedContent);
 
+// Admin-only Content Items CRUD Routes
+/**
+ * @swagger
+ * /api/content/admin/items:
+ *   post:
+ *     summary: Create content item (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               displayOrder:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Content item created successfully
+ *       403:
+ *         description: Admin access required
+ */
+router.post('/admin/items', verifyAdminToken, validate(schemas.contentItem), contentController.createContentItem);
+
+/**
+ * @swagger
+ * /api/content/admin/items:
+ *   get:
+ *     summary: Get all content items (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *     responses:
+ *       200:
+ *         description: Content items retrieved successfully
+ */
+router.get('/admin/items', verifyAdminToken, contentController.getAllContentItems);
+
+/**
+ * @swagger
+ * /api/content/admin/items/{id}:
+ *   get:
+ *     summary: Get content item by ID (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content item retrieved successfully
+ *       404:
+ *         description: Content item not found
+ */
+router.get('/admin/items/:id', verifyAdminToken, contentController.getContentItemById);
+
+/**
+ * @swagger
+ * /api/content/admin/items/{id}:
+ *   put:
+ *     summary: Update content item (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               displayOrder:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Content item updated successfully
+ *       404:
+ *         description: Content item not found
+ */
+router.put('/admin/items/:id', verifyAdminToken, validate(schemas.updateContentItem), contentController.updateContentItem);
+
+/**
+ * @swagger
+ * /api/content/admin/items/{id}:
+ *   delete:
+ *     summary: Delete content item (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content item deleted successfully
+ *       404:
+ *         description: Content item not found
+ */
+router.delete('/admin/items/:id', verifyAdminToken, contentController.deleteContentItem);
+
 /**
  * @swagger
  * /api/content/items:
@@ -137,6 +285,14 @@ router.get('/featured', detectCountry, applyGeoFilter, profileAuth, childProfile
  *         schema:
  *           type: integer
  *           default: 10
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Content grouped by items retrieved successfully

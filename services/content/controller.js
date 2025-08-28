@@ -1026,82 +1026,295 @@ const contentController = {
     }
   },
 
+  // Admin-only CRUD operations for Content Items
+  async createContentItem(req, res) {
+    try {
+      const { name, description, isActive = true, displayOrder = 0 } = req.body;
+
+      // Generate slug from name
+      const slug = name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+      const contentItem = await ContentItem.create({
+        name,
+        slug,
+        description,
+        isActive,
+        displayOrder
+      });
+
+      logger.info(`Admin created content item: ${contentItem.id}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Content item created successfully',
+        data: contentItem
+      });
+    } catch (error) {
+      logger.error('Create content item error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create content item',
+        message: error.message
+      });
+    }
+  },
+
+  async getAllContentItems(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        search,
+        isActive,
+        sortBy = 'displayOrder',
+        sortOrder = 'ASC'
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {};
+
+      if (search) {
+        where[Op.or] = [
+          { name: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      if (isActive !== undefined) {
+        where.isActive = isActive === 'true';
+      }
+
+      const { count, rows: contentItems } = await ContentItem.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [[sortBy, sortOrder]],
+        include: [{
+          model: ContentItemMapping,
+          as: 'itemMappings',
+          include: [{
+            model: Content,
+            as: 'content'
+          }]
+        }]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          contentItems,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Get all content items error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve content items',
+        message: error.message
+      });
+    }
+  },
+
+  async getContentItemById(req, res) {
+    try {
+      const { id } = req.params;
+
+      const contentItem = await ContentItem.findByPk(id, {
+        include: [{
+          model: ContentItemMapping,
+          as: 'itemMappings',
+          include: [{
+            model: Content,
+            as: 'content'
+          }]
+        }]
+      });
+
+      if (!contentItem) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: contentItem
+      });
+    } catch (error) {
+      logger.error('Get content item by ID error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve content item',
+        message: error.message
+      });
+    }
+  },
+
+  async updateContentItem(req, res) {
+    try {
+      const { id } = req.params;
+      const { name, description, isActive, displayOrder } = req.body;
+
+      const contentItem = await ContentItem.findByPk(id);
+
+      if (!contentItem) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      const updateData = {};
+      if (name !== undefined) {
+        updateData.name = name;
+        updateData.slug = name.toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      if (description !== undefined) updateData.description = description;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
+
+      await contentItem.update(updateData);
+
+      logger.info(`Admin updated content item: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content item updated successfully',
+        data: contentItem
+      });
+    } catch (error) {
+      logger.error('Update content item error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update content item',
+        message: error.message
+      });
+    }
+  },
+
+  async deleteContentItem(req, res) {
+    try {
+      const { id } = req.params;
+
+      const contentItem = await ContentItem.findByPk(id);
+
+      if (!contentItem) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      // Soft delete by setting isActive to false
+      await contentItem.update({ isActive: false });
+
+      logger.info(`Admin deleted content item: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content item deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Delete content item error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete content item',
+        message: error.message
+      });
+    }
+  },
+
   async getContentGroupedByItems(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      const {
+        page = 1,
+        limit = 10,
+        genre,
+        type,
+        sortBy = 'name',
+        sortOrder = 'ASC'
+      } = req.query;
+
       const offset = (page - 1) * limit;
+      const contentWhere = {}; // This was intended for filtering content within items
 
-      const ContentItem = require('./models/ContentItem');
+      // Apply genre and type filters to content
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        contentWhere.genre = { [Op.overlap]: genreArray };
+      }
+      if (type) {
+        const typeArray = type.split(',');
+        contentWhere.type = { [Op.in]: typeArray };
+      }
 
-      // Get items with their associated content (max 10 per item)
-      const items = await ContentItem.findAll({
-        where: { isActive: true },
-        limit: parseInt(limit),
-        offset: offset,
-        order: [['displayOrder', 'ASC'], ['createdAt', 'DESC']],
-        include: [
-          {
-            model: Content,
-            as: 'content',
-            through: {
-              attributes: ['displayOrder', 'isFeatured'],
-              where: {}
-            },
-            where: { isActive: true },
-            required: false, // Include items even if they have no content
-            attributes: [
-              'id', 'title', 'description', 'type', 'genre',
-              'duration', 'releaseYear', 'rating', 'ageRating',
-              'language', 'subtitles', 'cast', 'director',
-              'thumbnailUrl', 'posterImages', 'trailerUrl',
-              'status', 'createdAt'
-            ]
-          }
-        ]
+      // Determine content item filtering based on profile type
+      const contentItemWhere = { isActive: true };
+
+      // If this is a child profile, apply additional restrictions
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        // For kids profiles, only show content items that have at least one kid-friendly content
+        // This will be handled by the content filtering below
+      }
+
+      // Get all active content items with their associated content
+      const contentItems = await ContentItem.findAll({
+        where: contentItemWhere,
+        order: [[sortBy, sortOrder]],
+        include: [{
+          model: Content,
+          through: ContentItemMapping,
+          as: 'content',
+          where: contentWhere,
+          required: false,
+          limit: 10 // Limit to 10 content per item
+        }]
       });
 
-      // Get total count for pagination
-      const totalItems = await ContentItem.count({
-        where: { isActive: true }
-      });
+      // Filter items that have content
+      let itemsWithContent = contentItems.filter(item => item.content && item.content.length > 0);
 
-      // Process items to ensure max 10 content per item and apply filters
-      let filteredItems = items.map(item => {
-        let content = item.content || [];
+      // For child profiles, filter out content items that don't have any kid-friendly content
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        itemsWithContent = itemsWithContent.filter(item => {
+          const hasKidFriendlyContent = item.content.some(content => {
+            const allowedRatings = ['G', 'PG', 'PG-13'];
+            const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
 
-        // Sort content by featured status and display order
-        content = content.sort((a, b) => {
-          const aMapping = a.ContentItemMapping || {};
-          const bMapping = b.ContentItemMapping || {};
-
-          // Featured content first
-          if (aMapping.isFeatured && !bMapping.isFeatured) return -1;
-          if (!aMapping.isFeatured && bMapping.isFeatured) return 1;
-
-          // Then by display order
-          return (aMapping.displayOrder || 0) - (bMapping.displayOrder || 0);
+            return allowedRatings.includes(content.ageRating) && 
+                   content.genre && 
+                   content.genre.some(g => allowedGenres.includes(g));
+          });
+          return hasKidFriendlyContent;
         });
+      }
 
-        // Apply profile-based filters if applicable
-        if (req.contentFilter && req.contentFilter.excludeAdultContent) {
-          content = content.filter(content =>
-            ['G', 'PG', 'PG-13'].includes(content.ageRating) &&
-            content.genre.some(g => req.contentFilter.allowedGenres.includes(g))
-          );
-        }
+      const totalItems = itemsWithContent.length;
+      const startIndex = offset;
+      const endIndex = startIndex + parseInt(limit);
+      const paginatedItems = itemsWithContent.slice(startIndex, endIndex);
 
-        // Limit to 10 content per item
-        content = content.slice(0, 10);
-
-        return {
-          ...item.toJSON(),
-          content: content.map(c => ({
-            ...c.toJSON(),
-            isFeatured: c.ContentItemMapping?.isFeatured || false,
-            displayOrder: c.ContentItemMapping?.displayOrder || 0
-          }))
-        };
-      });
+      // Format the response
+      const filteredItems = paginatedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        slug: item.slug,
+        description: item.description,
+        displayOrder: item.displayOrder,
+        contentCount: item.content ? item.content.length : 0,
+        content: item.content || []
+      }));
 
       res.json({
         success: true,
