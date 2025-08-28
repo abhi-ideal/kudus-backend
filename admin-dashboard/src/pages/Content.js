@@ -57,8 +57,6 @@ const Content = () => {
   const [featuredFilter, setFeaturedFilter] = useState('');
   const [genres, setGenres] = useState([]);
   const [genresLoading, setGenresLoading] = useState(false);
-  const [isGenreModalVisible, setIsGenreModalVisible] = useState(false);
-  const [genreForm] = Form.useForm();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -402,13 +400,6 @@ const Content = () => {
             onClick={handleCreateContent}
           >
             Add Content
-          </Button>
-          <Button
-            type="default"
-            icon={<PlusOutlined />}
-            onClick={showGenreModal}
-          >
-            Add Genre
           </Button>
           <Button
             icon={<ReloadOutlined />}
