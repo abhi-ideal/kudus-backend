@@ -182,3 +182,53 @@ module.exports = {
   validate,
   schemas
 };
+const Joi = require('joi');
+
+const schemas = {
+  contentItem: Joi.object({
+    name: Joi.string().required(),
+    description: Joi.string().optional(),
+    isActive: Joi.boolean().optional(),
+    displayOrder: Joi.number().integer().optional()
+  }),
+
+  updateContentItem: Joi.object({
+    name: Joi.string().optional(),
+    description: Joi.string().optional(),
+    isActive: Joi.boolean().optional(),
+    displayOrder: Joi.number().integer().optional()
+  }),
+
+  content: Joi.object({
+    title: Joi.string().required(),
+    description: Joi.string().required(),
+    type: Joi.string().valid('movie', 'series').required(),
+    genre: Joi.array().items(Joi.string()).required(),
+    ageRating: Joi.string().valid('G', 'PG', 'PG-13', 'R', 'NC-17').optional(),
+    duration: Joi.number().integer().optional(),
+    releaseYear: Joi.number().integer().optional(),
+    director: Joi.string().optional(),
+    cast: Joi.array().items(Joi.string()).optional(),
+    language: Joi.string().optional(),
+    availableCountries: Joi.array().items(Joi.string()).optional()
+  })
+};
+
+const validate = (schema) => {
+  return (req, res, next) => {
+    const { error } = schema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        details: error.details.map(detail => detail.message)
+      });
+    }
+    next();
+  };
+};
+
+module.exports = {
+  validate,
+  schemas
+};
