@@ -18,6 +18,7 @@ Object.keys(models).forEach(modelName => {
 });
 
 const contentController = {
+  // Get all content with pagination and filtering
   async getAllContent(req, res) {
     try {
       const {
@@ -26,6 +27,7 @@ const contentController = {
         type,
         genre,
         language,
+        ageRating,
         sortBy = 'createdAt',
         sortOrder = 'DESC'
       } = req.query;
@@ -33,88 +35,65 @@ const contentController = {
       const offset = (page - 1) * limit;
       const whereClause = { isActive: true };
 
-      // Apply profile-based content filtering for child profiles
-      if (req.contentFilter && req.contentFilter.enforceChildSafety) {
-        // Strict age rating filtering for child profiles
-        whereClause.ageRating = {
-          [Op.in]: req.contentFilter.allowedAgeRatings
-        };
-
-        // Enforce child-appropriate genres only
-        whereClause.genre = {
-          [Op.overlap]: req.contentFilter.allowedGenres
-        };
-
-        // Check if requested genre is allowed for child profiles
-        if (genre && !req.contentFilter.allowedGenres.includes(genre)) {
-          return res.status(403).json({
-            success: false,
-            error: 'Content type not allowed for child profile',
-            requestedGenre: genre,
-            allowedGenres: req.contentFilter.allowedGenres
-          });
-        }
+      // Apply filters
+      if (type) {
+        whereClause.type = type;
       }
 
-      // Apply geo-restrictions
-      if (req.geoFilter && req.userCountry) {
-        const userCountry = req.userCountry;
+      if (genre) {
+        const genres = genre.split(',').map(g => g.trim());
+        whereClause.genre = {
+          [Op.overlap]: genres
+        };
+      }
+
+      if (language) {
+        whereClause.language = language;
+      }
+
+      if (ageRating) {
+        whereClause.ageRating = ageRating;
+      }
+
+      // Check geo restrictions
+      if (req.userCountry && req.userCountry !== 'US') {
         whereClause[Op.or] = [
-          // Globally available content not restricted in user's country
-          {
-            isGloballyAvailable: true,
-            restrictedCountries: {
-              [Op.notLike]: `%${userCountry}%`
-            }
-          },
-          // Content specifically available in user's country
-          {
-            isGloballyAvailable: false,
-            availableCountries: {
-              [Op.like]: `%${userCountry}%`
-            }
-          }
+          { availableCountries: { [Op.is]: null } },
+          { availableCountries: { [Op.contains]: [req.userCountry] } }
         ];
       }
-
-      if (type) whereClause.type = type;
-      if (genre && !req.contentFilter) whereClause.genre = { [Op.contains]: [genre] };
-      if (language) whereClause.language = language;
 
       const { count, rows: content } = await Content.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
-        offset: offset,
-        order: [[sortBy, sortOrder]],
-        attributes: [
-          'id', 'title', 'description', 'type', 'genre',
-          'duration', 'releaseYear', 'rating', 'ageRating',
-          'language', 'subtitles', 'cast', 'director',
-          'thumbnailUrl', 'trailerUrl', 'status', 'createdAt'
-        ]
+        offset: parseInt(offset),
+        order: [[sortBy, sortOrder.toUpperCase()]],
+        attributes: {
+          exclude: ['streamingUrl', 'downloadUrl']
+        }
       });
+
+      const totalPages = Math.ceil(count / limit);
 
       res.json({
         success: true,
         data: {
           content,
           pagination: {
-            total: count,
-            page: parseInt(page),
-            limit: parseInt(limit),
-            totalPages: Math.ceil(count / limit)
+            currentPage: parseInt(page),
+            totalPages,
+            totalItems: count,
+            itemsPerPage: parseInt(limit),
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
           }
-        },
-        profileContext: req.activeProfile ? {
-          profileId: req.activeProfile.id,
-          isChildProfile: req.activeProfile.isChild
-        } : null
+        }
       });
     } catch (error) {
-      console.error('Get all content error:', error);
+      logger.error('Error getting all content:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch content'
+        error: 'Failed to retrieve content'
       });
     }
   },
