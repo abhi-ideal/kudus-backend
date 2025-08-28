@@ -1347,9 +1347,9 @@ const contentController = {
           );
           
           if (where[Op.and]) {
-            where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+         //   where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
           } else {
-            where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+           // where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
           }
         }
       }
@@ -1376,7 +1376,7 @@ const contentController = {
       if (language) {
         where.language = language;
       }
-
+console.log('where================',where);
       const { count, rows } = await Content.findAndCountAll({
         where,
         limit: parseInt(limit),

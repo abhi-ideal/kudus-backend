@@ -105,7 +105,7 @@ const Content = () => {
       setContent(contentData);
       setPagination({
         ...pagination,
-        total: paginationData.totalItems,
+        total: paginationData.total,
       });
     } catch (error) {
       message.error('Failed to load content');
