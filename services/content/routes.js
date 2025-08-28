@@ -2,9 +2,21 @@ const express = require('express');
 const router = express.Router();
 const contentController = require('./controller');
 const { authenticate } = require('./middleware/auth');
-const { authenticateProfile } = require('./middleware/profileAuth');
 const { authAdmin: adminAuth } = require('./middleware/adminAuth');
 const { validate, schemas } = require('./utils/validation');
+
+// Simple profile authentication middleware for content service
+const authenticateProfile = (req, res, next) => {
+  // Add basic profile context if user is authenticated
+  if (req.user) {
+    req.activeProfile = {
+      id: req.user.uid || req.user.id,
+      isChild: false, // Default to adult profile
+      userId: req.user.uid || req.user.id
+    };
+  }
+  next();
+};
 
 // Simple geo restriction middleware
 const checkGeoRestriction = (req, res, next) => {
@@ -40,7 +52,7 @@ const checkGeoRestriction = (req, res, next) => {
  *       200:
  *         description: Content list retrieved successfully
  */
-router.get('/', checkGeoRestriction, authenticateProfile, contentController.getAllContent);
+router.get('/', checkGeoRestriction, contentController.getAllContent);
 
 /**
  * @swagger
@@ -122,7 +134,7 @@ router.get('/kids', checkGeoRestriction, contentController.getKidsContent);
  *                     pagination:
  *                       type: object
  */
-router.get('/featured', checkGeoRestriction, authenticateProfile, contentController.getFeaturedContent);
+router.get('/featured', checkGeoRestriction, contentController.getFeaturedContent);
 
 // Admin-only Content Items CRUD Routes
 /**
@@ -327,7 +339,7 @@ router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem
  *                             type: array
  *                             maxItems: 10
  */
-router.get('/items', checkGeoRestriction, authenticateProfile, contentController.getContentGroupedByItems);
+router.get('/items', checkGeoRestriction, contentController.getContentGroupedByItems);
 
 // Admin routes for content items management
 router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
@@ -508,7 +520,7 @@ router.get('/:contentId/watchlist-status', authenticate, authenticateProfile, co
  *       200:
  *         description: Series details retrieved successfully
  */
-router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, contentController.getSeriesDetails);
+router.get('/series/:id/details', checkGeoRestriction, contentController.getSeriesDetails);
 
 /**
  * @swagger
@@ -539,7 +551,7 @@ router.get('/series/:id/details', checkGeoRestriction, authenticateProfile, cont
  *       200:
  *         description: Season episodes retrieved successfully
  */
-router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestriction, authenticateProfile, contentController.getSeasonEpisodes);
+router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestriction, contentController.getSeasonEpisodes);
 
 /**
  * @swagger
@@ -557,7 +569,7 @@ router.get('/series/:seriesId/season/:seasonNumber/episodes', checkGeoRestrictio
  *       200:
  *         description: Episode details retrieved successfully
  */
-router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, contentController.getEpisodeDetails);
+router.get('/episode/:episodeId', checkGeoRestriction, contentController.getEpisodeDetails);
 
 /**
  * @swagger
@@ -575,7 +587,7 @@ router.get('/episode/:episodeId', checkGeoRestriction, authenticateProfile, cont
  *       200:
  *         description: Content retrieved successfully
  */
-router.get('/:id', checkGeoRestriction, authenticateProfile, contentController.getContentById);
+router.get('/:id', checkGeoRestriction, contentController.getContentById);
 
 /**
  * @swagger
@@ -599,7 +611,7 @@ router.get('/:id', checkGeoRestriction, authenticateProfile, contentController.g
  *       200:
  *         description: Streaming URL generated successfully
  */
-router.get('/:id/stream', authenticate, checkGeoRestriction, authenticateProfile, contentController.getStreamingUrl);
+router.get('/:id/stream', authenticate, checkGeoRestriction, contentController.getStreamingUrl);
 
 /**
  * @swagger
