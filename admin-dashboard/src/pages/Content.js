@@ -658,7 +658,7 @@ const Content = () => {
               label="Duration (minutes)"
             >
               <InputNumber min={1} placeholder="Enter duration in minutes" style={{ width: '100%' }} />
-            </Form.Form.Item>
+            </Form.Item>
 
             <Form.Item
               name="releaseYear"
