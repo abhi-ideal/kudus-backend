@@ -1046,12 +1046,13 @@ const contentController = {
         page = 1,
         limit = 20,
         search,
-        isActive,
+        active,
         sortBy = 'displayOrder',
         sortOrder = 'ASC'
       } = req.query;
 
-      const offset = (page - 1) * limit;
+      // Handle offset parameter
+      const offset = req.query.offset ? parseInt(req.query.offset) : (page - 1) * limit;
       const where = {};
 
       if (search) {
@@ -1061,8 +1062,9 @@ const contentController = {
         ];
       }
 
-      if (isActive !== undefined) {
-        where.isActive = isActive === 'true';
+      // Handle active filter
+      if (active !== undefined && active !== 'all') {
+        where.isActive = active === 'true';
       }
 
       const { count, rows: contentItems } = await ContentItem.findAndCountAll({
@@ -1070,26 +1072,18 @@ const contentController = {
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [[sortBy, sortOrder]],
-        include: [{
-          model: ContentItemMapping,
-          as: 'itemMappings',
-          include: [{
-            model: Content,
-            as: 'content'
-          }]
-        }]
+        attributes: ['id', 'name', 'slug', 'description', 'displayOrder', 'isActive', 'createdAt', 'updatedAt']
       });
 
       res.json({
         success: true,
-        data: {
-          contentItems,
-          pagination: {
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(count / limit),
-            totalItems: count,
-            itemsPerPage: parseInt(limit)
-          }
+        items: contentItems,
+        total: count,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(count / limit),
+          totalItems: count,
+          itemsPerPage: parseInt(limit)
         }
       });
     } catch (error) {
