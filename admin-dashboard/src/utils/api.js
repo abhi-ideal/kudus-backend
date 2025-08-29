@@ -130,8 +130,8 @@ const adminEndpoints = {
   getAllGenresAdmin: () => commonAPI.get('/admin/genres'),
   createGenre: (data) => commonAPI.post('/admin/genres', data),
   updateGenre: (id, data) => commonAPI.put(`/admin/genres/${id}`, data),
-  updateGenreChildProfile: (id, showOnChildProfile) =>
-    commonAPI.patch(`/admin/genres/${id}/child-profile`, { showOnChildProfile }),
+  updateGenreChildProfile: (id, data) =>
+    commonAPI.patch(`/genres/${id}/child-profile`, data),
   deleteGenre: (id) => commonAPI.delete(`/admin/genres/${id}`),
 
   // Content Items API
