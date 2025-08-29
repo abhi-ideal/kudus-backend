@@ -8,6 +8,7 @@ const Watchlist = require('./models/Watchlist');
 const WatchHistory = require('./models/WatchHistory');
 const ContentItem = require('./models/ContentItem');
 const ContentItemMapping = require('./models/ContentItemMapping');
+const { Sequelize } = require('sequelize');
 
 // Initialize associations
 const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory };
@@ -1244,7 +1245,7 @@ const contentController = {
         );
         contentWhere[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
       }
-      
+
       if (type) {
         const typeArray = type.split(',');
         contentWhere.type = { [Op.in]: typeArray };
@@ -1296,7 +1297,7 @@ const contentController = {
       // For child profiles, apply additional filtering
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
-        
+
         itemsWithContent = itemsWithContent.filter(item => {
           const hasKidFriendlyContent = item.content.some(content => {
             return content.genre && content.genre.some(g => allowedGenres.includes(g));
@@ -1648,42 +1649,102 @@ console.log('where================',where);
   },
 
   async updateContentItemOrder(req, res) {
+    const { id } = req.params;
+    const { newOrder, oldOrder } = req.body;
+
+    logger.info(`Updating content item order. Item ID: ${id}, New Order: ${newOrder}, Old Order: ${oldOrder}`);
+
+    if (newOrder === undefined || oldOrder === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing newOrder or oldOrder in request body'
+      });
+    }
+
+    const transaction = await sequelize.transaction();
+
     try {
-      const { id } = req.params;
-      const { position, newOrder, oldOrder } = req.body;
-
-      logger.info(`Updating content item order for ID: ${id}`, req.body);
-
-      const contentItem = await ContentItem.findByPk(id);
+      const contentItem = await ContentItem.findByPk(id, { transaction });
 
       if (!contentItem) {
+        await transaction.rollback();
         return res.status(404).json({
           success: false,
           error: 'Content item not found'
         });
       }
 
-      // Use newOrder if provided (from drag and drop), otherwise use position
-      const newPosition = newOrder !== undefined ? parseInt(newOrder) : parseInt(position);
+      const newPosition = parseInt(newOrder);
+      const oldPosition = parseInt(oldOrder);
 
-      if (isNaN(newPosition)) {
+      if (isNaN(newPosition) || isNaN(oldPosition)) {
+        await transaction.rollback();
         return res.status(400).json({
           success: false,
-          error: 'Invalid position value'
+          error: 'Invalid position value. Both newOrder and oldOrder must be numbers.'
         });
       }
 
-      await contentItem.update({ displayOrder: newPosition });
+      // If the order hasn't changed, no need to do anything
+      if (newPosition === oldPosition) {
+        await transaction.rollback(); // Rollback as no operation needed
+        return res.status(200).json({
+          success: true,
+          message: 'Content item order has not changed.',
+          data: contentItem
+        });
+      }
 
-      logger.info(`Admin updated content item order: ${id} to position ${newPosition}`);
+      // Update the dragged item's order
+      await contentItem.update({ displayOrder: newPosition }, { transaction });
+
+      // Adjust the order of other items based on the direction of the move
+      if (newPosition < oldPosition) {
+        // Item moved up, increment displayOrder for items between newPosition and oldPosition
+        await ContentItem.update(
+          { displayOrder: sequelize.literal('displayOrder + 1') },
+          {
+            where: {
+              displayOrder: {
+                [Op.gte]: newPosition,
+                [Op.lt]: oldPosition
+              },
+              id: { [Op.ne]: id } // Exclude the item being moved
+            },
+            transaction
+          }
+        );
+      } else {
+        // Item moved down, decrement displayOrder for items between oldPosition and newPosition
+        await ContentItem.update(
+          { displayOrder: sequelize.literal('displayOrder - 1') },
+          {
+            where: {
+              displayOrder: {
+                [Op.gt]: oldPosition,
+                [Op.lte]: newPosition
+              },
+              id: { [Op.ne]: id } // Exclude the item being moved
+            },
+            transaction
+          }
+        );
+      }
+
+      await transaction.commit();
+      logger.info(`Successfully updated order for content item ${id} from ${oldPosition} to ${newPosition}`);
+
+      // Reload to get updated data after transaction
+      const updatedContentItem = await ContentItem.findByPk(id);
 
       res.json({
         success: true,
         message: 'Content item order updated successfully',
-        data: contentItem
+        data: updatedContentItem
       });
     } catch (error) {
-      logger.error('Update content item order error:', error);
+      await transaction.rollback();
+      logger.error(`Error updating content item order for ID ${id}:`, error);
       res.status(500).json({
         success: false,
         error: 'Failed to update content item order',
