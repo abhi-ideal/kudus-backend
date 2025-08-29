@@ -260,7 +260,7 @@ router.get('/admin/items/:id', adminAuth, contentController.getContentItemById);
  *       404:
  *         description: Content item not found
  */
-router.put('/admin/items/:id', adminAuth, validate(schemas.updateContentItem), contentController.updateContentItem);
+router.put('/admin/items/:id', adminAuth, contentController.updateContentItem);
 
 /**
  * @swagger

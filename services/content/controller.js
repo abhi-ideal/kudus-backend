@@ -1137,12 +1137,17 @@ const contentController = {
       const { id } = req.params;
       const { name, description, isActive, displayOrder } = req.body;
 
+      logger.info(`Attempting to update content item with ID: ${id}`);
+      logger.info(`Request body:`, req.body);
+
       const contentItem = await ContentItem.findByPk(id);
 
       if (!contentItem) {
+        logger.warn(`Content item not found with ID: ${id}`);
         return res.status(404).json({
           success: false,
-          error: 'Content item not found'
+          error: 'Content item not found',
+          providedId: id
         });
       }
 
@@ -1157,9 +1162,14 @@ const contentController = {
       if (isActive !== undefined) updateData.isActive = isActive;
       if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
 
+      logger.info(`Updating content item with data:`, updateData);
+
       await contentItem.update(updateData);
 
-      logger.info(`Admin updated content item: ${id}`);
+      // Reload to get updated data
+      await contentItem.reload();
+
+      logger.info(`Successfully updated content item: ${id}`);
 
       res.json({
         success: true,
