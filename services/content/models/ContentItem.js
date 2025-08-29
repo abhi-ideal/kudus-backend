@@ -26,6 +26,11 @@ const ContentItem = sequelize.define('ContentItem', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  showOnChildProfile: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether this content item should be shown to child profiles'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

@@ -375,6 +375,7 @@ router.get('/items', checkGeoRestriction, contentController.getContentGroupedByI
  *         description: Content item not found
  */
 router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
+router.patch('/admin/items/:id/child-profile', adminAuth, contentController.updateContentItemChildProfile);
 
 /**
  * @swagger

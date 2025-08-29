@@ -125,22 +125,21 @@ const adminEndpoints = {
   updateEpisode: (id, data) => contentAPI.put(`/content/episodes/${id}`, data),
 
   // Common Service Endpoints
-  getGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/admin/genres (Admin)
-  getUserGenres: () => commonAPI.get('/genres'), // GET {{commonServiceUrl}}/api/common/genres (User)
-  createGenre: (genreData) => commonAPI.post('/genres', genreData), // POST {{commonServiceUrl}}/api/common/genres (Admin only)
-  updateGenre: (id, genreData) => {
-    // Remove id from data if it exists to avoid validation error
-    const { id: _, ...updateData } = genreData;
-    return commonAPI.put(`/genres/${id}`, updateData);
-  }, // PUT {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
-  deleteGenre: (id) => commonAPI.delete(`/genres/${id}`), // DELETE {{commonServiceUrl}}/api/common/admin/genres/:id (Admin only)
+  // Genres
+  getGenres: () => commonAPI.get('/genres'),
+  getAllGenresAdmin: () => commonAPI.get('/admin/genres'),
+  createGenre: (data) => commonAPI.post('/admin/genres', data),
+  updateGenre: (id, data) => commonAPI.put(`/admin/genres/${id}`, data),
+  updateGenreChildProfile: (id, showOnChildProfile) =>
+    commonAPI.patch(`/admin/genres/${id}/child-profile`, { showOnChildProfile }),
+  deleteGenre: (id) => commonAPI.delete(`/admin/genres/${id}`),
 
   // Content Items API
   getContentItems: (params) => contentAPI.get('/items', { params }),
   createContentItem: (data) => contentAPI.post('/items', data),
   updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
-  updateContentItemOrder: (id, orderData) => 
+  updateContentItemOrder: (id, orderData) =>
     contentAPI.patch(`/items/${id}/order`, orderData),
 };
 

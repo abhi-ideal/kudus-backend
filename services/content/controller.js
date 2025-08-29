@@ -1649,23 +1649,24 @@ console.log('where================',where);
   },
 
   async updateContentItemOrder(req, res) {
-    const { id } = req.params;
-    const { newOrder, oldOrder } = req.body;
-
-    logger.info(`Updating content item order. Item ID: ${id}, New Order: ${newOrder}, Old Order: ${oldOrder}`);
-
-    if (newOrder === undefined || oldOrder === undefined) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing newOrder or oldOrder in request body'
-      });
-    }
-
     const transaction = await sequelize.transaction();
 
     try {
-      const contentItem = await ContentItem.findByPk(id, { transaction });
+      const { id } = req.params;
+      const { newOrder, oldOrder } = req.body;
 
+      // Validate input
+      const position = parseInt(newOrder);
+      if (isNaN(position) || position < 0) {
+        await transaction.rollback();
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid position value'
+        });
+      }
+
+      // Find the content item to update
+      const contentItem = await ContentItem.findByPk(id);
       if (!contentItem) {
         await transaction.rollback();
         return res.status(404).json({
@@ -1674,77 +1675,48 @@ console.log('where================',where);
         });
       }
 
-      const newPosition = parseInt(newOrder);
-      const oldPosition = parseInt(oldOrder);
+      // Update all items to prevent duplicates by temporarily setting high values
+      await ContentItem.update(
+        { 
+          displayOrder: sequelize.literal('displayOrder + 10000')
+        },
+        { 
+          where: {},
+          transaction 
+        }
+      );
 
-      if (isNaN(newPosition) || isNaN(oldPosition)) {
-        await transaction.rollback();
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid position value. Both newOrder and oldOrder must be numbers.'
-        });
-      }
+      // Update the target item
+      await contentItem.update(
+        { displayOrder: position },
+        { transaction }
+      );
 
-      // If the order hasn't changed, no need to do anything
-      if (newPosition === oldPosition) {
-        await transaction.rollback(); // Rollback as no operation needed
-        return res.status(200).json({
-          success: true,
-          message: 'Content item order has not changed.',
-          data: contentItem
-        });
-      }
+      // Reorder all items sequentially
+      const allItems = await ContentItem.findAll({
+        order: [['displayOrder', 'ASC']],
+        transaction
+      });
 
-      // Update the dragged item's order
-      await contentItem.update({ displayOrder: newPosition }, { transaction });
-
-      // Adjust the order of other items based on the direction of the move
-      if (newPosition < oldPosition) {
-        // Item moved up, increment displayOrder for items between newPosition and oldPosition
-        await ContentItem.update(
-          { displayOrder: sequelize.literal('displayOrder + 1') },
-          {
-            where: {
-              displayOrder: {
-                [Op.gte]: newPosition,
-                [Op.lt]: oldPosition
-              },
-              id: { [Op.ne]: id } // Exclude the item being moved
-            },
-            transaction
-          }
-        );
-      } else {
-        // Item moved down, decrement displayOrder for items between oldPosition and newPosition
-        await ContentItem.update(
-          { displayOrder: sequelize.literal('displayOrder - 1') },
-          {
-            where: {
-              displayOrder: {
-                [Op.gt]: oldPosition,
-                [Op.lte]: newPosition
-              },
-              id: { [Op.ne]: id } // Exclude the item being moved
-            },
-            transaction
-          }
-        );
+      for (let i = 0; i < allItems.length; i++) {
+        if (allItems[i].id !== id) {
+          const newOrder = allItems[i].id === id ? position : (i >= position ? i + 1 : i);
+          await allItems[i].update(
+            { displayOrder: newOrder },
+            { transaction }
+          );
+        }
       }
 
       await transaction.commit();
-      logger.info(`Successfully updated order for content item ${id} from ${oldPosition} to ${newPosition}`);
-
-      // Reload to get updated data after transaction
-      const updatedContentItem = await ContentItem.findByPk(id);
 
       res.json({
         success: true,
-        message: 'Content item order updated successfully',
-        data: updatedContentItem
+        message: 'Content item order updated successfully'
       });
     } catch (error) {
       await transaction.rollback();
-      logger.error(`Error updating content item order for ID ${id}:`, error);
+      console.error('Update content item order error:', error);
       res.status(500).json({
         success: false,
         error: 'Failed to update content item order',
@@ -1752,6 +1724,36 @@ console.log('where================',where);
       });
     }
   },
+
+  // Admin: Update content item child profile visibility
+  async updateContentItemChildProfile(req, res) {
+    try {
+      const { id } = req.params;
+      const { showOnChildProfile } = req.body;
+
+      const contentItem = await ContentItem.findByPk(id);
+      if (!contentItem) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      await contentItem.update({ showOnChildProfile });
+
+      res.json({
+        success: true,
+        data: contentItem,
+        message: 'Content item child profile visibility updated successfully'
+      });
+    } catch (error) {
+      console.error('Update content item child profile error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update content item child profile visibility'
+      });
+    }
+  }
 };
 
 module.exports = {
@@ -1780,5 +1782,6 @@ module.exports = {
   getContentStatistics: contentController.getContentStatistics,
   getFeaturedContent: contentController.getFeaturedContent,
   updateContentItemOrder: contentController.updateContentItemOrder,
+  updateContentItemChildProfile: contentController.updateContentItemChildProfile, // Added this line
   getContentItems: contentController.getAllContentItems // Alias for content items management
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -57,7 +56,7 @@ const Genres = () => {
       };
 
       const response = await adminAPI.getGenres(params);
-      
+
       if (response.data.success) {
         setGenres(response.data.genres);
         setPagination(prev => ({
@@ -112,7 +111,7 @@ const Genres = () => {
         await adminAPI.createGenre(values);
         message.success('Genre created successfully');
       }
-      
+
       setIsModalVisible(false);
       form.resetFields();
       fetchGenres();
@@ -150,6 +149,17 @@ const Genres = () => {
     } catch (error) {
       console.error('Error updating genre status:', error);
       message.error('Failed to update genre status');
+    }
+  };
+
+  const handleChildProfileToggle = async (id, showOnChildProfile) => {
+    try {
+      await adminAPI.updateGenreChildProfile(id, { showOnChildProfile });
+      message.success('Genre child profile visibility updated');
+      fetchGenres();
+    } catch (error) {
+      console.error('Error updating genre child profile visibility:', error);
+      message.error('Failed to update genre child profile visibility');
     }
   };
 
@@ -199,6 +209,18 @@ const Genres = () => {
           onChange={() => handleToggleStatus(record)}
           checkedChildren="Active"
           unCheckedChildren="Inactive"
+        />
+      ),
+    },
+    {
+      title: 'Show on Child Profile',
+      dataIndex: 'showOnChildProfile',
+      key: 'showOnChildProfile',
+      render: (showOnChildProfile, record) => (
+        <Switch
+          checked={showOnChildProfile}
+          onChange={(checked) => handleChildProfileToggle(record.id, checked)}
+          size="small"
         />
       ),
     },
@@ -312,6 +334,7 @@ const Genres = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          initialValues={{ showOnChildProfile: true }}
         >
           <Form.Item
             name="name"
@@ -368,6 +391,16 @@ const Genres = () => {
           >
             <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
           </Form.Item>
+
+          <Form.Item
+            name="showOnChildProfile"
+            label="Show on Child Profile"
+            valuePropName="checked"
+            initialValue={true}
+          >
+            <Switch checkedChildren="Yes" unCheckedChildren="No" />
+          </Form.Item>
+
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>

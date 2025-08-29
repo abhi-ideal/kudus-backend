@@ -1,4 +1,3 @@
-
 const express = require('express');
 const commonController = require('./controller');
 const { validate } = require('./utils/validation');
@@ -183,6 +182,38 @@ router.get('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, commonControll
  *         description: Genre updated successfully
  */
 router.put('/admin/genres/:id', verifyFirebaseToken, verifyAdmin, validate('genreUpdate'), commonController.updateGenre);
+
+/**
+ * @swagger
+ * /api/common/admin/genres/{id}/child-profile:
+ *   patch:
+ *     summary: Update genre child profile visibility (Admin)
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - showOnChildProfile
+ *             properties:
+ *               showOnChildProfile:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Genre child profile visibility updated successfully
+ */
+router.patch('/admin/genres/:id/child-profile', verifyFirebaseToken, verifyAdmin, commonController.updateGenreChildProfile);
+
 
 /**
  * @swagger

@@ -256,6 +256,103 @@ const commonController = {
     }
   },
 
+  // Get all genres
+  async getGenres(req, res) {
+    try {
+      let whereClause = { isActive: true };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild) {
+        whereClause.showOnChildProfile = true;
+      }
+
+      const genres = await Genre.findAll({
+        where: whereClause,
+        order: [['name', 'ASC']]
+      });
+
+      res.json({
+        success: true,
+        data: genres,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false
+      });
+    } catch (error) {
+      console.error('Get genres error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve genres'
+      });
+    }
+  },
+
+  // Admin: Get all genres with child profile settings
+  async getAllGenresAdmin(req, res) {
+    try {
+      const { page = 1, limit = 50, search = '' } = req.query;
+      const offset = (page - 1) * limit;
+
+      let whereClause = {};
+      if (search) {
+        whereClause.name = { [Op.iLike]: `%${search}%` };
+      }
+
+      const { count, rows: genres } = await Genre.findAndCountAll({
+        where: whereClause,
+        order: [['name', 'ASC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      res.json({
+        success: true,
+        data: genres,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get all genres admin error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve genres'
+      });
+    }
+  },
+
+  // Admin: Update genre child profile visibility
+  async updateGenreChildProfile(req, res) {
+    try {
+      const { id } = req.params;
+      const { showOnChildProfile } = req.body;
+
+      const genre = await Genre.findByPk(id);
+      if (!genre) {
+        return res.status(404).json({
+          success: false,
+          error: 'Genre not found'
+        });
+      }
+
+      await genre.update({ showOnChildProfile });
+
+      res.json({
+        success: true,
+        data: genre,
+        message: 'Genre child profile visibility updated successfully'
+      });
+    } catch (error) {
+      console.error('Update genre child profile error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update genre child profile visibility'
+      });
+    }
+  },
+
+
   // Support/Contact Form Operations
   async createSupportTicket(req, res) {
     try {

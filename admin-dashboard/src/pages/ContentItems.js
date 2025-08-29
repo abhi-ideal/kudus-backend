@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -97,7 +96,7 @@ const ContentItems = () => {
       };
 
       const response = await adminAPI.getContentItems(params);
-      
+
       if (response.data.success) {
         setContentItems(response.data.items);
         setPagination(prev => ({
@@ -116,7 +115,7 @@ const ContentItems = () => {
   const moveRow = async (dragIndex, hoverIndex) => {
     const dragItem = contentItems[dragIndex];
     const hoverItem = contentItems[hoverIndex];
-    
+
     // Update local state immediately for smooth UX
     const newItems = [...contentItems];
     newItems.splice(dragIndex, 1);
@@ -164,7 +163,8 @@ const ContentItems = () => {
       slug: item.slug,
       description: item.description,
       displayOrder: item.displayOrder,
-      isActive: item.isActive
+      isActive: item.isActive,
+      showOnChildProfile: item.showOnChildProfile
     });
     setIsModalVisible(true);
   };
@@ -178,7 +178,7 @@ const ContentItems = () => {
         await adminAPI.createContentItem(values);
         message.success('Content item created successfully');
       }
-      
+
       setIsModalVisible(false);
       form.resetFields();
       fetchContentItems();
@@ -198,8 +198,17 @@ const ContentItems = () => {
       message.success('Content item deleted successfully');
       fetchContentItems();
     } catch (error) {
-      console.error('Error deleting content item:', error);
       message.error('Failed to delete content item');
+    }
+  };
+
+  const handleChildProfileToggle = async (id, showOnChildProfile) => {
+    try {
+      await adminAPI.updateContentItemChildProfile(id, { showOnChildProfile });
+      message.success('Content item child profile visibility updated');
+      fetchContentItems();
+    } catch (error) {
+      message.error('Failed to update content item child profile visibility');
     }
   };
 
@@ -276,12 +285,21 @@ const ContentItems = () => {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
-      render: (isActive, record) => (
+      render: (isActive) => (
+        <span style={{ color: isActive ? 'green' : 'red' }}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      title: 'Show on Child Profile',
+      dataIndex: 'showOnChildProfile',
+      key: 'showOnChildProfile',
+      render: (showOnChildProfile, record) => (
         <Switch
-          checked={isActive}
-          onChange={() => handleToggleStatus(record)}
-          checkedChildren="Active"
-          unCheckedChildren="Inactive"
+          checked={showOnChildProfile}
+          onChange={(checked) => handleChildProfileToggle(record.id, checked)}
+          size="small"
         />
       ),
     },
@@ -479,6 +497,15 @@ const ContentItems = () => {
             initialValue={true}
           >
             <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+          </Form.Item>
+
+          <Form.Item
+            name="showOnChildProfile"
+            label="Show on Child Profile"
+            valuePropName="checked"
+            initialValue={false}
+          >
+            <Switch checkedChildren="Yes" unCheckedChildren="No" />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

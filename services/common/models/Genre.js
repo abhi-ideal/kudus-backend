@@ -22,6 +22,11 @@ const Genre = sequelize.define('Genre', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  showOnChildProfile: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether this genre should be shown to child profiles'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
