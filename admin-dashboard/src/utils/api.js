@@ -141,6 +141,8 @@ const adminEndpoints = {
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
   updateContentItemOrder: (id, orderData) =>
     contentAPI.patch(`/items/${id}/order`, orderData),
+  updateContentItemChildProfile: (id, data) =>
+    contentAPI.patch(`/items/${id}/child-profile`, data),
 };
 
 // Content Items API (for drag and drop functionality)
