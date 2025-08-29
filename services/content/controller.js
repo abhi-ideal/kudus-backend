@@ -1649,7 +1649,9 @@ console.log('where================',where);
   async updateContentItemOrder(req, res) {
     try {
       const { id } = req.params;
-      const { position } = req.body;
+      const { position, newOrder, oldOrder } = req.body;
+
+      logger.info(`Updating content item order for ID: ${id}`, req.body);
 
       const contentItem = await ContentItem.findByPk(id);
 
@@ -1660,9 +1662,19 @@ console.log('where================',where);
         });
       }
 
-      await contentItem.update({ displayOrder: position });
+      // Use newOrder if provided (from drag and drop), otherwise use position
+      const newPosition = newOrder !== undefined ? parseInt(newOrder) : parseInt(position);
 
-      logger.info(`Admin updated content item order: ${id} to position ${position}`);
+      if (isNaN(newPosition)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid position value'
+        });
+      }
+
+      await contentItem.update({ displayOrder: newPosition });
+
+      logger.info(`Admin updated content item order: ${id} to position ${newPosition}`);
 
       res.json({
         success: true,

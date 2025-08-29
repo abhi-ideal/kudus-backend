@@ -341,7 +341,39 @@ router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem
  */
 router.get('/items', checkGeoRestriction, contentController.getContentGroupedByItems);
 
-// Admin routes for content items management
+/**
+ * @swagger
+ * /api/content/admin/items/{id}/order:
+ *   patch:
+ *     summary: Update content item display order (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               position:
+ *                 type: integer
+ *               newOrder:
+ *                 type: integer
+ *               oldOrder:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Content item order updated successfully
+ *       404:
+ *         description: Content item not found
+ */
 router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
 
 /**
