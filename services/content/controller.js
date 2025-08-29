@@ -798,6 +798,7 @@ const contentController = {
       const {
         page = 1,
         limit = 20,
+        type,
         sortBy = 'addedAt',
         sortOrder = 'DESC'
       } = req.query;
