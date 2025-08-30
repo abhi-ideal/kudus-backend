@@ -3,6 +3,7 @@ const router = express.Router();
 const contentController = require('./controller');
 const { verifyFirebaseToken: authenticate } = require('./middleware/auth');
 const { authAdmin: adminAuth } = require('./middleware/adminAuth');
+const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
 const { validate, schemas } = require('./utils/validation');
 
 // Simple profile authentication middleware for content service
@@ -339,7 +340,7 @@ router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem
  *                             type: array
  *                             maxItems: 10
  */
-router.get('/items', checkGeoRestriction, contentController.getContentGroupedByItems);
+router.get('/items', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getContentGroupedByItems);
 
 /**
  * @swagger
