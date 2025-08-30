@@ -1257,9 +1257,17 @@ const contentController = {
         contentWhere.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
       }
 
+      // Build where clause for content items
+      const itemWhere = { isActive: true };
+      
+      // For child profiles, only show items marked for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        itemWhere.showOnChildProfile = true;
+      }
+
       // Get content items with their mappings and content
       const contentItems = await ContentItem.findAll({
-        where: { isActive: true },
+        where: itemWhere,
         order: [[sortBy, sortOrder]],
         include: [{
           model: ContentItemMapping,
