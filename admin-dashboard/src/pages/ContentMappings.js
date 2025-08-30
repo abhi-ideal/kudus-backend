@@ -82,8 +82,8 @@ const ContentMappings = () => {
 
   const fetchContentItems = async () => {
     try {
-      const response = await adminAPI.getAllContentItems({ limit: 100 });
-      setContentItems(response.data.items || []);
+      const response = await adminAPI.getContentItems({ limit: 100 });
+      setContentItems(response.data.data || response.data.items || []);
     } catch (error) {
       console.error('Error fetching content items:', error);
     }

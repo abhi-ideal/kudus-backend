@@ -136,6 +136,7 @@ const adminEndpoints = {
 
   // Content Items API
   getContentItems: (params) => contentAPI.get('/items', { params }),
+  getAllContentItems: (params) => contentAPI.get('/admin/items', { params }),
   createContentItem: (data) => contentAPI.post('/items', data),
   updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
