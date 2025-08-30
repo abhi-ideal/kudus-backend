@@ -23,7 +23,9 @@ import {
   Divider,
   Tag,
   List,
-  Avatar
+  Avatar,
+  Modal,
+  Popconfirm
 } from 'antd';
 import {
   EditOutlined,
@@ -39,7 +41,10 @@ import {
   EyeOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  SafetyOutlined
+  SafetyOutlined,
+  LinkOutlined,
+  PlusOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
@@ -57,6 +62,11 @@ const ContentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
+  const [mappings, setMappings] = useState([]);
+  const [contentItems, setContentItems] = useState([]);
+  const [mappingsLoading, setMappingsLoading] = useState(false);
+  const [isAddMappingVisible, setIsAddMappingVisible] = useState(false);
+  const [mappingForm] = Form.useForm();
 
   // Mock data for analytics, ratings, and reviews
   const [analytics] = useState({
@@ -108,6 +118,8 @@ const ContentDetails = () => {
   useEffect(() => {
     if (id) {
       loadContent();
+      loadContentMappings();
+      loadContentItems();
     }
   }, [id]);
 
@@ -154,6 +166,55 @@ const ContentDetails = () => {
     }
   };
 
+  const loadContentMappings = async () => {
+    try {
+      setMappingsLoading(true);
+      const response = await adminEndpoints.getContentMappings({ contentId: id });
+      setMappings(response.data.mappings || []);
+    } catch (error) {
+      console.error('Error loading content mappings:', error);
+      message.error('Failed to load content mappings');
+    } finally {
+      setMappingsLoading(false);
+    }
+  };
+
+  const loadContentItems = async () => {
+    try {
+      const response = await adminEndpoints.getContentItems({ limit: 100 });
+      setContentItems(response.data.items || []);
+    } catch (error) {
+      console.error('Error loading content items:', error);
+    }
+  };
+
+  const handleAddMapping = async (values) => {
+    try {
+      await adminEndpoints.createContentMapping({
+        ...values,
+        contentId: id
+      });
+      message.success('Content mapping created successfully');
+      setIsAddMappingVisible(false);
+      mappingForm.resetFields();
+      loadContentMappings();
+    } catch (error) {
+      console.error('Error creating content mapping:', error);
+      message.error('Failed to create content mapping');
+    }
+  };
+
+  const handleDeleteMapping = async (mappingId) => {
+    try {
+      await adminEndpoints.deleteContentMapping(mappingId);
+      message.success('Content mapping deleted successfully');
+      loadContentMappings();
+    } catch (error) {
+      console.error('Error deleting content mapping:', error);
+      message.error('Failed to delete content mapping');
+    }
+  };
+
   const menuItems = [
     {
       key: 'metadata',
@@ -189,6 +250,11 @@ const ContentDetails = () => {
       key: 'ratings-reviews',
       icon: <StarOutlined />,
       label: 'Ratings & Reviews',
+    },
+    {
+      key: 'content-mappings',
+      icon: <LinkOutlined />,
+      label: 'Content Mappings',
     },
   ];
 
@@ -702,6 +768,170 @@ const ContentDetails = () => {
                 )}
               />
             </Card>
+          </div>
+        );
+
+      case 'content-mappings':
+        return (
+          <div>
+            <Card 
+              title="Content Assignments" 
+              extra={
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsAddMappingVisible(true)}
+                >
+                  Add to Item
+                </Button>
+              }
+              style={{ marginBottom: 16 }}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <Text type="secondary">
+                  Assign this content to different categories/items to control where it appears in the application.
+                </Text>
+              </div>
+
+              <Table
+                dataSource={mappings}
+                loading={mappingsLoading}
+                rowKey="id"
+                pagination={false}
+                columns={[
+                  {
+                    title: 'Content Item',
+                    dataIndex: 'itemId',
+                    key: 'itemId',
+                    render: (itemId, record) => {
+                      const item = contentItems.find(i => i.id === itemId);
+                      return (
+                        <div>
+                          <Text strong>{item?.name || 'Unknown Item'}</Text>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            {item?.slug}
+                          </Text>
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    title: 'Display Order',
+                    dataIndex: 'displayOrder',
+                    key: 'displayOrder',
+                    width: 120,
+                    render: (order) => <Text>{order || 0}</Text>
+                  },
+                  {
+                    title: 'Featured',
+                    dataIndex: 'isFeatured',
+                    key: 'isFeatured',
+                    width: 100,
+                    render: (isFeatured) => (
+                      <Tag color={isFeatured ? 'gold' : 'default'}>
+                        {isFeatured ? 'Featured' : 'Normal'}
+                      </Tag>
+                    )
+                  },
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    width: 100,
+                    render: (_, record) => (
+                      <Button
+                        type="link"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteMapping(record.id)}
+                        size="small"
+                      >
+                        Remove
+                      </Button>
+                    ),
+                  },
+                ]}
+              />
+            </Card>
+
+            <Modal
+              title="Assign Content to Item"
+              visible={isAddMappingVisible}
+              onCancel={() => {
+                setIsAddMappingVisible(false);
+                mappingForm.resetFields();
+              }}
+              footer={null}
+              width={500}
+            >
+              <Form
+                form={mappingForm}
+                layout="vertical"
+                onFinish={handleAddMapping}
+              >
+                <Form.Item
+                  name="itemId"
+                  label="Content Item"
+                  rules={[{ required: true, message: 'Please select a content item' }]}
+                >
+                  <Select
+                    placeholder="Select content item"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                  >
+                    {contentItems
+                      .filter(item => !mappings.some(m => m.itemId === item.id))
+                      .map(item => (
+                        <Option key={item.id} value={item.id}>
+                          {item.name}
+                          <Text type="secondary"> ({item.slug})</Text>
+                        </Option>
+                      ))}
+                  </Select>
+                </Form.Item>
+
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="displayOrder"
+                      label="Display Order"
+                      rules={[{ required: true, message: 'Please enter display order' }]}
+                    >
+                      <InputNumber
+                        min={0}
+                        placeholder="Display order (0-100)"
+                        style={{ width: '100%' }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="isFeatured"
+                      label="Featured Content"
+                      valuePropName="checked"
+                    >
+                      <Switch checkedChildren="Featured" unCheckedChildren="Normal" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Divider />
+                
+                <Form.Item style={{ marginBottom: 0 }}>
+                  <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
+                    Add Assignment
+                  </Button>
+                  <Button onClick={() => {
+                    setIsAddMappingVisible(false);
+                    mappingForm.resetFields();
+                  }}>
+                    Cancel
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Modal>
           </div>
         );
 
