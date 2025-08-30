@@ -1269,6 +1269,7 @@ const contentController = {
       const contentItems = await ContentItem.findAll({
         where: itemWhere,
         order: [[sortBy, sortOrder]],
+        attributes: ['id', 'name', 'slug', 'description', 'displayOrder', 'showOnChildProfile', 'isActive', 'createdAt', 'updatedAt'],
         include: [{
           model: ContentItemMapping,
           as: 'itemMappings',
@@ -1299,6 +1300,8 @@ const contentController = {
           slug: item.slug,
           description: item.description,
           displayOrder: item.displayOrder,
+          showOnChildProfile: item.showOnChildProfile,
+          isActive: item.isActive,
           contentCount: item.itemMappings.length,
           content: item.itemMappings.map(mapping => mapping.content).filter(Boolean)
         }));
