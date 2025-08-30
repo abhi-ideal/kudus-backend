@@ -153,8 +153,16 @@ const adminEndpoints = {
 
 // Content Items API (for drag and drop functionality)
 const contentItemsAPI = {
-  getContentItems: (params) => contentAPI.get('/content-items', { params }),
-  updateContentItemPosition: (id, position) => contentAPI.put(`/content-items/${id}/position`, { position }),
+  getAllContentItemsForDragDrop: () => contentAPI.get('/admin/items?limit=100'),
+  updateContentItemsOrder: (items) => contentAPI.patch('/admin/items/reorder', { items }),
+
+  // Content Mappings API
+  getContentMappings: (params) => contentAPI.get('/admin/mappings', { params }),
+  createContentMapping: (data) => contentAPI.post('/admin/mappings', data),
+  updateContentMapping: (id, data) => contentAPI.put(`/admin/mappings/${id}`, data),
+  deleteContentMapping: (id) => contentAPI.delete(`/admin/mappings/${id}`),
+
+  // Content Management API
 };
 
 // Export individual service APIs for direct access if needed

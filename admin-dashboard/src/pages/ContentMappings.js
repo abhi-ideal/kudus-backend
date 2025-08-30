@@ -4,32 +4,38 @@ import {
   Card,
   Table,
   Button,
-  Space,
   Modal,
   Form,
   Select,
-  message,
-  Tag,
-  InputNumber,
   Switch,
+  InputNumber,
+  message,
+  Space,
+  Tag,
+  Popconfirm,
   Row,
   Col,
-  Input
+  Typography,
+  Input,
+  Divider
 } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  SearchOutlined
+  SearchOutlined,
+  LinkOutlined
 } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 
+const { Title, Text } = Typography;
 const { Option } = Select;
+const { Search } = Input;
 
 const ContentMappings = () => {
   const [mappings, setMappings] = useState([]);
-  const [content, setContent] = useState([]);
   const [contentItems, setContentItems] = useState([]);
+  const [allContent, setAllContent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMapping, setEditingMapping] = useState(null);
@@ -46,74 +52,65 @@ const ContentMappings = () => {
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     fetchMappings();
+    fetchContentItems();
+    fetchAllContent();
   }, [pagination.current, pagination.pageSize, filters]);
-
-  const fetchData = async () => {
-    try {
-      // Fetch content and items for dropdowns
-      const [contentResponse, itemsResponse] = await Promise.all([
-        adminAPI.getContent({ limit: 1000 }),
-        adminAPI.getContentItems({ limit: 1000 })
-      ]);
-
-      if (contentResponse.data.success) {
-        setContent(contentResponse.data.content);
-      }
-      if (itemsResponse.data.success) {
-        setContentItems(itemsResponse.data.items);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      message.error('Failed to fetch data');
-    }
-  };
 
   const fetchMappings = async () => {
     try {
       setLoading(true);
       const params = {
+        page: pagination.current,
         limit: pagination.pageSize,
-        offset: (pagination.current - 1) * pagination.pageSize,
-        search: filters.search || undefined,
-        contentId: filters.contentId || undefined,
-        itemId: filters.itemId || undefined
+        ...filters
       };
-
+      
       const response = await adminAPI.getContentMappings(params);
-
-      if (response.data.success) {
-        setMappings(response.data.mappings);
-        setPagination(prev => ({
-          ...prev,
-          total: response.data.total
-        }));
-      }
+      setMappings(response.data.mappings || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.pagination?.total || 0
+      }));
     } catch (error) {
-      console.error('Error fetching mappings:', error);
-      message.error('Failed to fetch mappings');
+      console.error('Error fetching content mappings:', error);
+      message.error('Failed to fetch content mappings');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = () => {
+  const fetchContentItems = async () => {
+    try {
+      const response = await adminAPI.getAllContentItems({ limit: 100 });
+      setContentItems(response.data.items || []);
+    } catch (error) {
+      console.error('Error fetching content items:', error);
+    }
+  };
+
+  const fetchAllContent = async () => {
+    try {
+      const response = await adminAPI.getContent({ limit: 1000 });
+      setAllContent(response.data.content || []);
+    } catch (error) {
+      console.error('Error fetching content:', error);
+    }
+  };
+
+  const handleCreateMapping = () => {
     setEditingMapping(null);
     form.resetFields();
     setIsModalVisible(true);
   };
 
-  const handleEdit = (mapping) => {
+  const handleEditMapping = (mapping) => {
     setEditingMapping(mapping);
     form.setFieldsValue({
       contentId: mapping.contentId,
       itemId: mapping.itemId,
-      displayOrder: mapping.displayOrder,
-      isFeatured: mapping.isFeatured
+      displayOrder: mapping.displayOrder || 0,
+      isFeatured: mapping.isFeatured || false
     });
     setIsModalVisible(true);
   };
@@ -127,157 +124,229 @@ const ContentMappings = () => {
         await adminAPI.createContentMapping(values);
         message.success('Content mapping created successfully');
       }
-
+      
       setIsModalVisible(false);
       form.resetFields();
       fetchMappings();
     } catch (error) {
-      console.error('Error saving mapping:', error);
-      if (error.response?.status === 409) {
-        message.error('This content is already mapped to this item');
-      } else {
-        message.error(`Failed to ${editingMapping ? 'update' : 'create'} mapping`);
-      }
+      console.error('Error saving content mapping:', error);
+      message.error(error.response?.data?.error || 'Failed to save content mapping');
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteMapping = async (id) => {
     try {
       await adminAPI.deleteContentMapping(id);
       message.success('Content mapping deleted successfully');
       fetchMappings();
     } catch (error) {
-      message.error('Failed to delete mapping');
+      console.error('Error deleting content mapping:', error);
+      message.error('Failed to delete content mapping');
     }
   };
 
-  const handleTableChange = (newPagination) => {
-    setPagination(prev => ({
-      ...prev,
-      current: newPagination.current,
-      pageSize: newPagination.pageSize
-    }));
+  const handleSearch = (value) => {
+    setFilters(prev => ({ ...prev, search: value }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleFilterByItem = (itemId) => {
+    setFilters(prev => ({ ...prev, itemId }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const handleFilterByContent = (contentId) => {
+    setFilters(prev => ({ ...prev, contentId }));
+    setPagination(prev => ({ ...prev, current: 1 }));
+  };
+
+  const getContentTitle = (contentId) => {
+    const content = allContent.find(c => c.id === contentId);
+    return content ? content.title : 'Unknown Content';
+  };
+
+  const getItemName = (itemId) => {
+    const item = contentItems.find(i => i.id === itemId);
+    return item ? item.name : 'Unknown Item';
   };
 
   const columns = [
     {
-      title: 'Content',
-      dataIndex: 'content',
-      key: 'content',
-      render: (content) => content?.title || 'N/A',
-      sorter: true,
+      title: 'Content Item',
+      dataIndex: 'itemId',
+      key: 'itemId',
+      render: (itemId, record) => (
+        <div>
+          <Text strong>{getItemName(itemId)}</Text>
+          <br />
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            {record.item?.slug}
+          </Text>
+        </div>
+      ),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Select
+            placeholder="Select content item"
+            value={selectedKeys[0]}
+            onChange={(value) => setSelectedKeys(value ? [value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 200 }}
+            allowClear
+          >
+            {contentItems.map(item => (
+              <Option key={item.id} value={item.id}>{item.name}</Option>
+            ))}
+          </Select>
+          <div style={{ marginTop: 8 }}>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90, marginRight: 8 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </div>
+        </div>
+      ),
+      filterIcon: (filtered) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
     },
     {
-      title: 'Content Item',
-      dataIndex: 'item',
-      key: 'item',
-      render: (item) => item?.name || 'N/A',
+      title: 'Assigned Content',
+      dataIndex: 'contentId',
+      key: 'contentId',
+      render: (contentId, record) => (
+        <div>
+          <Text>{getContentTitle(contentId)}</Text>
+          <br />
+          <Tag color={record.content?.type === 'movie' ? 'blue' : 'green'}>
+            {record.content?.type || 'Unknown'}
+          </Tag>
+          {record.content?.genre && (
+            <div style={{ marginTop: 4 }}>
+              {record.content.genre.slice(0, 2).map(g => (
+                <Tag key={g} size="small">{g}</Tag>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       title: 'Display Order',
       dataIndex: 'displayOrder',
       key: 'displayOrder',
-      render: (order) => <Tag color="blue">{order}</Tag>,
+      width: 120,
       sorter: true,
+      render: (order) => <Text>{order || 0}</Text>
     },
     {
       title: 'Featured',
       dataIndex: 'isFeatured',
       key: 'isFeatured',
+      width: 100,
       render: (isFeatured) => (
         <Tag color={isFeatured ? 'gold' : 'default'}>
           {isFeatured ? 'Featured' : 'Normal'}
         </Tag>
-      ),
-    },
-    {
-      title: 'Created',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString(),
+      )
     },
     {
       title: 'Actions',
       key: 'actions',
+      width: 150,
       render: (_, record) => (
         <Space>
           <Button
             type="link"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
+            onClick={() => handleEditMapping(record)}
+            size="small"
           >
             Edit
           </Button>
-          <Button
-            type="link"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
+          <Popconfirm
+            title="Are you sure you want to delete this mapping?"
+            onConfirm={() => handleDeleteMapping(record.id)}
+            okText="Yes"
+            cancelText="No"
           >
-            Delete
-          </Button>
+            <Button
+              type="link"
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+            >
+              Delete
+            </Button>
+          </Popconfirm>
         </Space>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Card>
-        <div style={{ marginBottom: '16px' }}>
-          <Row gutter={16} align="middle">
-            <Col flex="auto">
-              <h2 style={{ margin: 0 }}>Content to Items Mapping</h2>
-              <p style={{ margin: '4px 0 0 0', color: '#666' }}>
-                Assign content to multiple content items
-              </p>
-            </Col>
-            <Col>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleCreate}
-              >
-                Add Mapping
-              </Button>
-            </Col>
-          </Row>
-        </div>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+          <Col>
+            <Title level={3} style={{ margin: 0 }}>
+              <LinkOutlined /> Content Assignments
+            </Title>
+            <Text type="secondary">
+              Assign content to different categories and manage their display order
+            </Text>
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleCreateMapping}
+            >
+              Assign Content
+            </Button>
+          </Col>
+        </Row>
 
-        <Row gutter={16} style={{ marginBottom: '16px' }}>
+        <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col span={8}>
-            <Input.Search
-              placeholder="Search by content title..."
+            <Search
+              placeholder="Search by content title"
+              onSearch={handleSearch}
               allowClear
-              enterButton={<SearchOutlined />}
-              onSearch={(value) => setFilters(prev => ({ ...prev, search: value }))}
             />
           </Col>
           <Col span={8}>
             <Select
+              placeholder="Filter by Content Item"
               style={{ width: '100%' }}
-              placeholder="Filter by Content"
+              onChange={handleFilterByItem}
               allowClear
-              showSearch
-              optionFilterProp="children"
-              onChange={(value) => setFilters(prev => ({ ...prev, contentId: value }))}
             >
-              {content.map(item => (
-                <Option key={item.id} value={item.id}>{item.title}</Option>
+              {contentItems.map(item => (
+                <Option key={item.id} value={item.id}>{item.name}</Option>
               ))}
             </Select>
           </Col>
           <Col span={8}>
             <Select
+              placeholder="Filter by Content"
               style={{ width: '100%' }}
-              placeholder="Filter by Content Item"
+              onChange={handleFilterByContent}
               allowClear
               showSearch
-              optionFilterProp="children"
-              onChange={(value) => setFilters(prev => ({ ...prev, itemId: value }))}
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
             >
-              {contentItems.map(item => (
-                <Option key={item.id} value={item.id}>{item.name}</Option>
+              {allContent.map(content => (
+                <Option key={content.id} value={content.id}>
+                  {content.title} ({content.type})
+                </Option>
               ))}
             </Select>
           </Col>
@@ -286,8 +355,8 @@ const ContentMappings = () => {
         <Table
           columns={columns}
           dataSource={mappings}
-          rowKey="id"
           loading={loading}
+          rowKey="id"
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -297,14 +366,23 @@ const ContentMappings = () => {
             showTotal: (total, range) =>
               `${range[0]}-${range[1]} of ${total} mappings`,
           }}
-          onChange={handleTableChange}
+          onChange={(newPagination, filters, sorter) => {
+            setPagination(prev => ({
+              ...prev,
+              current: newPagination.current,
+              pageSize: newPagination.pageSize
+            }));
+          }}
         />
       </Card>
 
       <Modal
-        title={editingMapping ? 'Edit Content Mapping' : 'Add Content Mapping'}
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        title={editingMapping ? 'Edit Content Assignment' : 'Assign Content to Item'}
+        visible={isModalVisible}
+        onCancel={() => {
+          setIsModalVisible(false);
+          form.resetFields();
+        }}
         footer={null}
         width={600}
       >
@@ -313,76 +391,92 @@ const ContentMappings = () => {
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <Form.Item
-            name="contentId"
-            label="Content"
-            rules={[{ required: true, message: 'Please select content' }]}
-          >
-            <Select
-              placeholder="Select content"
-              showSearch
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {content.map(item => (
-                <Option key={item.id} value={item.id}>{item.title}</Option>
-              ))}
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="itemId"
+                label="Content Item"
+                rules={[{ required: true, message: 'Please select a content item' }]}
+              >
+                <Select
+                  placeholder="Select content item"
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
+                >
+                  {contentItems.map(item => (
+                    <Option key={item.id} value={item.id}>
+                      {item.name}
+                      <Text type="secondary"> ({item.slug})</Text>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="contentId"
+                label="Content"
+                rules={[{ required: true, message: 'Please select content' }]}
+              >
+                <Select
+                  placeholder="Select content"
+                  showSearch
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
+                >
+                  {allContent.map(content => (
+                    <Option key={content.id} value={content.id}>
+                      {content.title}
+                      <Tag style={{ marginLeft: 8 }} color={content.type === 'movie' ? 'blue' : 'green'}>
+                        {content.type}
+                      </Tag>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="itemId"
-            label="Content Item"
-            rules={[{ required: true, message: 'Please select content item' }]}
-          >
-            <Select
-              placeholder="Select content item"
-              showSearch
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {contentItems.map(item => (
-                <Option key={item.id} value={item.id}>{item.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="displayOrder"
+                label="Display Order"
+                rules={[{ required: true, message: 'Please enter display order' }]}
+              >
+                <InputNumber
+                  min={0}
+                  placeholder="Display order (0-100)"
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="isFeatured"
+                label="Featured Content"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Featured" unCheckedChildren="Normal" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            name="displayOrder"
-            label="Display Order"
-            rules={[
-              { required: true, message: 'Please enter display order' },
-              { type: 'number', min: 0, message: 'Display order must be 0 or greater' }
-            ]}
-            initialValue={0}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              placeholder="Enter display order"
-              min={0}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="isFeatured"
-            label="Featured"
-            valuePropName="checked"
-            initialValue={false}
-          >
-            <Switch checkedChildren="Featured" unCheckedChildren="Normal" />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Divider />
+          
+          <Form.Item style={{ marginBottom: 0 }}>
             <Space>
-              <Button onClick={() => setIsModalVisible(false)}>
-                Cancel
-              </Button>
               <Button type="primary" htmlType="submit">
-                {editingMapping ? 'Update' : 'Create'} Mapping
+                {editingMapping ? 'Update Assignment' : 'Create Assignment'}
+              </Button>
+              <Button onClick={() => {
+                setIsModalVisible(false);
+                form.resetFields();
+              }}>
+                Cancel
               </Button>
             </Space>
           </Form.Item>
