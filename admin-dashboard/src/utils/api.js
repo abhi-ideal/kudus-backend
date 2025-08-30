@@ -145,10 +145,10 @@ const adminEndpoints = {
     contentAPI.patch(`/items/${id}/child-profile`, data),
 
   // Content Mappings API
-  getContentMappings: (params) => contentAPI.get('/admin/mappings', { params }),
-  createContentMapping: (data) => contentAPI.post('/admin/mappings', data),
-  updateContentMapping: (id, data) => contentAPI.put(`/admin/mappings/${id}`, data),
-  deleteContentMapping: (id) => contentAPI.delete(`/admin/mappings/${id}`),
+  getContentMappings: (params) => contentAPI.get('/mappings', { params }),
+  createContentMapping: (data) => contentAPI.post('/mappings', data),
+  updateContentMapping: (id, data) => contentAPI.put(`/mappings/${id}`, data),
+  deleteContentMapping: (id) => contentAPI.delete(`/mappings/${id}`),
 };
 
 // Content Items API (for drag and drop functionality)
@@ -157,10 +157,10 @@ const contentItemsAPI = {
   updateContentItemsOrder: (items) => contentAPI.patch('/admin/items/reorder', { items }),
 
   // Content Mappings API
-  getContentMappings: (params) => contentAPI.get('/admin/mappings', { params }),
-  createContentMapping: (data) => contentAPI.post('/admin/mappings', data),
-  updateContentMapping: (id, data) => contentAPI.put(`/admin/mappings/${id}`, data),
-  deleteContentMapping: (id) => contentAPI.delete(`/admin/mappings/${id}`),
+  getContentMappings: (params) => contentAPI.get('/mappings', { params }),
+  createContentMapping: (data) => contentAPI.post('/mappings', data),
+  updateContentMapping: (id, data) => contentAPI.put(`/mappings/${id}`, data),
+  deleteContentMapping: (id) => contentAPI.delete(`/mappings/${id}`),
 
   // Content Management API
 };
