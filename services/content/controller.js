@@ -1073,8 +1073,9 @@ const contentController = {
         where,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [[sortBy, sortOrder]],
-        attributes: ['id', 'name', 'slug', 'description', 'displayOrder', 'isActive', 'createdAt', 'updatedAt']
+        order: [['displayOrder', 'ASC'], ['name', 'ASC']],
+        attributes: ['id', 'name', 'slug', 'description', 'displayOrder', 'showOnChildProfile', 'isActive', 'createdAt', 'updatedAt'],
+        distinct: true
       });
 
       res.json({
