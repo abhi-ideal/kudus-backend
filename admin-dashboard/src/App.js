@@ -10,6 +10,7 @@ import ContentDetails from './pages/ContentDetails';
 import UserDetails from './pages/UserDetails';
 import Genres from './pages/Genres';
 import ContentItems from './pages/ContentItems';
+import ContentMappings from './pages/ContentMappings';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -38,6 +39,7 @@ function App() {
                       <Route path="/users/:id" element={<UserDetails />} /> {/* Added route for UserDetails */}
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
+                      <Route path="/content-mappings" element={<ContentMappings />} />
                       <Route path="/genres" element={<Genres />} /> {/* Added route for Genres */}
                       <Route path="/content-items" element={<ContentItems />} />
                     </Routes>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Layout as AntLayout, Menu, Button, Avatar, Dropdown } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -8,6 +9,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  AppstoreOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -41,7 +44,13 @@ const Layout = ({ children }) => {
     },
     {
       key: '/content-items',
-      label: 'Content Items',
+      icon: <AppstoreOutlined />,
+      label: <Link to="/content-items">Content Items</Link>
+    },
+    {
+      key: '/content-mappings',
+      icon: <LinkOutlined />,
+      label: <Link to="/content-mappings">Content Mappings</Link>
     },
   ];
 

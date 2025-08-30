@@ -143,6 +143,12 @@ const adminEndpoints = {
     contentAPI.patch(`/items/${id}/order`, orderData),
   updateContentItemChildProfile: (id, data) =>
     contentAPI.patch(`/items/${id}/child-profile`, data),
+
+  // Content Mappings API
+  getContentMappings: (params) => contentAPI.get('/admin/mappings', { params }),
+  createContentMapping: (data) => contentAPI.post('/admin/mappings', data),
+  updateContentMapping: (id, data) => contentAPI.put(`/admin/mappings/${id}`, data),
+  deleteContentMapping: (id) => contentAPI.delete(`/admin/mappings/${id}`),
 };
 
 // Content Items API (for drag and drop functionality)

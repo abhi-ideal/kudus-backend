@@ -377,6 +377,12 @@ router.get('/items', checkGeoRestriction, contentController.getContentGroupedByI
 router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
 router.patch('/admin/items/:id/child-profile', adminAuth, contentController.updateContentItemChildProfile);
 
+// Content Item Mappings Routes
+router.get('/admin/mappings', adminAuth, contentController.getContentMappings);
+router.post('/admin/mappings', adminAuth, contentController.createContentMapping);
+router.put('/admin/mappings/:id', adminAuth, contentController.updateContentMapping);
+router.delete('/admin/mappings/:id', adminAuth, contentController.deleteContentMapping);
+
 /**
  * @swagger
  * /api/content/continue-watching:

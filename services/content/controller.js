@@ -1733,6 +1733,7 @@ console.log('where================',where);
       const { showOnChildProfile } = req.body;
 
       const contentItem = await ContentItem.findByPk(id);
+
       if (!contentItem) {
         return res.status(404).json({
           success: false,
@@ -1742,19 +1743,228 @@ console.log('where================',where);
 
       await contentItem.update({ showOnChildProfile });
 
+      logger.info(`Admin updated content item child profile: ${id}`);
+
       res.json({
         success: true,
-        data: contentItem,
-        message: 'Content item child profile visibility updated successfully'
+        message: 'Content item child profile updated successfully',
+        contentItem
       });
     } catch (error) {
-      console.error('Update content item child profile error:', error);
+      logger.error('Update content item child profile error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to update content item child profile visibility'
+        error: 'Failed to update content item child profile',
+        message: error.message
       });
     }
-  }
+  },
+
+  // Content Item Mappings Management
+  async getContentMappings(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        search,
+        contentId,
+        itemId,
+        sortBy = 'createdAt',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      const where = {};
+
+      if (contentId) where.contentId = contentId;
+      if (itemId) where.itemId = itemId;
+
+      const { count, rows } = await ContentItemMapping.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [[sortBy, sortOrder]],
+        include: [
+          {
+            model: Content,
+            as: 'content',
+            attributes: ['id', 'title', 'type'],
+            where: search ? {
+              title: { [Op.like]: `%${search}%` }
+            } : undefined
+          },
+          {
+            model: ContentItem,
+            as: 'item',
+            attributes: ['id', 'name', 'slug']
+          }
+        ]
+      });
+
+      res.json({
+        success: true,
+        mappings: rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          pages: Math.ceil(count / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      logger.error('Get content mappings error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve content mappings',
+        message: error.message
+      });
+    }
+  },
+
+  async createContentMapping(req, res) {
+    try {
+      const { contentId, itemId, displayOrder = 0, isFeatured = false } = req.body;
+
+      // Check if mapping already exists
+      const existingMapping = await ContentItemMapping.findOne({
+        where: { contentId, itemId }
+      });
+
+      if (existingMapping) {
+        return res.status(409).json({
+          success: false,
+          error: 'Content is already mapped to this item'
+        });
+      }
+
+      // Verify content and item exist
+      const [content, item] = await Promise.all([
+        Content.findByPk(contentId),
+        ContentItem.findByPk(itemId)
+      ]);
+
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content not found'
+        });
+      }
+
+      if (!item) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content item not found'
+        });
+      }
+
+      const mapping = await ContentItemMapping.create({
+        contentId,
+        itemId,
+        displayOrder,
+        isFeatured
+      });
+
+      logger.info(`Admin created content mapping: ${mapping.id}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Content mapping created successfully',
+        mapping
+      });
+    } catch (error) {
+      logger.error('Create content mapping error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create content mapping',
+        message: error.message
+      });
+    }
+  },
+
+  async updateContentMapping(req, res) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+
+      const mapping = await ContentItemMapping.findByPk(id);
+
+      if (!mapping) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content mapping not found'
+        });
+      }
+
+      // If changing contentId or itemId, check for duplicates
+      if (updateData.contentId || updateData.itemId) {
+        const contentId = updateData.contentId || mapping.contentId;
+        const itemId = updateData.itemId || mapping.itemId;
+
+        const existingMapping = await ContentItemMapping.findOne({
+          where: { 
+            contentId, 
+            itemId,
+            id: { [Op.ne]: id } // Exclude current mapping
+          }
+        });
+
+        if (existingMapping) {
+          return res.status(409).json({
+            success: false,
+            error: 'Content is already mapped to this item'
+          });
+        }
+      }
+
+      await mapping.update(updateData);
+
+      logger.info(`Admin updated content mapping: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content mapping updated successfully',
+        mapping
+      });
+    } catch (error) {
+      logger.error('Update content mapping error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update content mapping',
+        message: error.message
+      });
+    }
+  },
+
+  async deleteContentMapping(req, res) {
+    try {
+      const { id } = req.params;
+
+      const mapping = await ContentItemMapping.findByPk(id);
+
+      if (!mapping) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content mapping not found'
+        });
+      }
+
+      await mapping.destroy();
+
+      logger.info(`Admin deleted content mapping: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Content mapping deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Delete content mapping error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete content mapping',
+        message: error.message
+      });
+    }
+  },
 };
 
 module.exports = {
@@ -1784,5 +1994,9 @@ module.exports = {
   getFeaturedContent: contentController.getFeaturedContent,
   updateContentItemOrder: contentController.updateContentItemOrder,
   updateContentItemChildProfile: contentController.updateContentItemChildProfile, // Added this line
-  getContentItems: contentController.getAllContentItems // Alias for content items management
+  getContentItems: contentController.getAllContentItems, // Alias for content items management
+  getContentMappings: contentController.getContentMappings,
+  createContentMapping: contentController.createContentMapping,
+  updateContentMapping: contentController.updateContentMapping,
+  deleteContentMapping: contentController.deleteContentMapping
 };
