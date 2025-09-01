@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -25,7 +24,8 @@ import {
   List,
   Avatar,
   Modal,
-  Popconfirm
+  Popconfirm,
+  Image
 } from 'antd';
 import {
   EditOutlined,
@@ -34,20 +34,20 @@ import {
   PictureOutlined,
   VideoCameraOutlined,
   PlayCircleOutlined,
-  ShieldOutlined,
+  SafetyOutlined,
   BarChartOutlined,
   StarOutlined,
   ArrowLeftOutlined,
   EyeOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  SafetyOutlined,
   LinkOutlined,
   PlusOutlined,
   DeleteOutlined
 } from '@ant-design/icons';
 import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
+import ThumbnailManager from '../components/ThumbnailManager';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -61,6 +61,8 @@ const ContentDetails = () => {
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isThumbnailModalVisible, setIsThumbnailModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [mappings, setMappings] = useState([]);
   const [contentItems, setContentItems] = useState([]);
@@ -129,7 +131,7 @@ const ContentDetails = () => {
       const response = await adminEndpoints.getContentById(id);
       const contentData = response.data.content || response.data.data;
       setContent(contentData);
-      
+
       // Set form values
       form.setFieldsValue({
         ...contentData,
@@ -148,7 +150,7 @@ const ContentDetails = () => {
     try {
       setSaving(true);
       const values = await form.validateFields();
-      
+
       const updateData = {
         ...values,
         cast: typeof values.cast === 'string' 
@@ -215,6 +217,29 @@ const ContentDetails = () => {
     }
   };
 
+  const handleEdit = () => {
+    form.setFieldsValue({
+      title: content.title,
+      description: content.description,
+      type: content.type,
+      genre: content.genre,
+      duration: content.duration,
+      releaseYear: content.releaseYear,
+      rating: content.rating,
+      language: content.language,
+      isActive: content.isActive
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleThumbnailUpdate = (updatedThumbnails) => {
+    setContent(prev => ({
+      ...prev,
+      thumbnailUrl: updatedThumbnails
+    }));
+    loadContent(); // Refresh to get latest data
+  };
+
   const menuItems = [
     {
       key: 'metadata',
@@ -256,14 +281,6 @@ const ContentDetails = () => {
       icon: <LinkOutlined />,
       label: 'Content Mappings',
     },
-  ];
-
-  const thumbnailSizes = [
-    { label: '150x150', value: '150x150' },
-    { label: '300x300', value: '300x300' },
-    { label: '500x500', value: '500x500' },
-    { label: '800x800', value: '800x800' },
-    { label: '1080x1080', value: '1080x1080' },
   ];
 
   const renderContent = () => {
@@ -385,39 +402,43 @@ const ContentDetails = () => {
               <Title level={4}>Upload Thumbnails</Title>
               <Text type="secondary">Upload thumbnails for different sizes and resolutions</Text>
             </div>
-            
-            {thumbnailSizes.map(size => (
-              <Card key={size.value} size="small" style={{ marginBottom: 16 }}>
-                <Row align="middle">
-                  <Col span={4}>
-                    <Text strong>{size.label}</Text>
+
+            <Row gutter={16}>
+              {Object.entries(content.thumbnailUrl || {}).map(([ratio, url]) => (
+                url && (
+                  <Col span={6} key={ratio}>
+                    <Card size="small" title={ratio.charAt(0).toUpperCase() + ratio.slice(1)}>
+                      <Image
+                        src={url}
+                        alt={`${ratio} thumbnail`}
+                        style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                      />
+                    </Card>
                   </Col>
-                  <Col span={12}>
-                    <Upload
-                      name="thumbnail"
-                      listType="picture-card"
-                      className="thumbnail-uploader"
-                      showUploadList={false}
-                      beforeUpload={() => false}
-                    >
-                      {content.thumbnailUrl?.[size.value] ? (
-                        <img src={content.thumbnailUrl[size.value]} alt="thumbnail" style={{ width: '100%' }} />
-                      ) : (
-                        <div>
-                          <PictureOutlined />
-                          <div style={{ marginTop: 8 }}>Upload</div>
-                        </div>
-                      )}
-                    </Upload>
-                  </Col>
-                  <Col span={8}>
-                    <Button type="primary" icon={<UploadOutlined />}>
-                      Upload {size.label}
-                    </Button>
-                  </Col>
-                </Row>
-              </Card>
-            ))}
+                )
+              ))}
+              <Col span={24}>
+                <div style={{
+                  border: '1px dashed #d9d9d9',
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#999',
+                  marginTop: 16
+                }}>
+                  No thumbnails available. Click "Manage Thumbnails" to add them.
+                </div>
+              </Col>
+            </Row>
+
+            <Button
+              type="primary"
+              onClick={() => setIsThumbnailModalVisible(true)}
+              icon={<UploadOutlined />}
+              style={{ marginTop: 16 }}
+            >
+              Manage Thumbnails
+            </Button>
           </Card>
         );
 
@@ -534,8 +555,8 @@ const ContentDetails = () => {
             <Form layout="vertical">
               <Card size="small" title="Global Availability" style={{ marginBottom: 16 }}>
                 <Form.Item name="isGloballyAvailable" valuePropName="checked">
-                  <Switch 
-                    checkedChildren="Global" 
+                  <Switch
+                    checkedChildren="Global"
                     unCheckedChildren="Restricted"
                     defaultChecked={content.isGloballyAvailable}
                   />
@@ -774,11 +795,11 @@ const ContentDetails = () => {
       case 'content-mappings':
         return (
           <div>
-            <Card 
-              title="Content Assignments" 
+            <Card
+              title="Content Assignments"
               extra={
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => setIsAddMappingVisible(true)}
                 >
@@ -918,7 +939,7 @@ const ContentDetails = () => {
                 </Row>
 
                 <Divider />
-                
+
                 <Form.Item style={{ marginBottom: 0 }}>
                   <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
                     Add Assignment
@@ -947,8 +968,8 @@ const ContentDetails = () => {
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
-        <Button 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/content')}
           style={{ marginRight: 16 }}
         >
@@ -975,6 +996,14 @@ const ContentDetails = () => {
           </Content>
         </Layout>
       </Layout>
+
+      <ThumbnailManager
+        visible={isThumbnailModalVisible}
+        onCancel={() => setIsThumbnailModalVisible(false)}
+        contentId={id}
+        currentThumbnails={content?.thumbnailUrl || {}}
+        onUpdate={handleThumbnailUpdate}
+      />
     </div>
   );
 };

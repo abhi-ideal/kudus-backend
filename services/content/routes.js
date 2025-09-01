@@ -378,6 +378,61 @@ router.get('/items', authenticate, profileAuth, childProfileFilter, checkGeoRest
 router.patch('/admin/items/:id/order', adminAuth, contentController.updateContentItemOrder);
 router.patch('/admin/items/:id/child-profile', adminAuth, contentController.updateContentItemChildProfile);
 
+// Thumbnail Management Routes
+/**
+ * @swagger
+ * /api/content/admin/content/{id}/thumbnails:
+ *   patch:
+ *     summary: Update content thumbnails (Admin only)
+ *     tags: [Content - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               thumbnails:
+ *                 type: object
+ *                 properties:
+ *                   banner:
+ *                     type: string
+ *                     description: 16:4 ratio (1920x480px)
+ *                   landscape:
+ *                     type: string
+ *                     description: 16:9 ratio (1200x675px)
+ *                   portrait:
+ *                     type: string
+ *                     description: 2:3 ratio (500x750px)
+ *                   square:
+ *                     type: string
+ *                     description: 1:1 ratio (500x500px)
+ *     responses:
+ *       200:
+ *         description: Thumbnails updated successfully
+ */
+router.patch('/admin/content/:id/thumbnails', adminAuth, contentController.updateContentThumbnails);
+
+/**
+ * @swagger
+ * /api/content/thumbnail-ratios:
+ *   get:
+ *     summary: Get supported thumbnail ratios and specifications
+ *     tags: [Content]
+ *     responses:
+ *       200:
+ *         description: Thumbnail ratio specifications
+ */
+router.get('/thumbnail-ratios', contentController.getThumbnailRatios);
+
 // Content Item Mappings Routes
 router.get('/admin/mappings', adminAuth, contentController.getContentMappings);
 router.post('/admin/mappings', adminAuth, contentController.createContentMapping);

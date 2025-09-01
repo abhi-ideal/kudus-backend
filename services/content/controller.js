@@ -1259,7 +1259,7 @@ const contentController = {
 
       // Build where clause for content items
       const itemWhere = { isActive: true };
-      
+
       // For child profiles, only show items marked for child profiles
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         itemWhere.showOnChildProfile = true;
@@ -1976,6 +1976,92 @@ console.log('where================',where);
       });
     }
   },
+
+  // Thumbnail Management APIs
+  async updateContentThumbnails(req, res) {
+    try {
+      const { id } = req.params;
+      const { thumbnails } = req.body;
+
+      // Validate thumbnail structure
+      const validRatios = ['banner', 'landscape', 'portrait', 'square'];
+      const thumbnailData = {};
+
+      for (const ratio of validRatios) {
+        if (thumbnails[ratio]) {
+          thumbnailData[ratio] = thumbnails[ratio];
+        }
+      }
+
+      const content = await Content.findByPk(id);
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content not found'
+        });
+      }
+
+      await content.update({
+        thumbnailUrl: {
+          ...content.thumbnailUrl,
+          ...thumbnailData
+        }
+      });
+
+      logger.info(`Updated thumbnails for content: ${id}`);
+
+      res.json({
+        success: true,
+        message: 'Thumbnails updated successfully',
+        thumbnails: content.thumbnailUrl
+      });
+    } catch (error) {
+      logger.error('Update thumbnails error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update thumbnails',
+        message: error.message
+      });
+    }
+  },
+
+  async getThumbnailRatios(req, res) {
+    try {
+      const ratios = {
+        banner: {
+          ratio: '16:4',
+          recommendedSize: '1920x480px',
+          description: 'Banner images for hero sections'
+        },
+        landscape: {
+          ratio: '16:9',
+          recommendedSize: '1200x675px',
+          description: 'Landscape images for grid displays'
+        },
+        portrait: {
+          ratio: '2:3',
+          recommendedSize: '500x750px',
+          description: 'Portrait images for mobile views'
+        },
+        square: {
+          ratio: '1:1',
+          recommendedSize: '500x500px',
+          description: 'Square images for thumbnails'
+        }
+      };
+
+      res.json({
+        success: true,
+        ratios
+      });
+    } catch (error) {
+      logger.error('Get thumbnail ratios error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get thumbnail ratios'
+      });
+    }
+  }
 };
 
 module.exports = {
@@ -2009,5 +2095,7 @@ module.exports = {
   getContentMappings: contentController.getContentMappings,
   createContentMapping: contentController.createContentMapping,
   updateContentMapping: contentController.updateContentMapping,
-  deleteContentMapping: contentController.deleteContentMapping
+  deleteContentMapping: contentController.deleteContentMapping,
+  updateContentThumbnails: contentController.updateContentThumbnails,
+  getThumbnailRatios: contentController.getThumbnailRatios
 };

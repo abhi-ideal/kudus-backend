@@ -140,6 +140,10 @@ const adminEndpoints = {
   createContentItem: (data) => contentAPI.post('/items', data),
   updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
+  
+  // Thumbnail Management API
+  updateContentThumbnails: (id, thumbnails) => contentAPI.patch(`/admin/content/${id}/thumbnails`, { thumbnails }),
+  getThumbnailRatios: () => contentAPI.get('/thumbnail-ratios'),
   updateContentItemOrder: (id, orderData) =>
     contentAPI.patch(`/items/${id}/order`, orderData),
   updateContentItemChildProfile: (id, data) =>

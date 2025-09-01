@@ -18,6 +18,7 @@ import {
   Row,
   Col,
   Switch,
+  Image,
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,6 +33,102 @@ import {
 } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 import moment from 'moment';
+
+// Assume ThumbnailManager is imported from a separate file
+// import ThumbnailManager from './ThumbnailManager';
+
+const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails, onUpdate }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible && currentThumbnails) {
+      form.setFieldsValue({
+        banner: currentThumbnails.banner || '',
+        landscape: currentThumbnails.landscape || '',
+        portrait: currentThumbnails.portrait || '',
+        square: currentThumbnails.square || '',
+      });
+    }
+  }, [visible, currentThumbnails, form]);
+
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+      await adminAPI.updateContentThumbnails(contentId, {
+        thumbnailUrl: {
+          banner: values.banner,
+          landscape: values.landscape,
+          portrait: values.portrait,
+          square: values.square,
+        },
+      });
+      message.success('Thumbnails updated successfully');
+      onUpdate();
+    } catch (error) {
+      message.error('Failed to update thumbnails');
+      console.error('Thumbnail update error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="Manage Thumbnails"
+      visible={visible}
+      onCancel={onCancel}
+      footer={[
+        <Button key="cancel" onClick={onCancel}>Cancel</Button>,
+        <Button key="save" type="primary" onClick={handleSave} loading={loading}>
+          Save
+        </Button>,
+      ]}
+      width={700}
+    >
+      <Form form={form} layout="vertical">
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="banner" label="Banner (16:4)">
+              <Input placeholder="Enter banner image URL (e.g., 1920x480px)" />
+            </Form.Item>
+            {currentThumbnails.banner && (
+              <Image width={200} src={currentThumbnails.banner} alt="Banner" style={{ marginBottom: 10 }} />
+            )}
+          </Col>
+          <Col span={12}>
+            <Form.Item name="landscape" label="Landscape (16:9)">
+              <Input placeholder="Enter landscape image URL (e.g., 1200x675px)" />
+            </Form.Item>
+            {currentThumbnails.landscape && (
+              <Image width={200} src={currentThumbnails.landscape} alt="Landscape" style={{ marginBottom: 10 }} />
+            )}
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="portrait" label="Portrait (2:3)">
+              <Input placeholder="Enter portrait image URL (e.g., 500x750px)" />
+            </Form.Item>
+            {currentThumbnails.portrait && (
+              <Image width={200} src={currentThumbnails.portrait} alt="Portrait" style={{ marginBottom: 10 }} />
+            )}
+          </Col>
+          <Col span={12}>
+            <Form.Item name="square" label="Square (1:1)">
+              <Input placeholder="Enter square image URL (e.g., 500x500px)" />
+            </Form.Item>
+            {currentThumbnails.square && (
+              <Image width={200} src={currentThumbnails.square} alt="Square" style={{ marginBottom: 10 }} />
+            )}
+          </Col>
+        </Row>
+      </Form>
+    </Modal>
+  );
+};
+
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -48,6 +145,8 @@ const Content = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('create');
   const [selectedContent, setSelectedContent] = useState(null);
+  const [isThumbnailModalVisible, setIsThumbnailModalVisible] = useState(false);
+  const [selectedContentForThumbnails, setSelectedContentForThumbnails] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -220,7 +319,7 @@ const Content = () => {
     }
   };
 
-  
+  const fetchContent = loadContent; // Alias for clarity in onUpdate
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -346,6 +445,61 @@ const Content = () => {
       ),
     },
     {
+      title: 'Thumbnails',
+      dataIndex: 'thumbnailUrl',
+      key: 'thumbnailUrl',
+      width: 120,
+      render: (thumbnailUrl, record) => {
+        if (thumbnailUrl && typeof thumbnailUrl === 'object') {
+          // Show the first available thumbnail
+          const firstThumbnail = thumbnailUrl.landscape || thumbnailUrl.square ||
+                                thumbnailUrl.portrait || thumbnailUrl.banner;
+          if (firstThumbnail) {
+            return (
+              <div style={{ position: 'relative' }}>
+                <Image
+                  src={firstThumbnail}
+                  alt="Content thumbnail"
+                  width={60}
+                  height={40}
+                  style={{ objectFit: 'cover', borderRadius: 4 }}
+                  fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  background: 'rgba(0,0,0,0.6)',
+                  color: 'white',
+                  padding: '2px 4px',
+                  fontSize: '10px',
+                  borderRadius: 2
+                }}>
+                  {Object.keys(thumbnailUrl).filter(key => thumbnailUrl[key]).length}
+                </div>
+              </div>
+            );
+          }
+        }
+
+        return (
+          <div style={{
+            width: 60,
+            height: 40,
+            backgroundColor: '#f5f5f5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 4,
+            color: '#999',
+            fontSize: '12px'
+          }}>
+            No Image
+          </div>
+        );
+      }
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
@@ -384,6 +538,21 @@ const Content = () => {
           >
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
+          <Button
+            type="link"
+            onClick={() => navigate(`/content/${record.id}`)}
+          >
+            View Details
+          </Button>
+          <Button
+            type="link"
+            onClick={() => {
+              setSelectedContentForThumbnails(record);
+              setIsThumbnailModalVisible(true);
+            }}
+          >
+            Thumbnails
+          </Button>
         </Space>
       ),
     },
@@ -675,7 +844,20 @@ const Content = () => {
         )}
       </Modal>
 
-      
+      <ThumbnailManager
+        visible={isThumbnailModalVisible}
+        onCancel={() => {
+          setIsThumbnailModalVisible(false);
+          setSelectedContentForThumbnails(null);
+        }}
+        contentId={selectedContentForThumbnails?.id}
+        currentThumbnails={selectedContentForThumbnails?.thumbnailUrl || {}}
+        onUpdate={() => {
+          fetchContent();
+          setIsThumbnailModalVisible(false);
+          setSelectedContentForThumbnails(null);
+        }}
+      />
     </div>
   );
 };

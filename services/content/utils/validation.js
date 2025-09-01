@@ -140,7 +140,12 @@ const schemas = {
     director: Joi.string().min(1).max(100).optional(),
     thumbnailUrl: Joi.alternatives().try(
       Joi.string().uri(),
-      Joi.object()
+      Joi.object({
+        banner: Joi.string().uri().allow(null).optional(),      // 16:4 ratio
+        landscape: Joi.string().uri().allow(null).optional(),   // 16:9 ratio
+        portrait: Joi.string().uri().allow(null).optional(),    // 2:3 ratio
+        square: Joi.string().uri().allow(null).optional()       // 1:1 ratio
+      })
     ).optional(),
     posterImages: Joi.alternatives().try(
       Joi.string().uri(),
