@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -13,9 +12,10 @@ import {
   Col,
   Typography,
   Image,
-  Divider
+  Divider,
+  Progress
 } from 'antd';
-import { UploadOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { UploadOutlined, DeleteOutlined, EyeOutlined, PictureOutlined } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 
 const { Title, Text } = Typography;
@@ -30,6 +30,8 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     portrait: '',
     square: ''
   });
+  const [uploading, setUploading] = useState({});
+  const [uploadProgress, setUploadProgress] = useState({});
 
   useEffect(() => {
     if (visible) {
@@ -76,6 +78,57 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     }
   };
 
+  const getSignedUrl = async (fileType) => {
+    try {
+      const response = await adminAPI.getSignedUrlForThumbnailUpload(fileType);
+      if (response.data.success) {
+        return response.data.signedUrl;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting signed URL:', error);
+      return null;
+    }
+  };
+
+  const handleFileUpload = async (file, type) => {
+    setUploading(prev => ({ ...prev, [type]: true }));
+    setUploadProgress(prev => ({ ...prev, [type]: 0 }));
+
+    const signedUrl = await getSignedUrl(file.type);
+    if (!signedUrl) {
+      message.error('Failed to get upload URL.');
+      setUploading(prev => ({ ...prev, [type]: false }));
+      return;
+    }
+
+    try {
+      await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(prev => ({ ...prev, [type]: percentCompleted }));
+        },
+      });
+
+      // Assuming the signed URL returns the public URL of the uploaded file
+      // This part might need adjustment based on your backend implementation
+      const uploadedFileUrl = signedUrl.split('?')[0]; 
+      handleThumbnailChange(type, uploadedFileUrl);
+      message.success(`${type} uploaded successfully!`);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      message.error(`Failed to upload ${type}.`);
+    } finally {
+      setUploading(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+
   const ThumbnailInput = ({ type, spec, value }) => (
     <Card size="small" style={{ marginBottom: 16 }}>
       <Row gutter={16} align="middle">
@@ -97,19 +150,113 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
             </Text>
           </div>
         </Col>
-        <Col span={12}>
+        <Col span={10}>
           <Input
             placeholder={`Enter ${type} image URL`}
             value={value}
             onChange={(e) => handleThumbnailChange(type, e.target.value)}
+            style={{ marginBottom: 8 }}
           />
+
+          {/* Upload Progress */}
+          {uploading[type] && (
+            <Progress 
+              percent={uploadProgress[type]} 
+              size="small" 
+              status="active"
+              format={percent => `${percent}%`}
+            />
+          )}
+
+          {/* Current Thumbnail Preview */}
+          {value && (
+            <div 
+              style={{ 
+                marginTop: 8, 
+                border: '1px solid #d9d9d9', 
+                borderRadius: 4, 
+                padding: 4,
+                cursor: 'pointer',
+                position: 'relative'
+              }}
+              onClick={() => {
+                Modal.info({
+                  title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
+                  content: (
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                      <Image
+                        src={value}
+                        alt={`${type} thumbnail`}
+                        style={{ maxWidth: '100%', maxHeight: '300px' }}
+                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                      />
+                    </div>
+                  ),
+                  width: 600,
+                });
+              }}
+            >
+              <Image
+                src={value}
+                alt={`${type} thumbnail`}
+                style={{ width: '100%', height: '60px', objectFit: 'cover' }}
+                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+              />
+              <div style={{
+                position: 'absolute',
+                top: 2,
+                right: 2,
+                background: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                borderRadius: 2,
+                padding: '2px 4px',
+                fontSize: '10px'
+              }}>
+                Click to preview
+              </div>
+            </div>
+          )}
         </Col>
-        <Col span={6}>
-          <Space>
+        <Col span={8}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Upload
+              accept="image/*"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                // Validate file type
+                const isImage = file.type.startsWith('image/');
+                if (!isImage) {
+                  message.error('You can only upload image files!');
+                  return false;
+                }
+
+                // Validate file size (max 10MB)
+                const isLt10M = file.size / 1024 / 1024 < 10;
+                if (!isLt10M) {
+                  message.error('Image must be smaller than 10MB!');
+                  return false;
+                }
+
+                handleFileUpload(file, type);
+                return false; // Prevent default upload
+              }}
+              disabled={uploading[type]}
+            >
+              <Button 
+                icon={<PictureOutlined />} 
+                block
+                loading={uploading[type]}
+                disabled={uploading[type]}
+              >
+                {uploading[type] ? 'Uploading...' : 'Select Image'}
+              </Button>
+            </Upload>
+
             {value && (
-              <>
+              <Space>
                 <Button
                   icon={<EyeOutlined />}
+                  size="small"
                   onClick={() => {
                     Modal.info({
                       title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
@@ -119,20 +266,25 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
                             src={value}
                             alt={`${type} thumbnail`}
                             style={{ maxWidth: '100%', maxHeight: '300px' }}
-                            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ=="
+                            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
                           />
                         </div>
                       ),
                       width: 600,
                     });
                   }}
-                />
+                >
+                  Preview
+                </Button>
                 <Button
                   danger
                   icon={<DeleteOutlined />}
+                  size="small"
                   onClick={() => handleThumbnailChange(type, '')}
-                />
-              </>
+                >
+                  Remove
+                </Button>
+              </Space>
             )}
           </Space>
         </Col>
@@ -170,7 +322,7 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
         ))}
 
         <Divider />
-        
+
         <Title level={5}>Current Thumbnails Preview</Title>
         <Row gutter={16}>
           {Object.entries(thumbnails).map(([type, url]) => (

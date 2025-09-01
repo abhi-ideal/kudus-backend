@@ -12,6 +12,19 @@ const s3Client = new S3Client({
   }
 });
 
+const { S3Client } = require('@aws-sdk/client-s3');
+const { createPresignedPost } = require('@aws-sdk/s3-presigned-post');
+const { v4: uuidv4 } = require('uuid');
+
+// Configure AWS S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
+
 const s3Service = {
   /**
    * Generate signed POST URL for direct upload to S3

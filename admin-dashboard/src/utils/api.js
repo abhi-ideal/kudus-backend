@@ -171,7 +171,7 @@ const contentItemsAPI = {
 };
 
 // Export individual service APIs for direct access if needed
-export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
+export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, adminAPI, commonAPI };
 export { contentItemsAPI };
 
 // Export adminEndpoints and adminAPI for backward compatibility
