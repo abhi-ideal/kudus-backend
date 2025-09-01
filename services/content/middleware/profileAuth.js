@@ -81,8 +81,12 @@ const profileAuth = async (req, res, next) => {
  * Content service specific implementation - SECURE VERSION
  */
 const childProfileFilter = (req, res, next) => {
+  console.log('Child profile filter - activeProfile:', req.activeProfile);
+  
   // Check if this is a child profile from Firebase custom claims
   if (req.activeProfile && req.activeProfile.isChild === true) {
+    console.log('Applying child profile content filter');
+    
     // Add strict child profile filtering context for content queries
     req.contentFilter = {
       excludeAdultContent: true,
@@ -92,6 +96,10 @@ const childProfileFilter = (req, res, next) => {
       restrictedGenres: ['Horror', 'Thriller', 'Crime', 'Drama', 'Romance'],
       enforceChildSafety: true
     };
+    
+    console.log('Child profile filter applied:', req.contentFilter);
+  } else {
+    console.log('Not a child profile or no active profile');
   }
   next();
 };

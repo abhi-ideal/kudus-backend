@@ -1260,9 +1260,14 @@ const contentController = {
       // Build where clause for content items
       const itemWhere = { isActive: true };
 
+      console.log('Content filter:', req.contentFilter);
+      console.log('Exclude adult content:', req.contentFilter?.excludeAdultContent);
+      console.log('Active profile is child:', req.activeProfile?.isChild);
+
       // For child profiles, only show items marked for child profiles
-      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+      if (req.activeProfile && req.activeProfile.isChild === true) {
         itemWhere.showOnChildProfile = true;
+        console.log('Applied child profile filter - showOnChildProfile: true');
       }
 
       // Get content items with their mappings and content
