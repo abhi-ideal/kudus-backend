@@ -1582,22 +1582,27 @@ const contentController = {
         where.id = { [Op.notIn]: req.geoFilter.restrictedContent };
       }
 
+      console.log('Featured content - Content filter:', req.contentFilter);
+      console.log('Featured content - Active profile is child:', req.activeProfile?.isChild);
+
       // Apply child profile filtering at database level
-      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+      if (req.activeProfile && req.activeProfile.isChild === true) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        console.log('Applied child profile filter for featured content - ageRating:', where.ageRating);
 
         // Add genre filter for child profiles
-        if (req.contentFilter.allowedGenres && req.contentFilter.allowedGenres.length > 0) {
-          const allowedGenreConditions = req.contentFilter.allowedGenres.map(g => 
-            `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
-          );
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
 
-          if (where[Op.and]) {
-         //   where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
-          } else {
-           // where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
-          }
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
         }
+        
+        console.log('Applied child profile genre filter for featured content');
       }
 
       // Apply filters
@@ -1622,7 +1627,7 @@ const contentController = {
       if (language) {
         where.language = language;
       }
-console.log('where================',where);
+
       const { count, rows } = await Content.findAndCountAll({
         where,
         limit: parseInt(limit),
