@@ -2,6 +2,7 @@ const express = require('express');
 const commonController = require('./controller');
 const { validate } = require('./utils/validation');
 const { verifyFirebaseToken, verifyAdmin } = require('./middleware/auth');
+const { profileAuth } = require('../../user/middleware/profileAuth');
 
 const router = express.Router();
 
@@ -96,7 +97,7 @@ router.post('/upload-url', verifyFirebaseToken, validate('uploadUrl'), commonCon
  *       200:
  *         description: List of active genres
  */
-router.get('/genres', commonController.getUserGenres);
+router.get('/genres', verifyFirebaseToken, profileAuth, commonController.getUserGenres);
 
 /**
  * @swagger

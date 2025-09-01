@@ -86,15 +86,26 @@ const commonController = {
     try {
       const { search, limit = 50, offset = 0 } = req.query;
 
+      console.log('Genres endpoint - Active profile:', req.activeProfile);
+      console.log('Genres endpoint - Is child profile:', req.activeProfile?.isChild);
+
       const whereClause = {
         isActive: true // Users can only see active genres
       };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        whereClause.showOnChildProfile = true;
+        console.log('Applied child profile filter for genres - showOnChildProfile: true');
+      }
 
       if (search) {
         whereClause.name = {
           [Op.like]: `%${search}%`
         };
       }
+
+      console.log('Genres where clause:', whereClause);
 
       const genres = await Genre.findAndCountAll({
         where: whereClause,
@@ -108,7 +119,9 @@ const commonController = {
         genres: genres.rows,
         total: genres.count,
         limit: parseInt(limit),
-        offset: parseInt(offset)
+        offset: parseInt(offset),
+        isChildProfile: req.activeProfile?.isChild || false,
+        appliedFilter: req.activeProfile?.isChild ? 'showOnChildProfile: true' : 'none'
       });
     } catch (error) {
       console.error('Get user genres error:', error);
