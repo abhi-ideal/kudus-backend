@@ -84,8 +84,12 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
             <Title level={5} style={{ margin: 0, textTransform: 'capitalize' }}>
               {type}
             </Title>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {spec.ratio} • {spec.recommendedSize}
+            <Text type="secondary" style={{ fontSize: '12px', fontWeight: 'bold' }}>
+              Ratio: {spec.ratio}
+            </Text>
+            <br />
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              Size: {spec.recommendedSize}
             </Text>
             <br />
             <Text type="secondary" style={{ fontSize: '11px' }}>

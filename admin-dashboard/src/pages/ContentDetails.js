@@ -396,46 +396,119 @@ const ContentDetails = () => {
         );
 
       case 'thumbnails':
+        const thumbnailSpecs = {
+          banner: {
+            ratio: '16:4',
+            size: '1920x480px',
+            description: 'Banner images for hero sections'
+          },
+          landscape: {
+            ratio: '16:9', 
+            size: '1200x675px',
+            description: 'Landscape images for grid displays'
+          },
+          portrait: {
+            ratio: '2:3',
+            size: '500x750px', 
+            description: 'Portrait images for mobile views'
+          },
+          square: {
+            ratio: '1:1',
+            size: '500x500px',
+            description: 'Square images for thumbnails'
+          }
+        };
+
         return (
           <Card title="Thumbnail Management">
             <div style={{ marginBottom: 24 }}>
-              <Title level={4}>Upload Thumbnails</Title>
-              <Text type="secondary">Upload thumbnails for different sizes and resolutions</Text>
+              <Title level={4}>Thumbnail Types & Requirements</Title>
+              <Text type="secondary">All thumbnail types with their required ratios and recommended sizes</Text>
             </div>
 
-            <Row gutter={16}>
-              {Object.entries(content.thumbnailUrl || {}).map(([ratio, url]) => (
-                url && (
-                  <Col span={6} key={ratio}>
-                    <Card size="small" title={ratio.charAt(0).toUpperCase() + ratio.slice(1)}>
-                      <Image
-                        src={url}
-                        alt={`${ratio} thumbnail`}
-                        style={{ width: '100%', height: '120px', objectFit: 'cover' }}
-                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-                      />
-                    </Card>
+            {/* Thumbnail Requirements Table */}
+            <Card size="small" title="Thumbnail Requirements" style={{ marginBottom: 24 }}>
+              <Row gutter={16} style={{ marginBottom: 16 }}>
+                <Col span={6}><Text strong>Type</Text></Col>
+                <Col span={6}><Text strong>Ratio</Text></Col>
+                <Col span={6}><Text strong>Recommended Size</Text></Col>
+                <Col span={6}><Text strong>Usage</Text></Col>
+              </Row>
+              <Divider style={{ margin: '8px 0' }} />
+              {Object.entries(thumbnailSpecs).map(([type, spec]) => (
+                <Row gutter={16} key={type} style={{ marginBottom: 8, padding: '8px 0' }}>
+                  <Col span={6}>
+                    <Text strong style={{ textTransform: 'capitalize' }}>{type}</Text>
                   </Col>
-                )
+                  <Col span={6}>
+                    <Text type="secondary">{spec.ratio}</Text>
+                  </Col>
+                  <Col span={6}>
+                    <Text type="secondary">{spec.size}</Text>
+                  </Col>
+                  <Col span={6}>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>{spec.description}</Text>
+                  </Col>
+                </Row>
               ))}
-              <Col span={24}>
-                <div style={{
-                  border: '1px dashed #d9d9d9',
-                  padding: '40px',
-                  textAlign: 'center',
-                  color: '#999',
-                  marginTop: 16
-                }}>
-                  No thumbnails available. Click "Manage Thumbnails" to add them.
-                </div>
-              </Col>
-            </Row>
+            </Card>
+
+            {/* Current Thumbnails */}
+            <Card size="small" title="Current Thumbnails" style={{ marginBottom: 24 }}>
+              <Row gutter={16}>
+                {Object.entries(thumbnailSpecs).map(([type, spec]) => {
+                  const url = content.thumbnailUrl?.[type];
+                  return (
+                    <Col span={6} key={type}>
+                      <Card size="small">
+                        <div style={{ textAlign: 'center' }}>
+                          <Title level={5} style={{ margin: '0 0 8px 0', textTransform: 'capitalize' }}>
+                            {type}
+                          </Title>
+                          <Text type="secondary" style={{ fontSize: '11px' }}>
+                            {spec.ratio} • {spec.size}
+                          </Text>
+                          <div style={{ marginTop: 8, height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {url ? (
+                              <Image
+                                src={url}
+                                alt={`${type} thumbnail`}
+                                style={{ maxWidth: '100%', maxHeight: '80px', objectFit: 'cover' }}
+                                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                              />
+                            ) : (
+                              <div style={{
+                                width: '60px',
+                                height: '60px',
+                                border: '1px dashed #d9d9d9',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#999',
+                                fontSize: '12px'
+                              }}>
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ marginTop: 8 }}>
+                            <Tag color={url ? 'green' : 'default'} style={{ fontSize: '10px' }}>
+                              {url ? 'Available' : 'Missing'}
+                            </Tag>
+                          </div>
+                        </div>
+                      </Card>
+                    </Col>
+                  );
+                })}
+              </Row>
+            </Card>
 
             <Button
               type="primary"
               onClick={() => setIsThumbnailModalVisible(true)}
               icon={<UploadOutlined />}
-              style={{ marginTop: 16 }}
+              size="large"
             >
               Manage Thumbnails
             </Button>
