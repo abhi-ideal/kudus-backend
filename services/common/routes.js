@@ -2,7 +2,7 @@ const express = require('express');
 const commonController = require('./controller');
 const { validate } = require('./utils/validation');
 const { verifyFirebaseToken, verifyAdmin } = require('./middleware/auth');
-const { profileAuth } = require('../../user/middleware/profileAuth');
+const { profileAuth } = require('../user/middleware/profileAuth');
 
 const router = express.Router();
 
