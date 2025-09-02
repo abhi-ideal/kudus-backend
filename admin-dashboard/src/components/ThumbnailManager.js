@@ -355,21 +355,154 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
 
         <Divider />
 
-        <Title level={5}>Current Thumbnails Preview</Title>
+        <Title level={5}>Current Thumbnails</Title>
         <Row gutter={16}>
-          {Object.entries(thumbnails).map(([type, url]) => (
-            url && (
-              <Col span={6} key={type}>
-                <Card size="small" title={type.charAt(0).toUpperCase() + type.slice(1)}>
-                  <Image
-                    src={url}
-                    alt={`${type} thumbnail`}
-                    style={{ width: '100%', height: '80px', objectFit: 'cover' }}
-                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-                  />
-                </Card>
-              </Col>
-            )
+          {Object.entries(ratioSpecs).map(([type, spec]) => (
+            <Col span={6} key={type}>
+              <Card 
+                size="small" 
+                title={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                    <Text type="secondary" style={{ fontSize: '10px' }}>
+                      {spec.ratio}
+                    </Text>
+                  </div>
+                }
+                actions={[
+                  <Upload
+                    key="upload"
+                    accept="image/*"
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                      const isImage = file.type.startsWith('image/');
+                      if (!isImage) {
+                        message.error('You can only upload image files!');
+                        return false;
+                      }
+
+                      const isLt10M = file.size / 1024 / 1024 < 10;
+                      if (!isLt10M) {
+                        message.error('Image must be smaller than 10MB!');
+                        return false;
+                      }
+
+                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+                      if (!allowedTypes.includes(file.type)) {
+                        message.error('Only JPEG, PNG, WebP, and GIF images are allowed!');
+                        return false;
+                      }
+
+                      handleFileUpload(file, type);
+                      return false;
+                    }}
+                    disabled={uploading[type]}
+                  >
+                    <Button 
+                      type="link" 
+                      icon={<UploadOutlined />} 
+                      size="small"
+                      loading={uploading[type]}
+                      disabled={uploading[type]}
+                    >
+                      {uploading[type] ? `${uploadProgress[type] || 0}%` : 'Upload'}
+                    </Button>
+                  </Upload>,
+                  thumbnails[type] && (
+                    <Button
+                      key="preview"
+                      type="link"
+                      icon={<EyeOutlined />}
+                      size="small"
+                      onClick={() => {
+                        Modal.info({
+                          title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
+                          content: (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>
+                              <Image
+                                src={thumbnails[type]}
+                                alt={`${type} thumbnail`}
+                                style={{ maxWidth: '100%', maxHeight: '400px' }}
+                                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                              />
+                            </div>
+                          ),
+                          width: 600,
+                        });
+                      }}
+                    >
+                      Preview
+                    </Button>
+                  ),
+                  thumbnails[type] && (
+                    <Button
+                      key="remove"
+                      type="link"
+                      danger
+                      icon={<DeleteOutlined />}
+                      size="small"
+                      onClick={() => handleThumbnailChange(type, '')}
+                    >
+                      Remove
+                    </Button>
+                  )
+                ].filter(Boolean)}
+              >
+                <div style={{ position: 'relative' }}>
+                  {thumbnails[type] ? (
+                    <Image
+                      src={thumbnails[type]}
+                      alt={`${type} thumbnail`}
+                      style={{ width: '100%', height: '80px', objectFit: 'cover' }}
+                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                    />
+                  ) : (
+                    <div 
+                      style={{ 
+                        width: '100%', 
+                        height: '80px', 
+                        backgroundColor: '#f5f5f5', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        border: '2px dashed #d9d9d9',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <div style={{ textAlign: 'center', color: '#999' }}>
+                        <PictureOutlined style={{ fontSize: '24px', marginBottom: '4px' }} />
+                        <br />
+                        <Text type="secondary" style={{ fontSize: '11px' }}>
+                          No image
+                        </Text>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {uploading[type] && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px'
+                    }}>
+                      <Progress 
+                        type="circle" 
+                        percent={uploadProgress[type]} 
+                        size={40}
+                        strokeWidth={8}
+                      />
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </Col>
           ))}
         </Row>
       </div>
