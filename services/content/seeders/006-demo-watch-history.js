@@ -1,4 +1,3 @@
-
 'use strict';
 
 const { v4: uuidv4 } = require('uuid');
@@ -32,7 +31,7 @@ module.exports = {
     if (content.length > 0 && profiles.length > 0) {
       const movie = content.find(c => c.type === 'movie') || content[0];
       const profile = profiles[0];
-      
+
       watchHistoryData.push({
         id: uuidv4(),
         profileId: profile.id,
@@ -53,7 +52,7 @@ module.exports = {
     if (episodes.length > 0 && profiles.length > 0) {
       const episode = episodes[0];
       const profile = profiles[0];
-      
+
       watchHistoryData.push({
         id: uuidv4(),
         profileId: profile.id,
@@ -74,7 +73,7 @@ module.exports = {
     if (content.length > 1 && profiles.length > 0) {
       const completedContent = content[1];
       const profile = profiles[0];
-      
+
       watchHistoryData.push({
         id: uuidv4(),
         profileId: profile.id,
@@ -95,7 +94,7 @@ module.exports = {
     if (content.length > 2 && profiles.length > 1) {
       const secondProfile = profiles[1];
       const secondContent = content[2];
-      
+
       watchHistoryData.push({
         id: uuidv4(),
         profileId: secondProfile.id,
@@ -115,7 +114,7 @@ module.exports = {
     // Create multiple incomplete episodes for series binge watching
     if (episodes.length > 1 && profiles.length > 0) {
       const profile = profiles[0];
-      
+
       for (let i = 1; i < Math.min(episodes.length, 3); i++) {
         const episode = episodes[i];
         watchHistoryData.push({
@@ -135,15 +134,95 @@ module.exports = {
       }
     }
 
+    // Now, let's add more specific data for upcoming-soon and top-10-series endpoints
+
+    // Add upcoming-soon data (Action genre, released in the future or recent past)
+    const upcomingSoonData = [
+      { id: uuidv4(), title: 'Action Movie 1', genre: 'Action', releaseYear: 2025, type: 'movie', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Action Series 1', genre: 'Action', releaseYear: 2025, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Action Movie 2', genre: 'Action', releaseYear: 2024, type: 'movie', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Action Series 2', genre: 'Action', releaseYear: 2024, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+    ];
+    await queryInterface.bulkInsert('content', upcomingSoonData);
+    console.log('✅ Inserted demo data for upcoming-soon');
+
+    // Add top-10-series data (Comedy genre)
+    const top10SeriesData = [
+      { id: uuidv4(), title: 'Comedy Series 1', genre: 'Comedy', releaseYear: 2023, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Comedy Series 2', genre: 'Comedy', releaseYear: 2023, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Comedy Series 3', genre: 'Comedy', releaseYear: 2022, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Comedy Movie 1', genre: 'Comedy', releaseYear: 2023, type: 'movie', isActive: true, createdAt: new Date(), updatedAt: new Date() },
+      { id: uuidv4(), title: 'Action Series 3', genre: 'Action', releaseYear: 2025, type: 'series', isActive: true, createdAt: new Date(), updatedAt: new Date() }, // Add another action series for variety
+    ];
+    await queryInterface.bulkInsert('content', top10SeriesData);
+    console.log('✅ Inserted demo data for top-10-series');
+
+    // Fetch all content to use for watch history generation
+    const allContentRows = await queryInterface.sequelize.query(
+      'SELECT id, genre FROM content WHERE isActive = true',
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    // Get profiles again, in case the above inserts added new ones (unlikely but safe)
+    const updatedProfiles = await queryInterface.sequelize.query(
+      'SELECT id FROM user_profiles LIMIT 3',
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    const watchHistoryDataForSeeding = [];
+
+    // Random watch history for existing content
+    for (let i = 0; i < allContentRows.length; i++) {
+      const content = allContentRows[i];
+
+      // Give comedy series more watch counts for top-10 testing
+      let watchCount;
+      if (content.genre && content.genre.includes('Comedy')) {
+        watchCount = Math.floor(Math.random() * 50) + 30; // 30-80 watches for comedy
+      } else {
+        watchCount = Math.floor(Math.random() * 20) + 5; // 5-25 watches for others
+      }
+
+      for (let j = 0; j < watchCount; j++) {
+        const randomProfile = updatedProfiles[Math.floor(Math.random() * updatedProfiles.length)];
+        const randomProgress = Math.floor(Math.random() * 90) + 10; // 10-100% progress
+        const randomWatchedAt = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000); // Last 30 days
+
+        watchHistoryDataForSeeding.push({
+          id: uuidv4(),
+          profileId: randomProfile.id,
+          contentId: content.id,
+          progress: randomProgress,
+          watchedAt: randomWatchedAt,
+          deviceType: ['mobile', 'desktop', 'tv'][Math.floor(Math.random() * 3)],
+          isCompleted: randomProgress >= 90,
+          createdAt: randomWatchedAt,
+          updatedAt: randomWatchedAt
+        });
+      }
+    }
+
+    if (watchHistoryDataForSeeding.length > 0) {
+      await queryInterface.bulkInsert('watch_history', watchHistoryDataForSeeding);
+      console.log(`✅ Inserted ${watchHistoryDataForSeeding.length} watch history records for demo data`);
+    } else {
+      console.log('⚠️ No watch history data created for demo data - insufficient profiles or content');
+    }
+
+
+    // Ensure the original watch history seeding is still present
     if (watchHistoryData.length > 0) {
       await queryInterface.bulkInsert('watch_history', watchHistoryData);
       console.log(`✅ Inserted ${watchHistoryData.length} watch history records for continue watching demo`);
     } else {
-      console.log('⚠️ No watch history data created - insufficient profiles or content');
+      console.log('⚠️ No watch history data created for continue watching demo - insufficient profiles or content');
     }
   },
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.bulkDelete('watch_history', null, {});
+    // Add logic here to delete the content added in the up function if necessary
+    // For simplicity, we are only deleting watch_history in down.
+    // If content deletion is needed, you would fetch IDs of inserted content and use bulkDelete.
   }
 };
