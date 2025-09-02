@@ -137,6 +137,246 @@ router.get('/kids', checkGeoRestriction, contentController.getKidsContent);
  */
 router.get('/featured', checkGeoRestriction, contentController.getFeaturedContent);
 
+/**
+ * @swagger
+ * /api/content/upcoming-soon:
+ *   get:
+ *     summary: Get upcoming soon content
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           description: Comma-separated content types (movie,series,documentary)
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Upcoming content retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     upcomingContent:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ *                 contentType:
+ *                   type: string
+ *                   example: upcoming-soon
+ */
+router.get('/upcoming-soon', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getUpcomingSoon);
+
+/**
+ * @swagger
+ * /api/content/everyones-watching:
+ *   get:
+ *     summary: Get everyone's watching (popular content)
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           description: Comma-separated content types (movie,series,documentary)
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Popular content retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     popularContent:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ *                 contentType:
+ *                   type: string
+ *                   example: everyones-watching
+ */
+router.get('/everyones-watching', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getEveryonesWatching);
+
+/**
+ * @swagger
+ * /api/content/top-10-series:
+ *   get:
+ *     summary: Get top 10 video series
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *           default: global
+ *     responses:
+ *       200:
+ *         description: Top 10 series retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     top10Series:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           rank:
+ *                             type: integer
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           viewCount:
+ *                             type: integer
+ *                           totalSeasons:
+ *                             type: integer
+ *                           totalEpisodes:
+ *                             type: integer
+ *                     country:
+ *                       type: string
+ *                     generatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                 contentType:
+ *                   type: string
+ *                   example: top-10-series
+ */
+router.get('/top-10-series', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getTop10Series);
+
+/**
+ * @swagger
+ * /api/content/top-10-movies:
+ *   get:
+ *     summary: Get top 10 video movies
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: country
+ *         schema:
+ *           type: string
+ *           default: global
+ *     responses:
+ *       200:
+ *         description: Top 10 movies retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     top10Movies:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           rank:
+ *                             type: integer
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           viewCount:
+ *                             type: integer
+ *                     country:
+ *                       type: string
+ *                     generatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                 contentType:
+ *                   type: string
+ *                   example: top-10-movies
+ */
+router.get('/top-10-movies', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getTop10Movies);
+
 // Admin-only Content Items CRUD Routes
 /**
  * @swagger

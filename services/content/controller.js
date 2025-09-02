@@ -2071,6 +2071,451 @@ const contentController = {
         error: 'Failed to get thumbnail ratios'
       });
     }
+  },
+
+  async getUpcomingSoon(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre,
+        language
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {
+        isActive: true,
+        status: 'published',
+        releaseYear: {
+          [Op.gte]: new Date().getFullYear()
+        }
+      };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        console.log('Applied child profile filter for upcoming soon content');
+      }
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+        }
+      }
+
+      // Apply filters
+      if (type) {
+        const typeArray = type.split(',');
+        where.type = { [Op.in]: typeArray };
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      const { count, rows } = await Content.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['releaseYear', 'ASC'], ['createdAt', 'DESC']],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre',
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
+          'status', 'createdAt'
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          upcomingContent: rows,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit)
+          }
+        },
+        contentType: 'upcoming-soon',
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
+      });
+    } catch (error) {
+      logger.error('Get upcoming soon content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve upcoming content',
+        message: error.message
+      });
+    }
+  },
+
+  async getEveryonesWatching(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        genre,
+        language
+      } = req.query;
+
+      const offset = (page - 1) * limit;
+      const where = {
+        isActive: true,
+        status: 'published'
+      };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        console.log('Applied child profile filter for everyone\'s watching content');
+      }
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+        }
+      }
+
+      // Apply filters
+      if (type) {
+        const typeArray = type.split(',');
+        where.type = { [Op.in]: typeArray };
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      // Get content with watch history count (simulating popularity)
+      const { count, rows } = await Content.findAndCountAll({
+        where,
+        include: [
+          {
+            model: WatchHistory,
+            as: 'watchHistory',
+            attributes: [],
+            required: false
+          }
+        ],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre',
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
+          'status', 'createdAt',
+          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
+        ],
+        group: ['Content.id'],
+        order: [[sequelize.literal('viewCount'), 'DESC'], ['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        subQuery: false
+      });
+
+      res.json({
+        success: true,
+        data: {
+          popularContent: rows,
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count.length / limit),
+            totalItems: count.length,
+            itemsPerPage: parseInt(limit)
+          }
+        },
+        contentType: 'everyones-watching',
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
+      });
+    } catch (error) {
+      logger.error('Get everyone\'s watching content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve popular content',
+        message: error.message
+      });
+    }
+  },
+
+  async getTop10Series(req, res) {
+    try {
+      const {
+        genre,
+        language,
+        country = 'global'
+      } = req.query;
+
+      const where = {
+        isActive: true,
+        status: 'published',
+        type: 'series'
+      };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        console.log('Applied child profile filter for top 10 series');
+      }
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      // Get top 10 series based on watch history and ratings
+      const series = await Content.findAll({
+        where,
+        include: [
+          {
+            model: WatchHistory,
+            as: 'watchHistory',
+            attributes: [],
+            required: false
+          },
+          {
+            model: Season,
+            as: 'seasons',
+            where: { isActive: true },
+            required: false,
+            include: [{
+              model: Episode,
+              as: 'episodes',
+              where: { isActive: true },
+              required: false
+            }]
+          }
+        ],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre',
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
+          'status', 'createdAt',
+          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
+        ],
+        group: ['Content.id'],
+        order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
+        limit: 10,
+        subQuery: false
+      });
+
+      // Add ranking position
+      const rankedSeries = series.map((item, index) => ({
+        rank: index + 1,
+        ...item.toJSON(),
+        totalSeasons: item.seasons ? item.seasons.length : 0,
+        totalEpisodes: item.seasons 
+          ? item.seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0)
+          : 0
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          top10Series: rankedSeries,
+          country: country,
+          generatedAt: new Date().toISOString()
+        },
+        contentType: 'top-10-series',
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
+      });
+    } catch (error) {
+      logger.error('Get top 10 series error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve top 10 series',
+        message: error.message
+      });
+    }
+  },
+
+  async getTop10Movies(req, res) {
+    try {
+      const {
+        genre,
+        language,
+        country = 'global'
+      } = req.query;
+
+      const where = {
+        isActive: true,
+        status: 'published',
+        type: 'movie'
+      };
+
+      // Apply child profile filtering
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        console.log('Applied child profile filter for top 10 movies');
+      }
+
+      // Apply content filtering for child profiles
+      if (req.contentFilter && req.contentFilter.excludeAdultContent) {
+        where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (where[Op.and]) {
+          where[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          where[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      // Get top 10 movies based on watch history and ratings
+      const movies = await Content.findAll({
+        where,
+        include: [
+          {
+            model: WatchHistory,
+            as: 'watchHistory',
+            attributes: [],
+            required: false
+          }
+        ],
+        attributes: [
+          'id', 'title', 'description', 'type', 'genre',
+          'duration', 'releaseYear', 'rating', 'ageRating',
+          'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
+          'status', 'createdAt',
+          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
+        ],
+        group: ['Content.id'],
+        order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
+        limit: 10,
+        subQuery: false
+      });
+
+      // Add ranking position
+      const rankedMovies = movies.map((item, index) => ({
+        rank: index + 1,
+        ...item.toJSON()
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          top10Movies: rankedMovies,
+          country: country,
+          generatedAt: new Date().toISOString()
+        },
+        contentType: 'top-10-movies',
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
+      });
+    } catch (error) {
+      logger.error('Get top 10 movies error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve top 10 movies',
+        message: error.message
+      });
+    }
   }
 };
 
@@ -2107,5 +2552,9 @@ module.exports = {
   updateContentMapping: contentController.updateContentMapping,
   deleteContentMapping: contentController.deleteContentMapping,
   updateContentThumbnails: contentController.updateContentThumbnails,
-  getThumbnailRatios: contentController.getThumbnailRatios
+  getThumbnailRatios: contentController.getThumbnailRatios,
+  getUpcomingSoon: contentController.getUpcomingSoon,
+  getEveryonesWatching: contentController.getEveryonesWatching,
+  getTop10Series: contentController.getTop10Series,
+  getTop10Movies: contentController.getTop10Movies
 };
