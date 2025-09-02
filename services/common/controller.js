@@ -82,52 +82,51 @@ const commonController = {
     }
   },
 
+  // Get active genres for users
   async getUserGenres(req, res) {
     try {
-      const { search, limit = 50, offset = 0 } = req.query;
+      const { search = '', limit = 50, offset = 0 } = req.query;
 
-      console.log('Genres endpoint - Active profile:', req.activeProfile);
-      console.log('Genres endpoint - Is child profile:', req.activeProfile?.isChild);
-
-      const whereClause = {
-        isActive: true // Users can only see active genres
+      let whereClause = {
+        isActive: true
       };
+
+      if (search) {
+        whereClause.name = { [Op.iLike]: `%${search}%` };
+      }
+
+      console.log('Active profile in getUserGenres:', req.activeProfile);
+      console.log('Is child profile:', req.activeProfile?.isChild);
 
       // Apply child profile filtering
       if (req.activeProfile && req.activeProfile.isChild === true) {
         whereClause.showOnChildProfile = true;
-        console.log('Applied child profile filter for genres - showOnChildProfile: true');
+        console.log('Applied child profile filter for genres');
       }
 
-      if (search) {
-        whereClause.name = {
-          [Op.like]: `%${search}%`
-        };
-      }
+      console.log('Where clause for genres:', whereClause);
 
-      console.log('Genres where clause:', whereClause);
-
-      const genres = await Genre.findAndCountAll({
+      const genres = await Genre.findAll({
         where: whereClause,
+        order: [['name', 'ASC']],
         limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['name', 'ASC']]
+        offset: parseInt(offset)
       });
 
-      res.status(200).json({
+      console.log('Found genres:', genres.length);
+
+      res.json({
         success: true,
-        genres: genres.rows,
-        total: genres.count,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        isChildProfile: req.activeProfile?.isChild || false,
-        appliedFilter: req.activeProfile?.isChild ? 'showOnChildProfile: true' : 'none'
+        data: genres,
+        total: genres.length,
+        isChildProfile: req.activeProfile ? req.activeProfile.isChild : false,
+        profileInfo: req.activeProfile || null
       });
     } catch (error) {
-      console.error('Get user genres error:', error);
+      console.error('Get genres error:', error);
       res.status(500).json({
-        error: 'Failed to retrieve genres',
-        message: error.message
+        success: false,
+        error: 'Failed to retrieve genres'
       });
     }
   },
