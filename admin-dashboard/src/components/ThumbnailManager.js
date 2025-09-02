@@ -1,5 +1,7 @@
 
-<Modal,
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
   Form,
   Input,
   Button,
