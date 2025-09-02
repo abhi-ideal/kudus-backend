@@ -84,7 +84,7 @@ const childProfileFilter = (req, res, next) => {
   console.log('Child profile filter - activeProfile:', req.activeProfile);
   
   // Check if this is a child profile from Firebase custom claims
-  if (req.activeProfile && req.activeProfile.isChild === true) {
+  if (req.activeProfile && req.activeProfile.child === true) {
     console.log('Applying child profile content filter');
     
     // Add strict child profile filtering context for content queries

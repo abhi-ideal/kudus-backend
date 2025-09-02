@@ -38,7 +38,7 @@ const profileAuth = async (req, res, next) => {
     // Add profile context to request based on token claims
     req.activeProfile = {
       id: activeProfileId,
-      isChild: decodedToken.isChild || false, // Get from token claims
+      isChild: decodedToken.child || false, // Get from token claims
       fromToken: !!(decodedToken.profile_id || decodedToken.default_profile_id)
     };
 
