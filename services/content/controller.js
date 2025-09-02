@@ -2239,7 +2239,7 @@ const contentController = {
       }
 
       // Get content with watch history count (simulating popularity)
-      const { count, rows } = await Content.findAndCountAll({
+      const rows = await Content.findAll({
         where,
         include: [
           {
@@ -2263,14 +2263,17 @@ const contentController = {
         subQuery: false
       });
 
+      // Get total count separately to avoid GROUP BY issues with findAndCountAll
+      const totalCount = await Content.count({ where });
+
       res.json({
         success: true,
         data: {
           popularContent: rows,
           pagination: {
             currentPage: parseInt(page),
-            totalPages: Math.ceil(count.length / limit),
-            totalItems: count.length,
+            totalPages: Math.ceil(totalCount / limit),
+            totalItems: totalCount,
             itemsPerPage: parseInt(limit)
           }
         },
@@ -2343,8 +2346,8 @@ const contentController = {
         where.language = language;
       }
 
-      // Get top 10 series based on watch history and ratings
-      const series = await Content.findAll({
+      // Get top 10 series based on watch history and ratings (without includes to avoid GROUP BY issues)
+      const seriesData = await Content.findAll({
         where,
         include: [
           {
@@ -2352,18 +2355,6 @@ const contentController = {
             as: 'watchHistory',
             attributes: [],
             required: false
-          },
-          {
-            model: Season,
-            as: 'seasons',
-            where: { isActive: true },
-            required: false,
-            include: [{
-              model: Episode,
-              as: 'episodes',
-              where: { isActive: true },
-              required: false
-            }]
           }
         ],
         attributes: [
@@ -2379,15 +2370,31 @@ const contentController = {
         subQuery: false
       });
 
-      // Add ranking position
-      const rankedSeries = series.map((item, index) => ({
-        rank: index + 1,
-        ...item.toJSON(),
-        totalSeasons: item.seasons ? item.seasons.length : 0,
-        totalEpisodes: item.seasons 
-          ? item.seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0)
-          : 0
-      }));
+      // Fetch seasons and episodes separately for each series
+      const rankedSeries = await Promise.all(
+        seriesData.map(async (item, index) => {
+          const seasons = await Season.findAll({
+            where: { 
+              seriesId: item.id,
+              isActive: true 
+            },
+            include: [{
+              model: Episode,
+              as: 'episodes',
+              where: { isActive: true },
+              required: false
+            }]
+          });
+
+          return {
+            rank: index + 1,
+            ...item.toJSON(),
+            totalSeasons: seasons.length,
+            totalEpisodes: seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0),
+            seasons: seasons
+          };
+        })
+      );
 
       res.json({
         success: true,
@@ -2466,7 +2473,7 @@ const contentController = {
       }
 
       // Get top 10 movies based on watch history and ratings
-      const movies = await Content.findAll({
+      const moviesData = await Content.findAll({
         where,
         include: [
           {
@@ -2490,7 +2497,7 @@ const contentController = {
       });
 
       // Add ranking position
-      const rankedMovies = movies.map((item, index) => ({
+      const rankedMovies = moviesData.map((item, index) => ({
         rank: index + 1,
         ...item.toJSON()
       }));
