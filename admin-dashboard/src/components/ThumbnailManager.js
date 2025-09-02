@@ -78,11 +78,18 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     }
   };
 
-  const getSignedUrl = async (fileType) => {
+  const getSignedUrl = async (fileName, fileType, fileSize) => {
     try {
-      const response = await adminAPI.getSignedUrlForThumbnailUpload(fileType);
+      const response = await adminAPI.getSignedUrlForThumbnailUpload({
+        fileName,
+        fileType,
+        fileSize
+      });
       if (response.data.success) {
-        return response.data.signedUrl;
+        return {
+          signedUrl: response.data.signedUrl,
+          publicUrl: response.data.publicUrl
+        };
       }
       return null;
     } catch (error) {
@@ -95,35 +102,52 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     setUploading(prev => ({ ...prev, [type]: true }));
     setUploadProgress(prev => ({ ...prev, [type]: 0 }));
 
-    const signedUrl = await getSignedUrl(file.type);
-    if (!signedUrl) {
+    // Generate unique filename
+    const fileName = `${type}_${Date.now()}_${file.name}`;
+    
+    const urlData = await getSignedUrl(fileName, file.type, file.size);
+    if (!urlData) {
       message.error('Failed to get upload URL.');
       setUploading(prev => ({ ...prev, [type]: false }));
       return;
     }
 
     try {
-      await fetch(signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
-        body: file,
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      // Create XMLHttpRequest for upload progress tracking
+      const xhr = new XMLHttpRequest();
+      
+      // Set up progress tracking
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentCompleted = Math.round((event.loaded * 100) / event.total);
           setUploadProgress(prev => ({ ...prev, [type]: percentCompleted }));
-        },
+        }
       });
 
-      // Assuming the signed URL returns the public URL of the uploaded file
-      // This part might need adjustment based on your backend implementation
-      const uploadedFileUrl = signedUrl.split('?')[0]; 
-      handleThumbnailChange(type, uploadedFileUrl);
-      message.success(`${type} uploaded successfully!`);
+      // Set up completion handlers
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200 || xhr.status === 204) {
+          handleThumbnailChange(type, urlData.publicUrl);
+          message.success(`${type} uploaded successfully!`);
+        } else {
+          message.error(`Failed to upload ${type}. Status: ${xhr.status}`);
+        }
+        setUploading(prev => ({ ...prev, [type]: false }));
+      });
+
+      xhr.addEventListener('error', () => {
+        message.error(`Failed to upload ${type}.`);
+        setUploading(prev => ({ ...prev, [type]: false }));
+      });
+
+      // Send the file
+      xhr.open('PUT', urlData.signedUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+
     } catch (error) {
       console.error('Error uploading file:', error);
       message.error(`Failed to upload ${type}.`);
-    } finally {
       setUploading(prev => ({ ...prev, [type]: false }));
     }
   };
@@ -237,6 +261,13 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
                   return false;
                 }
 
+                // Additional file type validation
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                  message.error('Only JPEG, PNG, WebP, and GIF images are allowed!');
+                  return false;
+                }
+
                 handleFileUpload(file, type);
                 return false; // Prevent default upload
               }}
@@ -247,8 +278,9 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
                 block
                 loading={uploading[type]}
                 disabled={uploading[type]}
+                type={uploading[type] ? "default" : "primary"}
               >
-                {uploading[type] ? 'Uploading...' : 'Select Image'}
+                {uploading[type] ? `Uploading... ${uploadProgress[type] || 0}%` : 'Upload Image'}
               </Button>
             </Upload>
 

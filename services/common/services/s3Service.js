@@ -69,6 +69,25 @@ const s3Service = {
    */
   async generateThumbnailUploadUrl(fileSize, fileType = 'image/jpeg') {
     return this.generateSignedPostUrl(fileType, fileSize, 'thumbnails');
+  },
+
+  /**
+   * Generate signed URL for direct uploads
+   */
+  async generateSignedUrl(key, contentType, operation = 'putObject', expiresIn = 300) {
+    try {
+      const params = {
+        Bucket: this.bucketName,
+        Key: key,
+        Expires: expiresIn,
+        ContentType: contentType
+      };
+
+      return this.s3.getSignedUrl(operation, params);
+    } catch (error) {
+      logger.error('Generate signed URL error:', error);
+      throw new Error('Failed to generate signed URL');
+    }
   }
 };
 

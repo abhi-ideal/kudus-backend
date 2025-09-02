@@ -140,9 +140,14 @@ const adminEndpoints = {
   createContentItem: (data) => contentAPI.post('/items', data),
   updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
-  
+
   // Thumbnail Management API
-  updateContentThumbnails: (id, thumbnails) => contentAPI.patch(`/admin/content/${id}/thumbnails`, { thumbnails }),
+  updateContentThumbnails: (contentId, thumbnails) => 
+    contentAPI.patch(`/admin/content/${contentId}/thumbnails`, { thumbnails }),
+
+  // Get signed URL for thumbnail upload
+  getSignedUrlForThumbnailUpload: (uploadData) =>
+    commonAPI.post('/common/admin/upload/thumbnail/signed-url', uploadData),
   getThumbnailRatios: () => contentAPI.get('/thumbnail-ratios'),
   updateContentItemOrder: (id, orderData) =>
     contentAPI.patch(`/items/${id}/order`, orderData),

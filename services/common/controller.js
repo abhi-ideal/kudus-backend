@@ -754,6 +754,63 @@ const commonController = {
         message: error.message
       });
     }
+  },
+
+  // Generate signed URL for thumbnail uploads
+  async getSignedUrlForThumbnailUpload(req, res) {
+    try {
+      const { fileName, fileType, fileSize } = req.body;
+
+      if (!fileName || !fileType) {
+        return res.status(400).json({
+          success: false,
+          error: 'fileName and fileType are required'
+        });
+      }
+
+      // Validate file type
+      if (!fileType.startsWith('image/')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Only image files are allowed'
+        });
+      }
+
+      // Validate file size (max 10MB)
+      if (fileSize && fileSize > 10 * 1024 * 1024) {
+        return res.status(400).json({
+          success: false,
+          error: 'File size must be less than 10MB'
+        });
+      }
+
+      const s3Service = require('./services/s3Service');
+      
+      // Generate unique file path
+      const timestamp = Date.now();
+      const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const s3Key = `thumbnails/${timestamp}_${sanitizedFileName}`;
+
+      // Generate signed URL
+      const signedUrl = await s3Service.generateSignedUrl(s3Key, fileType, 'putObject');
+      const publicUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+
+      res.json({
+        success: true,
+        signedUrl,
+        publicUrl,
+        fileName: sanitizedFileName,
+        s3Key
+      });
+
+    } catch (error) {
+      console.error('Generate signed URL error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate signed URL',
+        message: error.message
+      });
+    }
   }
 };
 
