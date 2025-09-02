@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
+
+<Modal,
   Form,
   Input,
   Button,
@@ -13,12 +12,15 @@ import {
   Typography,
   Image,
   Divider,
-  Progress
+  Progress,
+  Table,
+  Select
 } from 'antd';
-import { UploadOutlined, DeleteOutlined, EyeOutlined, PictureOutlined } from '@ant-design/icons';
+import { UploadOutlined, DeleteOutlined, EyeOutlined, PictureOutlined, EditOutlined } from '@ant-design/icons';
 import { adminAPI } from '../utils/api';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}, onUpdate }) => {
   const [form] = Form.useForm();
@@ -32,6 +34,9 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
   });
   const [uploading, setUploading] = useState({});
   const [uploadProgress, setUploadProgress] = useState({});
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [selectedUploadType, setSelectedUploadType] = useState('');
+  const [uploadFile, setUploadFile] = useState(null);
 
   useEffect(() => {
     if (visible) {
@@ -102,7 +107,6 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     setUploading(prev => ({ ...prev, [type]: true }));
     setUploadProgress(prev => ({ ...prev, [type]: 0 }));
 
-    // Generate unique filename
     const fileName = `${type}_${Date.now()}_${file.name}`;
     
     const urlData = await getSignedUrl(fileName, file.type, file.size);
@@ -113,10 +117,8 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     }
 
     try {
-      // Create XMLHttpRequest for upload progress tracking
       const xhr = new XMLHttpRequest();
       
-      // Set up progress tracking
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
           const percentCompleted = Math.round((event.loaded * 100) / event.total);
@@ -124,7 +126,6 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
         }
       });
 
-      // Set up completion handlers
       xhr.addEventListener('load', () => {
         if (xhr.status === 200 || xhr.status === 204) {
           handleThumbnailChange(type, urlData.publicUrl);
@@ -140,7 +141,6 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
         setUploading(prev => ({ ...prev, [type]: false }));
       });
 
-      // Send the file
       xhr.open('PUT', urlData.signedUrl);
       xhr.setRequestHeader('Content-Type', file.type);
       xhr.send(file);
@@ -152,361 +152,328 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
     }
   };
 
+  const openUploadModal = () => {
+    setUploadModalVisible(true);
+    setSelectedUploadType('');
+    setUploadFile(null);
+  };
 
-  const ThumbnailInput = ({ type, spec, value }) => (
-    <Card size="small" style={{ marginBottom: 16 }}>
-      <Row gutter={16} align="middle">
-        <Col span={6}>
-          <div>
-            <Title level={5} style={{ margin: 0, textTransform: 'capitalize' }}>
-              {type}
-            </Title>
-            <Text type="secondary" style={{ fontSize: '12px', fontWeight: 'bold' }}>
-              Ratio: {spec.ratio}
-            </Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              Size: {spec.recommendedSize}
-            </Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              {spec.description}
-            </Text>
-          </div>
-        </Col>
-        <Col span={10}>
-          <Input
-            placeholder={`Enter ${type} image URL`}
-            value={value}
-            onChange={(e) => handleThumbnailChange(type, e.target.value)}
-            style={{ marginBottom: 8 }}
-          />
+  const handleUploadModalOk = () => {
+    if (!selectedUploadType) {
+      message.error('Please select a thumbnail type');
+      return;
+    }
+    if (!uploadFile) {
+      message.error('Please select a file to upload');
+      return;
+    }
 
-          {/* Upload Progress */}
-          {uploading[type] && (
-            <Progress 
-              percent={uploadProgress[type]} 
-              size="small" 
-              status="active"
-              format={percent => `${percent}%`}
+    handleFileUpload(uploadFile, selectedUploadType);
+    setUploadModalVisible(false);
+    setSelectedUploadType('');
+    setUploadFile(null);
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const columns = [
+    {
+      title: 'THUMBNAIL',
+      dataIndex: 'thumbnail',
+      key: 'thumbnail',
+      width: 120,
+      render: (_, record) => (
+        <div style={{ width: 80, height: 60, border: '1px solid #d9d9d9', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+          {thumbnails[record.type] ? (
+            <Image
+              src={thumbnails[record.type]}
+              alt={record.type}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
             />
+          ) : (
+            <div style={{ 
+              width: '100%', 
+              height: '100%', 
+              backgroundColor: '#f5f5f5', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              border: '2px dashed #d9d9d9'
+            }}>
+              <PictureOutlined style={{ fontSize: '16px', color: '#999' }} />
+            </div>
           )}
-
-          {/* Current Thumbnail Preview */}
-          {value && (
-            <div 
-              style={{ 
-                marginTop: 8, 
-                border: '1px solid #d9d9d9', 
-                borderRadius: 4, 
-                padding: 4,
-                cursor: 'pointer',
-                position: 'relative'
-              }}
+          
+          {uploading[record.type] && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Progress 
+                type="circle" 
+                percent={uploadProgress[record.type]} 
+                size={30}
+                strokeWidth={8}
+              />
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      title: 'TYPE',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type) => (
+        <div>
+          <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{type}</div>
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            {ratioSpecs[type]?.ratio}
+          </Text>
+        </div>
+      )
+    },
+    {
+      title: 'SIZE',
+      dataIndex: 'size',
+      key: 'size',
+      render: (_, record) => {
+        const url = thumbnails[record.type];
+        if (!url) return <Text type="secondary">-</Text>;
+        
+        // You can fetch actual file size via an API call if needed
+        // For now, showing placeholder
+        return <Text>{ratioSpecs[record.type]?.recommendedSize || '-'}</Text>;
+      }
+    },
+    {
+      title: 'ACTION',
+      key: 'action',
+      align: 'right',
+      render: (_, record) => (
+        <Space>
+          {thumbnails[record.type] && (
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              size="small"
               onClick={() => {
                 Modal.info({
-                  title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
+                  title: `${record.type.charAt(0).toUpperCase() + record.type.slice(1)} Preview`,
                   content: (
                     <div style={{ textAlign: 'center', padding: '20px' }}>
                       <Image
-                        src={value}
-                        alt={`${type} thumbnail`}
-                        style={{ maxWidth: '100%', maxHeight: '300px' }}
-                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
+                        src={thumbnails[record.type]}
+                        alt={`${record.type} thumbnail`}
+                        style={{ maxWidth: '100%', maxHeight: '400px' }}
                       />
                     </div>
                   ),
                   width: 600,
                 });
               }}
-            >
-              <Image
-                src={value}
-                alt={`${type} thumbnail`}
-                style={{ width: '100%', height: '60px', objectFit: 'cover' }}
-                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-              />
-              <div style={{
-                position: 'absolute',
-                top: 2,
-                right: 2,
-                background: 'rgba(0,0,0,0.5)',
-                color: 'white',
-                borderRadius: 2,
-                padding: '2px 4px',
-                fontSize: '10px'
-              }}>
-                Click to preview
-              </div>
-            </div>
+            />
           )}
-        </Col>
-        <Col span={8}>
-          <Space direction="vertical" style={{ width: '100%' }}>
+          
+          {thumbnails[record.type] && (
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => {
+                const newUrl = prompt('Enter new URL:', thumbnails[record.type]);
+                if (newUrl !== null) {
+                  handleThumbnailChange(record.type, newUrl);
+                }
+              }}
+            />
+          )}
+          
+          {thumbnails[record.type] && (
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={() => handleThumbnailChange(record.type, '')}
+            />
+          )}
+          
+          <Button
+            type="text"
+            size="small"
+            style={{ color: '#999' }}
+          >
+            ⋮
+          </Button>
+        </Space>
+      )
+    }
+  ];
+
+  const tableData = Object.keys(ratioSpecs).map(type => ({
+    key: type,
+    type,
+    thumbnail: thumbnails[type],
+  }));
+
+  return (
+    <>
+      <Modal
+        title="Upload Thumbnail"
+        open={visible}
+        onCancel={onCancel}
+        width={800}
+        footer={[
+          <Button key="cancel" onClick={onCancel}>
+            Cancel
+          </Button>,
+          <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
+            Update Thumbnails
+          </Button>
+        ]}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Text type="secondary">
+            Set your video thumbnail from your local storage images or you can download images and set it too.
+          </Text>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <Title level={5} style={{ margin: 0 }}>Metadata</Title>
+          <Button 
+            type="primary" 
+            icon={<UploadOutlined />}
+            onClick={openUploadModal}
+          >
+            Upload File
+          </Button>
+        </div>
+
+        <div style={{ marginBottom: 16, color: '#1890ff', cursor: 'pointer' }}>
+          📎 Thumbnails
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+          size="small"
+          style={{ backgroundColor: '#fff' }}
+        />
+      </Modal>
+
+      {/* Upload Modal */}
+      <Modal
+        title="Upload Thumbnail File"
+        open={uploadModalVisible}
+        onCancel={() => {
+          setUploadModalVisible(false);
+          setSelectedUploadType('');
+          setUploadFile(null);
+        }}
+        onOk={handleUploadModalOk}
+        okText="Upload"
+        cancelText="Cancel"
+        width={500}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Text>Select thumbnail type and choose file to upload:</Text>
+        </div>
+
+        <Form layout="vertical">
+          <Form.Item label="Thumbnail Type" required>
+            <Select
+              placeholder="Select thumbnail type"
+              value={selectedUploadType}
+              onChange={setSelectedUploadType}
+              style={{ width: '100%' }}
+            >
+              {Object.entries(ratioSpecs).map(([type, spec]) => (
+                <Option key={type} value={type}>
+                  <div>
+                    <div style={{ fontWeight: 500, textTransform: 'capitalize' }}>{type}</div>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      Ratio: {spec.ratio} | {spec.recommendedSize}
+                    </Text>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="Choose File" required>
             <Upload
               accept="image/*"
-              showUploadList={false}
+              showUploadList={true}
               beforeUpload={(file) => {
-                // Validate file type
                 const isImage = file.type.startsWith('image/');
                 if (!isImage) {
                   message.error('You can only upload image files!');
                   return false;
                 }
 
-                // Validate file size (max 10MB)
                 const isLt10M = file.size / 1024 / 1024 < 10;
                 if (!isLt10M) {
                   message.error('Image must be smaller than 10MB!');
                   return false;
                 }
 
-                // Additional file type validation
                 const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
                 if (!allowedTypes.includes(file.type)) {
                   message.error('Only JPEG, PNG, WebP, and GIF images are allowed!');
                   return false;
                 }
 
-                handleFileUpload(file, type);
-                return false; // Prevent default upload
+                setUploadFile(file);
+                return false;
               }}
-              disabled={uploading[type]}
+              fileList={uploadFile ? [uploadFile] : []}
+              onRemove={() => setUploadFile(null)}
             >
-              <Button 
-                icon={<PictureOutlined />} 
-                block
-                loading={uploading[type]}
-                disabled={uploading[type]}
-                type={uploading[type] ? "default" : "primary"}
-              >
-                {uploading[type] ? `Uploading... ${uploadProgress[type] || 0}%` : 'Upload Image'}
-              </Button>
+              <Button icon={<UploadOutlined />}>Select File</Button>
             </Upload>
+          </Form.Item>
 
-            {value && (
-              <Space>
-                <Button
-                  icon={<EyeOutlined />}
-                  size="small"
-                  onClick={() => {
-                    Modal.info({
-                      title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
-                      content: (
-                        <div style={{ textAlign: 'center', padding: '20px' }}>
-                          <Image
-                            src={value}
-                            alt={`${type} thumbnail`}
-                            style={{ maxWidth: '100%', maxHeight: '300px' }}
-                            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW12+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-                          />
-                        </div>
-                      ),
-                      width: 600,
-                    });
-                  }}
-                >
-                  Preview
-                </Button>
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  size="small"
-                  onClick={() => handleThumbnailChange(type, '')}
-                >
-                  Remove
-                </Button>
-              </Space>
-            )}
-          </Space>
-        </Col>
-      </Row>
-    </Card>
-  );
-
-  return (
-    <Modal
-      title="Thumbnail Management"
-      open={visible}
-      onCancel={onCancel}
-      width={800}
-      footer={[
-        <Button key="cancel" onClick={onCancel}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-          Update Thumbnails
-        </Button>
-      ]}
-    >
-      <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-          Upload or provide URLs for different aspect ratios. Each ratio serves different UI components.
-        </Text>
-
-        {Object.entries(ratioSpecs).map(([type, spec]) => (
-          <ThumbnailInput
-            key={type}
-            type={type}
-            spec={spec}
-            value={thumbnails[type]}
-          />
-        ))}
-
-        <Divider />
-
-        <Title level={5}>Current Thumbnails</Title>
-        <Row gutter={16}>
-          {Object.entries(ratioSpecs).map(([type, spec]) => (
-            <Col span={6} key={type}>
-              <Card 
-                size="small" 
-                title={
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
-                    <Text type="secondary" style={{ fontSize: '10px' }}>
-                      {spec.ratio}
-                    </Text>
-                  </div>
-                }
-                actions={[
-                  <Upload
-                    key="upload"
-                    accept="image/*"
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                      const isImage = file.type.startsWith('image/');
-                      if (!isImage) {
-                        message.error('You can only upload image files!');
-                        return false;
-                      }
-
-                      const isLt10M = file.size / 1024 / 1024 < 10;
-                      if (!isLt10M) {
-                        message.error('Image must be smaller than 10MB!');
-                        return false;
-                      }
-
-                      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-                      if (!allowedTypes.includes(file.type)) {
-                        message.error('Only JPEG, PNG, WebP, and GIF images are allowed!');
-                        return false;
-                      }
-
-                      handleFileUpload(file, type);
-                      return false;
-                    }}
-                    disabled={uploading[type]}
-                  >
-                    <Button 
-                      type="link" 
-                      icon={<UploadOutlined />} 
-                      size="small"
-                      loading={uploading[type]}
-                      disabled={uploading[type]}
-                    >
-                      {uploading[type] ? `${uploadProgress[type] || 0}%` : 'Upload'}
-                    </Button>
-                  </Upload>,
-                  thumbnails[type] && (
-                    <Button
-                      key="preview"
-                      type="link"
-                      icon={<EyeOutlined />}
-                      size="small"
-                      onClick={() => {
-                        Modal.info({
-                          title: `${type.charAt(0).toUpperCase() + type.slice(1)} Preview`,
-                          content: (
-                            <div style={{ textAlign: 'center', padding: '20px' }}>
-                              <Image
-                                src={thumbnails[type]}
-                                alt={`${type} thumbnail`}
-                                style={{ maxWidth: '100%', maxHeight: '400px' }}
-                                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-                              />
-                            </div>
-                          ),
-                          width: 600,
-                        });
-                      }}
-                    >
-                      Preview
-                    </Button>
-                  ),
-                  thumbnails[type] && (
-                    <Button
-                      key="remove"
-                      type="link"
-                      danger
-                      icon={<DeleteOutlined />}
-                      size="small"
-                      onClick={() => handleThumbnailChange(type, '')}
-                    >
-                      Remove
-                    </Button>
-                  )
-                ].filter(Boolean)}
-              >
-                <div style={{ position: 'relative' }}>
-                  {thumbnails[type] ? (
-                    <Image
-                      src={thumbnails[type]}
-                      alt={`${type} thumbnail`}
-                      style={{ width: '100%', height: '80px', objectFit: 'cover' }}
-                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RUG8A+5JwAAEkpJREFUeJzs2FVYVfccx/GX2ZAYsIJiBUNHjBGD3QWJDQqKBYJdBQ2iJAKCXQWJBYqCxE5N+a/8z/f8f/7/z/9/H9zW16+c9/P3/z73/9/f/v39/f0DQKH26HgQ="
-                    />
-                  ) : (
-                    <div 
-                      style={{ 
-                        width: '100%', 
-                        height: '80px', 
-                        backgroundColor: '#f5f5f5', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        border: '2px dashed #d9d9d9',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      <div style={{ textAlign: 'center', color: '#999' }}>
-                        <PictureOutlined style={{ fontSize: '24px', marginBottom: '4px' }} />
-                        <br />
-                        <Text type="secondary" style={{ fontSize: '11px' }}>
-                          No image
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {uploading[type] && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(255,255,255,0.8)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '4px'
-                    }}>
-                      <Progress 
-                        type="circle" 
-                        percent={uploadProgress[type]} 
-                        size={40}
-                        strokeWidth={8}
-                      />
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </Modal>
+          {selectedUploadType && ratioSpecs[selectedUploadType] && (
+            <div style={{ 
+              padding: 12, 
+              backgroundColor: '#f6f8fa', 
+              borderRadius: 6,
+              marginTop: 8 
+            }}>
+              <Text strong>Recommended specifications:</Text>
+              <br />
+              <Text type="secondary">
+                Aspect Ratio: {ratioSpecs[selectedUploadType].ratio}
+              </Text>
+              <br />
+              <Text type="secondary">
+                Size: {ratioSpecs[selectedUploadType].recommendedSize}
+              </Text>
+              <br />
+              <Text type="secondary">
+                {ratioSpecs[selectedUploadType].description}
+              </Text>
+            </div>
+          )}
+        </Form>
+      </Modal>
+    </>
   );
 };
 
