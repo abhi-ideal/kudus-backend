@@ -27,7 +27,28 @@ const { Option } = Select;
 const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}, onUpdate }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [ratioSpecs, setRatioSpecs] = useState({});
+  const [ratioSpecs, setRatioSpecs] = useState({
+    banner: {
+      ratio: '16:4',
+      recommendedSize: '1920x480px',
+      description: 'Wide banner for hero sections and main displays'
+    },
+    landscape: {
+      ratio: '16:9',
+      recommendedSize: '1200x675px',
+      description: 'Standard landscape format for content cards'
+    },
+    portrait: {
+      ratio: '2:3',
+      recommendedSize: '500x750px',
+      description: 'Vertical format for mobile and poster displays'
+    },
+    square: {
+      ratio: '1:1',
+      recommendedSize: '500x500px',
+      description: 'Square format for profile pictures and icons'
+    }
+  });
   const [thumbnails, setThumbnails] = useState({
     banner: '',
     landscape: '',
@@ -60,6 +81,29 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
       }
     } catch (error) {
       console.error('Error fetching thumbnail ratios:', error);
+      // Fallback to default specs if API call fails
+      setRatioSpecs({
+        banner: {
+          ratio: '16:4',
+          recommendedSize: '1920x480px',
+          description: 'Wide banner for hero sections and main displays'
+        },
+        landscape: {
+          ratio: '16:9',
+          recommendedSize: '1200x675px',
+          description: 'Standard landscape format for content cards'
+        },
+        portrait: {
+          ratio: '2:3',
+          recommendedSize: '500x750px',
+          description: 'Vertical format for mobile and poster displays'
+        },
+        square: {
+          ratio: '1:1',
+          recommendedSize: '500x500px',
+          description: 'Square format for profile pictures and icons'
+        }
+      });
     }
   };
 
