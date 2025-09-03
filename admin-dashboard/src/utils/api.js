@@ -147,7 +147,7 @@ const adminEndpoints = {
 
   // Get signed URL for thumbnail upload
   getSignedUrlForThumbnailUpload: (uploadData) =>
-    commonAPI.post('/common/admin/upload/thumbnail/signed-url', uploadData),
+    commonAPI.post('/upload/thumbnail/signed-url', uploadData),
   getThumbnailRatios: () => contentAPI.get('/thumbnail-ratios'),
   updateContentItemOrder: (id, orderData) =>
     contentAPI.patch(`/items/${id}/order`, orderData),
