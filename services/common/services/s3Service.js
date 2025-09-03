@@ -2,6 +2,8 @@
 const { S3Client } = require('@aws-sdk/client-s3');
 const { createPresignedPost } = require('@aws-sdk/s3-presigned-post');
 const { v4: uuidv4 } = require('uuid');
+const logger = require('.././utils/logger');
+
 
 // Configure AWS S3 client
 const s3Client = new S3Client({
