@@ -73,6 +73,36 @@ const router = express.Router();
  */
 router.post('/upload-url', verifyFirebaseToken, validate('uploadUrl'), commonController.generateUploadUrl);
 
+/**
+ * @swagger
+ * /api/common/upload/thumbnail/signed-url:
+ *   post:
+ *     summary: Generate signed URL for thumbnail upload
+ *     tags: [Common]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fileName
+ *               - fileType
+ *             properties:
+ *               fileName:
+ *                 type: string
+ *               fileType:
+ *                 type: string
+ *               fileSize:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Signed URL generated successfully
+ */
+router.post('/upload/thumbnail/signed-url', verifyFirebaseToken, commonController.getSignedUrlForThumbnailUpload);
+
 // Genre CRUD Routes
 /**
  * @swagger
