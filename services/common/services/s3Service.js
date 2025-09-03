@@ -78,16 +78,18 @@ const s3Service = {
    */
   async generateSignedUrl(key, contentType, operation = 'putObject', expiresIn = 300) {
     try {
-      const params = {
-        Bucket: this.bucketName,
-        Key: key,
-        Expires: expiresIn,
-        ContentType: contentType
-      };
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      const { PutObjectCommand } = require('@aws-sdk/client-s3');
 
-      return this.s3.getSignedUrl(operation, params);
+      const command = new PutObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: key,
+        ContentType: contentType
+      });
+
+      return await getSignedUrl(s3Client, command, { expiresIn });
     } catch (error) {
-      logger.error('Generate signed URL error:', error);
+      console.error('Generate signed URL error:', error);
       throw new Error('Failed to generate signed URL');
     }
   }
