@@ -103,6 +103,36 @@ router.post('/upload-url', verifyFirebaseToken, validate('uploadUrl'), commonCon
  */
 router.post('/upload/thumbnail/signed-url', verifyFirebaseToken, commonController.getSignedUrlForThumbnailUpload);
 
+/**
+ * @swagger
+ * /api/common/admin/upload/thumbnail/signed-url:
+ *   post:
+ *     summary: Generate signed URL for thumbnail upload (Admin only)
+ *     tags: [Common - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fileName
+ *               - fileType
+ *             properties:
+ *               fileName:
+ *                 type: string
+ *               fileType:
+ *                 type: string
+ *               fileSize:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Signed URL generated successfully (Admin access)
+ */
+router.post('/admin/upload/thumbnail/signed-url', verifyFirebaseToken, verifyAdmin, commonController.getSignedUrlForThumbnailUpload);
+
 // Genre CRUD Routes
 /**
  * @swagger
