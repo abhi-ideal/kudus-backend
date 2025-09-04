@@ -7,9 +7,9 @@ const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid'); // Make sure uuid is required
 const logger = require('./utils/logger'); // Fixed logger path
 
-// Assuming HelpArticle and ContactUs models are defined and imported
-// const HelpArticle = require('./models/HelpArticle');
-// const ContactUs = require('./models/ContactUs');
+// Import required models
+const HelpArticle = require('./models/HelpArticle');
+const ContactUs = require('./models/ContactUs');
 
 
 const commonController = {
@@ -1248,6 +1248,105 @@ const commonController = {
       });
     }
   },
+
+  // Missing Support Ticket methods
+  async getSupportTickets(req, res) {
+    try {
+      const { status, category, limit = 20, offset = 0 } = req.query;
+
+      const whereClause = {};
+      if (status) whereClause.status = status;
+      if (category) whereClause.category = category;
+
+      const { count, rows: tickets } = await Support.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        tickets,
+        pagination: {
+          total: count,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        }
+      });
+    } catch (error) {
+      logger.error('Get support tickets error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve support tickets'
+      });
+    }
+  },
+
+  async getSupportTicketById(req, res) {
+    try {
+      const { id } = req.params;
+
+      const ticket = await Support.findByPk(id);
+
+      if (!ticket) {
+        return res.status(404).json({
+          success: false,
+          error: 'Support ticket not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        ticket
+      });
+    } catch (error) {
+      logger.error('Get support ticket by ID error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve support ticket'
+      });
+    }
+  },
+
+  async updateSupportTicket(req, res) {
+    try {
+      const { id } = req.params;
+      const { status, priority, adminResponse } = req.body;
+
+      const ticket = await Support.findByPk(id);
+
+      if (!ticket) {
+        return res.status(404).json({
+          success: false,
+          error: 'Support ticket not found'
+        });
+      }
+
+      const updateData = {};
+      if (status) updateData.status = status;
+      if (priority) updateData.priority = priority;
+      if (adminResponse) {
+        updateData.adminResponse = adminResponse;
+        updateData.respondedBy = req.user?.email || 'admin';
+        updateData.respondedAt = new Date();
+      }
+
+      await ticket.update(updateData);
+
+      res.json({
+        success: true,
+        message: 'Support ticket updated successfully',
+        ticket
+      });
+    } catch (error) {
+      logger.error('Update support ticket error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update support ticket'
+      });
+    }
+  }
 };
 
 module.exports = commonController;
