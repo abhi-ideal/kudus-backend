@@ -4,7 +4,25 @@ const UserProfile = require('./models/UserProfile');
 const UserFeed = require('./models/UserFeed');
 const WatchHistory = require('./models/WatchHistory');
 const logger = require('./utils/logger');
-const admin = require('./firebaseAdmin'); // Assuming firebaseAdmin is set up elsewhere
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  try {
+    const serviceAccount = {
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    };
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    logger.info('Firebase Admin initialized successfully in user service');
+  } catch (error) {
+    logger.error('Failed to initialize Firebase Admin in user service:', error);
+  }
+}
 
 // Define associations
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
