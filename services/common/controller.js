@@ -595,9 +595,9 @@ const commonController = {
       const { id } = req.params;
 
       const article = await HelpArticle.findOne({
-        where: { 
-          id, 
-          isPublished: true 
+        where: {
+          id,
+          isPublished: true
         }
       });
 
@@ -1158,7 +1158,96 @@ const commonController = {
         message: error.message
       });
     }
-  }
+  },
+  // Help & Support API
+  async getHelpArticles(req, res) {
+    try {
+      const { category, search, limit = 20, offset = 0 } = req.query;
+
+      const whereClause = { isActive: true };
+      if (category) whereClause.category = category;
+      if (search) {
+        whereClause[Op.or] = [
+          { title: { [Op.like]: `%${search}%` } },
+          { content: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const articles = await HelpArticle.findAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.json({
+        success: true,
+        data: articles
+      });
+    } catch (error) {
+      logger.error('Get help articles error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch help articles'
+      });
+    }
+  },
+
+  // Contact Us API
+  async submitContactUs(req, res) {
+    try {
+      const { email, subject, description } = req.body;
+
+      const contactRecord = await ContactUs.create({
+        email,
+        subject,
+        description,
+        status: 'pending'
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Contact request submitted successfully',
+        data: contactRecord
+      });
+    } catch (error) {
+      logger.error('Submit contact us error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to submit contact request'
+      });
+    }
+  },
+
+  // Search API for content
+  async searchContent(req, res) {
+    try {
+      const { query, type, genre, limit = 20, offset = 0 } = req.query;
+
+      if (!query) {
+        return res.status(400).json({
+          success: false,
+          message: 'Search query is required'
+        });
+      }
+
+      // This would typically call the content service
+      // For now, return a placeholder response
+      res.json({
+        success: true,
+        message: 'Content search functionality - should integrate with content service',
+        searchQuery: query,
+        filters: { type, genre },
+        pagination: { limit, offset }
+      });
+    } catch (error) {
+      logger.error('Search content error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to search content'
+      });
+    }
+  },
 };
 
 module.exports = commonController;
