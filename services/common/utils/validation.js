@@ -85,10 +85,42 @@ const schemas = {
 
   termsConditionsUpdate: Joi.object({
     title: Joi.string().min(5).max(200),
-    content: Joi.string().min(10),
-    version: Joi.string(),
+    content: Joi.string().min(20),
+    version: Joi.string().max(50),
     effectiveDate: Joi.date(),
     isActive: Joi.boolean()
+  }),
+
+  helpArticle: Joi.object({
+    title: Joi.string().required().min(5).max(200),
+    content: Joi.string().required().min(20).max(10000),
+    category: Joi.string().valid('account', 'billing', 'streaming', 'features', 'content', 'general'),
+    tags: Joi.array().items(Joi.string()),
+    isPublished: Joi.boolean(),
+    isFAQ: Joi.boolean(),
+    order: Joi.number().integer()
+  }),
+
+  helpArticleUpdate: Joi.object({
+    title: Joi.string().min(5).max(200),
+    content: Joi.string().min(20).max(10000),
+    category: Joi.string().valid('account', 'billing', 'streaming', 'features', 'content', 'general'),
+    tags: Joi.array().items(Joi.string()),
+    isPublished: Joi.boolean(),
+    isFAQ: Joi.boolean(),
+    order: Joi.number().integer()
+  }),
+
+  contactUs: Joi.object({
+    email: Joi.string().required().email(),
+    subject: Joi.string().required().min(5).max(200),
+    description: Joi.string().required().min(10).max(2000)
+  }),
+
+  contactUsUpdate: Joi.object({
+    status: Joi.string().valid('new', 'in_progress', 'resolved', 'closed'),
+    priority: Joi.string().valid('low', 'medium', 'high', 'urgent'),
+    adminResponse: Joi.string().max(2000)
   })
 };
 

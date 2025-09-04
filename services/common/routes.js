@@ -644,7 +644,117 @@ router.post('/terms-conditions', verifyFirebaseToken, validate('termsConditions'
  */
 router.put('/terms-conditions/:id', verifyFirebaseToken, validate('termsConditionsUpdate'), commonController.updateTermsConditions);
 
-// Help & Support Routes
+// Admin Help Articles Management
+/**
+ * @swagger
+ * /api/common/admin/help-articles:
+ *   get:
+ *     summary: Get all help articles (Admin)
+ *     tags: [Admin - Help & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: published
+ *         schema:
+ *           type: string
+ *           enum: [true, false]
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Help articles retrieved successfully
+ */
+router.get('/admin/help-articles', verifyFirebaseToken, verifyAdmin, commonController.getAdminHelpArticles);
+
+/**
+ * @swagger
+ * /api/common/admin/help-articles:
+ *   post:
+ *     summary: Create help article (Admin)
+ *     tags: [Admin - Help & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *                 enum: [account, billing, streaming, features, content, general]
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isPublished:
+ *                 type: boolean
+ *               isFAQ:
+ *                 type: boolean
+ *               order:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Help article created successfully
+ */
+router.post('/admin/help-articles', verifyFirebaseToken, verifyAdmin, commonController.createHelpArticle);
+
+/**
+ * @swagger
+ * /api/common/admin/help-articles/{id}:
+ *   put:
+ *     summary: Update help article (Admin)
+ *     tags: [Admin - Help & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Help article updated successfully
+ */
+router.put('/admin/help-articles/:id', verifyFirebaseToken, verifyAdmin, commonController.updateHelpArticle);
+
+/**
+ * @swagger
+ * /api/common/admin/help-articles/{id}:
+ *   delete:
+ *     summary: Delete help article (Admin)
+ *     tags: [Admin - Help & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Help article deleted successfully
+ */
+router.delete('/admin/help-articles/:id', verifyFirebaseToken, verifyAdmin, commonController.deleteHelpArticle);
+
+// Public Help & Support Routes
 /**
  * @swagger
  * /api/common/help/topics:
@@ -656,6 +766,24 @@ router.put('/terms-conditions/:id', verifyFirebaseToken, validate('termsConditio
  *         description: Help topics retrieved successfully
  */
 router.get('/help/topics', commonController.getHelpTopics);
+
+/**
+ * @swagger
+ * /api/common/help/articles/{id}:
+ *   get:
+ *     summary: Get help article by ID
+ *     tags: [Help & Support]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Help article retrieved successfully
+ */
+router.get('/help/articles/:id', commonController.getHelpArticleById);
 
 /**
  * @swagger
@@ -674,7 +802,7 @@ router.get('/help/topics', commonController.getHelpTopics);
  *         name: category
  *         schema:
  *           type: string
- *           enum: [account, billing, streaming, features, content]
+ *           enum: [account, billing, streaming, features, content, general]
  *     responses:
  *       200:
  *         description: Search results retrieved successfully
@@ -692,11 +820,125 @@ router.get('/help/search', commonController.searchHelp);
  *         name: category
  *         schema:
  *           type: string
- *           enum: [account, billing, streaming, features, content]
+ *           enum: [account, billing, streaming, features, content, general]
  *     responses:
  *       200:
  *         description: FAQ retrieved successfully
  */
 router.get('/help/faq', commonController.getFAQ);
+
+// Contact Us Routes
+/**
+ * @swagger
+ * /api/common/contact-us:
+ *   post:
+ *     summary: Submit contact us form
+ *     tags: [Contact]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - subject
+ *               - description
+ *             properties:
+ *               email:
+ *                 type: string
+ *               subject:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Contact request submitted successfully
+ */
+router.post('/contact-us', validate('contactUs'), commonController.createContactUs);
+
+/**
+ * @swagger
+ * /api/common/admin/contact-us:
+ *   get:
+ *     summary: Get all contact us requests (Admin)
+ *     tags: [Admin - Contact]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [new, in_progress, resolved, closed]
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [low, medium, high, urgent]
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Contact requests retrieved successfully
+ */
+router.get('/admin/contact-us', verifyFirebaseToken, verifyAdmin, commonController.getContactUsList);
+
+/**
+ * @swagger
+ * /api/common/admin/contact-us/{id}:
+ *   get:
+ *     summary: Get contact us request by ID (Admin)
+ *     tags: [Admin - Contact]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Contact request retrieved successfully
+ */
+router.get('/admin/contact-us/:id', verifyFirebaseToken, verifyAdmin, commonController.getContactUsById);
+
+/**
+ * @swagger
+ * /api/common/admin/contact-us/{id}:
+ *   put:
+ *     summary: Update contact us request (Admin)
+ *     tags: [Admin - Contact]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [new, in_progress, resolved, closed]
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *               adminResponse:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Contact request updated successfully
+ */
+router.put('/admin/contact-us/:id', verifyFirebaseToken, verifyAdmin, validate('contactUsUpdate'), commonController.updateContactUs);
 
 module.exports = router;

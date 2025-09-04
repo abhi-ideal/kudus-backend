@@ -7,6 +7,11 @@ const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid'); // Make sure uuid is required
 const logger = require('./utils/logger'); // Fixed logger path
 
+// Assuming HelpArticle and ContactUs models are defined and imported
+// const HelpArticle = require('./models/HelpArticle');
+// const ContactUs = require('./models/ContactUs');
+
+
 const commonController = {
   // S3 Upload URL Generation
   async generateUploadUrl(req, res) {
@@ -366,7 +371,6 @@ const commonController = {
     }
   },
 
-
   // Support/Contact Form Management
   async createSupportTicket(req, res) {
     try {
@@ -400,239 +404,419 @@ const commonController = {
     }
   },
 
-  async getHelpTopics(req, res) {
+  // Help Articles Management (Admin)
+  createHelpArticle: async (req, res) => {
     try {
-      const helpTopics = [
-        {
-          id: 1,
-          title: 'Account Management',
-          description: 'Help with account settings, profile management, and subscriptions',
-          articles: [
-            { id: 1, title: 'How to change your password', url: '/help/change-password' },
-            { id: 2, title: 'Managing your subscription', url: '/help/subscription' },
-            { id: 3, title: 'Delete your account', url: '/help/delete-account' }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Streaming Issues',
-          description: 'Troubleshooting playback, buffering, and quality issues',
-          articles: [
-            { id: 4, title: 'Video won\'t play', url: '/help/video-playback' },
-            { id: 5, title: 'Poor video quality', url: '/help/video-quality' },
-            { id: 6, title: 'Buffering problems', url: '/help/buffering' }
-          ]
-        },
-        {
-          id: 3,
-          title: 'Content & Features',
-          description: 'Information about content library and platform features',
-          articles: [
-            { id: 7, title: 'How to add to watchlist', url: '/help/watchlist' },
-            { id: 8, title: 'Using parental controls', url: '/help/parental-controls' },
-            { id: 9, title: 'Content availability', url: '/help/content-availability' }
-          ]
-        },
-        {
-          id: 4,
-          title: 'Billing & Payments',
-          description: 'Payment methods, billing cycles, and refunds',
-          articles: [
-            { id: 10, title: 'Update payment method', url: '/help/payment-method' },
-            { id: 11, title: 'Understanding your bill', url: '/help/billing' },
-            { id: 12, title: 'Request a refund', url: '/help/refund' }
-          ]
-        }
-      ];
+      const { title, content, category, tags, isPublished, isFAQ, order } = req.body;
+      const adminEmail = req.user.email;
+
+      const helpArticle = await HelpArticle.create({
+        title,
+        content,
+        category: category || 'general',
+        tags: tags || [],
+        isPublished: isPublished !== undefined ? isPublished : true,
+        isFAQ: isFAQ || false,
+        order: order || 0,
+        createdBy: adminEmail
+      });
+
+      logger.info(`Admin created help article: ${helpArticle.id}`);
+
+      res.status(201).json({
+        message: 'Help article created successfully',
+        article: helpArticle
+      });
+    } catch (error) {
+      logger.error('Create help article error:', error);
+      res.status(500).json({
+        error: 'Failed to create help article',
+        message: error.message
+      });
+    }
+  },
+
+  updateHelpArticle: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, content, category, tags, isPublished, isFAQ, order } = req.body;
+      const adminEmail = req.user.email;
+
+      const helpArticle = await HelpArticle.findByPk(id);
+
+      if (!helpArticle) {
+        return res.status(404).json({
+          error: 'Help article not found'
+        });
+      }
+
+      await helpArticle.update({
+        title: title || helpArticle.title,
+        content: content || helpArticle.content,
+        category: category || helpArticle.category,
+        tags: tags !== undefined ? tags : helpArticle.tags,
+        isPublished: isPublished !== undefined ? isPublished : helpArticle.isPublished,
+        isFAQ: isFAQ !== undefined ? isFAQ : helpArticle.isFAQ,
+        order: order !== undefined ? order : helpArticle.order,
+        updatedBy: adminEmail
+      });
+
+      logger.info(`Admin updated help article: ${id}`);
 
       res.json({
-        success: true,
-        helpTopics
+        message: 'Help article updated successfully',
+        article: helpArticle
+      });
+    } catch (error) {
+      logger.error('Update help article error:', error);
+      res.status(500).json({
+        error: 'Failed to update help article',
+        message: error.message
+      });
+    }
+  },
+
+  deleteHelpArticle: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const helpArticle = await HelpArticle.findByPk(id);
+
+      if (!helpArticle) {
+        return res.status(404).json({
+          error: 'Help article not found'
+        });
+      }
+
+      await helpArticle.destroy();
+
+      logger.info(`Admin deleted help article: ${id}`);
+
+      res.json({
+        message: 'Help article deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Delete help article error:', error);
+      res.status(500).json({
+        error: 'Failed to delete help article',
+        message: error.message
+      });
+    }
+  },
+
+  getAdminHelpArticles: async (req, res) => {
+    try {
+      const { category, published, faq, limit = 20, offset = 0, search } = req.query;
+
+      const whereClause = {};
+
+      if (category) {
+        whereClause.category = category;
+      }
+
+      if (published !== undefined) {
+        whereClause.isPublished = published === 'true';
+      }
+
+      if (faq !== undefined) {
+        whereClause.isFAQ = faq === 'true';
+      }
+
+      if (search) {
+        whereClause[Op.or] = [
+          { title: { [Op.like]: `%${search}%` } },
+          { content: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows: articles } = await HelpArticle.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['order', 'ASC'], ['createdAt', 'DESC']]
+      });
+
+      res.json({
+        message: 'Help articles retrieved successfully',
+        articles,
+        pagination: {
+          total: count,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        }
+      });
+    } catch (error) {
+      logger.error('Get admin help articles error:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve help articles',
+        message: error.message
+      });
+    }
+  },
+
+  // Public Help Methods
+  getHelpTopics: async (req, res) => {
+    try {
+      const articles = await HelpArticle.findAll({
+        where: { isPublished: true },
+        attributes: ['id', 'title', 'category'],
+        order: [['order', 'ASC'], ['createdAt', 'DESC']]
+      });
+
+      const topics = articles.reduce((acc, article) => {
+        if (!acc[article.category]) {
+          acc[article.category] = {
+            title: article.category.charAt(0).toUpperCase() + article.category.slice(1),
+            articles: []
+          };
+        }
+        acc[article.category].articles.push({
+          id: article.id,
+          title: article.title
+        });
+        return acc;
+      }, {});
+
+      res.json({
+        message: 'Help topics retrieved successfully',
+        topics
       });
     } catch (error) {
       logger.error('Get help topics error:', error);
       res.status(500).json({
-        success: false,
         error: 'Failed to retrieve help topics',
         message: error.message
       });
     }
   },
 
-  async searchHelp(req, res) {
+  getHelpArticleById: async (req, res) => {
     try {
-      const { q: query, category } = req.query;
+      const { id } = req.params;
 
-      if (!query || query.length < 2) {
-        return res.status(400).json({
-          success: false,
-          error: 'Search query must be at least 2 characters long'
+      const article = await HelpArticle.findOne({
+        where: { 
+          id, 
+          isPublished: true 
+        }
+      });
+
+      if (!article) {
+        return res.status(404).json({
+          error: 'Help article not found'
         });
       }
 
-      // Mock help articles for search
-      const allArticles = [
-        { id: 1, title: 'How to change your password', content: 'Steps to update your account password', category: 'account', url: '/help/change-password' },
-        { id: 2, title: 'Managing your subscription', content: 'Information about subscription plans and billing', category: 'billing', url: '/help/subscription' },
-        { id: 3, title: 'Delete your account', content: 'How to permanently delete your account', category: 'account', url: '/help/delete-account' },
-        { id: 4, title: 'Video won\'t play', content: 'Troubleshooting video playback issues', category: 'streaming', url: '/help/video-playback' },
-        { id: 5, title: 'Poor video quality', content: 'Improving video streaming quality', category: 'streaming', url: '/help/video-quality' },
-        { id: 6, title: 'Buffering problems', content: 'Solutions for video buffering issues', category: 'streaming', url: '/help/buffering' },
-        { id: 7, title: 'How to add to watchlist', content: 'Adding content to your watchlist', category: 'features', url: '/help/watchlist' },
-        { id: 8, title: 'Using parental controls', content: 'Setting up parental controls for child profiles', category: 'features', url: '/help/parental-controls' },
-        { id: 9, title: 'Content availability', content: 'Understanding content regional availability', category: 'content', url: '/help/content-availability' },
-        { id: 10, title: 'Update payment method', content: 'How to change your payment information', category: 'billing', url: '/help/payment-method' }
-      ];
-
-      // Filter articles based on query and category
-      let filteredArticles = allArticles.filter(article => 
-        article.title.toLowerCase().includes(query.toLowerCase()) ||
-        article.content.toLowerCase().includes(query.toLowerCase())
-      );
-
-      if (category) {
-        filteredArticles = filteredArticles.filter(article => article.category === category);
-      }
+      // Increment view count
+      await article.increment('viewCount');
 
       res.json({
-        success: true,
-        query,
-        category,
-        results: filteredArticles,
-        totalResults: filteredArticles.length
+        message: 'Help article retrieved successfully',
+        article
+      });
+    } catch (error) {
+      logger.error('Get help article by ID error:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve help article',
+        message: error.message
+      });
+    }
+  },
+
+  searchHelp: async (req, res) => {
+    try {
+      const { q, category } = req.query;
+
+      if (!q || q.trim().length < 2) {
+        return res.status(400).json({
+          error: 'Search query must be at least 2 characters'
+        });
+      }
+
+      const whereClause = {
+        isPublished: true,
+        [Op.or]: [
+          { title: { [Op.like]: `%${q}%` } },
+          { content: { [Op.like]: `%${q}%` } }
+        ]
+      };
+
+      if (category) {
+        whereClause.category = category;
+      }
+
+      const articles = await HelpArticle.findAll({
+        where: whereClause,
+        attributes: ['id', 'title', 'content', 'category'],
+        order: [['viewCount', 'DESC'], ['createdAt', 'DESC']]
+      });
+
+      res.json({
+        message: 'Search completed successfully',
+        query: q,
+        category: category || 'all',
+        results: articles.map(article => ({
+          ...article.toJSON(),
+          content: article.content.substring(0, 200) + '...'
+        })),
+        total: articles.length
       });
     } catch (error) {
       logger.error('Search help error:', error);
       res.status(500).json({
-        success: false,
         error: 'Failed to search help articles',
         message: error.message
       });
     }
   },
 
-  async getFAQ(req, res) {
+  getFAQ: async (req, res) => {
     try {
-      const faqs = [
-        {
-          id: 1,
-          question: 'How much does the service cost?',
-          answer: 'We offer multiple subscription plans starting from $9.99/month for basic access to our content library.',
-          category: 'billing'
-        },
-        {
-          id: 2,
-          question: 'Can I watch on multiple devices?',
-          answer: 'Yes, you can stream on multiple devices. The number of simultaneous streams depends on your subscription plan.',
-          category: 'streaming'
-        },
-        {
-          id: 3,
-          question: 'Is there a free trial available?',
-          answer: 'Yes, we offer a 7-day free trial for new subscribers. You can cancel anytime during the trial period.',
-          category: 'billing'
-        },
-        {
-          id: 4,
-          question: 'How do I cancel my subscription?',
-          answer: 'You can cancel your subscription anytime from your account settings under the subscription management section.',
-          category: 'account'
-        },
-        {
-          id: 5,
-          question: 'What devices are supported?',
-          answer: 'Our service works on smart TVs, smartphones, tablets, computers, and streaming devices like Roku and Chromecast.',
-          category: 'streaming'
-        }
-      ];
-
       const { category } = req.query;
-      let filteredFAQs = faqs;
+
+      const whereClause = {
+        isPublished: true,
+        isFAQ: true
+      };
 
       if (category) {
-        filteredFAQs = faqs.filter(faq => faq.category === category);
+        whereClause.category = category;
       }
 
+      const faqs = await HelpArticle.findAll({
+        where: whereClause,
+        attributes: ['id', 'title', 'content', 'category'],
+        order: [['order', 'ASC'], ['viewCount', 'DESC']]
+      });
+
       res.json({
-        success: true,
-        faqs: filteredFAQs
+        message: 'FAQ retrieved successfully',
+        category: category || 'all',
+        faqs: faqs.map(faq => ({
+          id: faq.id,
+          question: faq.title,
+          answer: faq.content,
+          category: faq.category
+        }))
       });
     } catch (error) {
       logger.error('Get FAQ error:', error);
       res.status(500).json({
-        success: false,
         error: 'Failed to retrieve FAQ',
         message: error.message
       });
     }
   },
 
-  async getSupportTickets(req, res) {
+  // Contact Us Methods
+  createContactUs: async (req, res) => {
     try {
-      const { status, category, limit = 50, offset = 0 } = req.query;
+      const { email, subject, description } = req.body;
+
+      const contactUs = await ContactUs.create({
+        email,
+        subject,
+        description
+      });
+
+      logger.info(`New contact us submission: ${contactUs.id} from ${email}`);
+
+      res.status(201).json({
+        message: 'Contact request submitted successfully',
+        id: contactUs.id
+      });
+    } catch (error) {
+      logger.error('Create contact us error:', error);
+      res.status(500).json({
+        error: 'Failed to submit contact request',
+        message: error.message
+      });
+    }
+  },
+
+  getContactUsList: async (req, res) => {
+    try {
+      const { status, priority, limit = 20, offset = 0, search } = req.query;
 
       const whereClause = {};
 
-      if (status) whereClause.status = status;
-      if (category) whereClause.category = category;
+      if (status) {
+        whereClause.status = status;
+      }
 
-      const tickets = await Support.findAndCountAll({
+      if (priority) {
+        whereClause.priority = priority;
+      }
+
+      if (search) {
+        whereClause[Op.or] = [
+          { email: { [Op.like]: `%${search}%` } },
+          { subject: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows: contacts } = await ContactUs.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']],
-        attributes: { exclude: ['adminResponse'] }
+        order: [['createdAt', 'DESC']]
       });
 
-      res.status(200).json({
-        tickets: tickets.rows,
-        total: tickets.count,
-        limit: parseInt(limit),
-        offset: parseInt(offset)
+      res.json({
+        message: 'Contact requests retrieved successfully',
+        contacts,
+        pagination: {
+          total: count,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        }
       });
     } catch (error) {
-      console.error('Get support tickets error:', error);
+      logger.error('Get contact us list error:', error);
       res.status(500).json({
-        error: 'Failed to retrieve support tickets',
+        error: 'Failed to retrieve contact requests',
         message: error.message
       });
     }
   },
 
-  async getSupportTicketById(req, res) {
+  getContactUsById: async (req, res) => {
     try {
       const { id } = req.params;
 
-      const ticket = await Support.findByPk(id);
+      const contact = await ContactUs.findByPk(id);
 
-      if (!ticket) {
+      if (!contact) {
         return res.status(404).json({
-          error: 'Support ticket not found',
-          message: 'The requested support ticket does not exist'
+          error: 'Contact request not found'
         });
       }
 
-      res.status(200).json({ ticket });
+      res.json({
+        message: 'Contact request retrieved successfully',
+        contact
+      });
     } catch (error) {
-      console.error('Get support ticket error:', error);
+      logger.error('Get contact us by ID error:', error);
       res.status(500).json({
-        error: 'Failed to retrieve support ticket',
+        error: 'Failed to retrieve contact request',
         message: error.message
       });
     }
   },
 
-  async updateSupportTicket(req, res) {
+  updateContactUs: async (req, res) => {
     try {
       const { id } = req.params;
       const { status, priority, adminResponse } = req.body;
+      const adminEmail = req.user.email;
 
-      const ticket = await Support.findByPk(id);
+      const contact = await ContactUs.findByPk(id);
 
-      if (!ticket) {
+      if (!contact) {
         return res.status(404).json({
-          error: 'Support ticket not found',
-          message: 'The requested support ticket does not exist'
+          error: 'Contact request not found'
         });
       }
 
@@ -640,22 +824,24 @@ const commonController = {
 
       if (status) updateData.status = status;
       if (priority) updateData.priority = priority;
-      if (adminResponse) updateData.adminResponse = adminResponse;
-
-      if (status === 'resolved' || status === 'closed') {
-        updateData.resolvedAt = new Date();
+      if (adminResponse) {
+        updateData.adminResponse = adminResponse;
+        updateData.respondedBy = adminEmail;
+        updateData.respondedAt = new Date();
       }
 
-      await ticket.update(updateData);
+      await contact.update(updateData);
 
-      res.status(200).json({
-        message: 'Support ticket updated successfully',
-        ticket
+      logger.info(`Admin updated contact request: ${id}`);
+
+      res.json({
+        message: 'Contact request updated successfully',
+        contact
       });
     } catch (error) {
-      console.error('Update support ticket error:', error);
+      logger.error('Update contact us error:', error);
       res.status(500).json({
-        error: 'Failed to update support ticket',
+        error: 'Failed to update contact request',
         message: error.message
       });
     }
