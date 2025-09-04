@@ -9,8 +9,10 @@ import Login from './pages/Login';
 import ContentDetails from './pages/ContentDetails';
 import UserDetails from './pages/UserDetails';
 import Genres from './pages/Genres';
-import ContentItems from './pages/ContentItems';
-import ContentMappings from './pages/ContentMappings';
+import FAQ from './pages/FAQ';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -40,8 +42,11 @@ function App() {
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
                       <Route path="/content-mappings" element={<ContentMappings />} />
-                      <Route path="/genres" element={<Genres />} /> {/* Added route for Genres */}
-                      <Route path="/content-items" element={<ContentItems />} />
+                      <Route path="/genres" element={<Genres />} />
+                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/contact-us" element={<ContactUs />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/terms-conditions" element={<TermsConditions />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

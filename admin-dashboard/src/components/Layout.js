@@ -11,6 +11,7 @@ import {
   MenuUnfoldOutlined,
   AppstoreOutlined,
   LinkOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -77,7 +78,20 @@ const Layout = ({ children }) => {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          items={menuItems}
+          items={[
+            ...menuItems,
+            {
+              key: 'support',
+              icon: <QuestionCircleOutlined />,
+              label: 'Support & Legal',
+              children: [
+                { key: '/faq', label: <Link to="/faq">FAQ Management</Link> },
+                { key: '/contact-us', label: <Link to="/contact-us">Contact Us</Link> },
+                { key: '/privacy-policy', label: <Link to="/privacy-policy">Privacy Policy</Link> },
+                { key: '/terms-conditions', label: <Link to="/terms-conditions">Terms & Conditions</Link> },
+              ],
+            },
+          ]}
           onClick={handleMenuClick}
         />
       </Sider>

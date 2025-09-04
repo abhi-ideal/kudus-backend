@@ -105,9 +105,9 @@ const adminEndpoints = {
   getUserActivity: (userId, params = {}) =>
     userAPI.get(`/users/${userId}/activity`, { params }),
 
-  getUserStatistics: () => userAPI.get('/users/statistics'),
+  getUserStatistics: () => userAPI.get('/admin/users/statistics'),
 
-  // Content API
+  // Content management
   getContent: (params) => contentAPI.get('/content', { params }),
   getContentById: (contentId) => contentAPI.get(`/content/${contentId}`),
   createContent: (data) => contentAPI.post('/content', data),
@@ -159,6 +159,34 @@ const adminEndpoints = {
   createContentMapping: (data) => contentAPI.post('/mappings', data),
   updateContentMapping: (id, data) => contentAPI.put(`/mappings/${id}`, data),
   deleteContentMapping: (id) => contentAPI.delete(`/mappings/${id}`),
+
+  // FAQ Management Endpoints
+  getFaqs: (params) => commonAPI.get('/admin/faqs', { params }),
+  getFaqById: (id) => commonAPI.get(`/admin/faqs/${id}`),
+  createFaq: (data) => commonAPI.post('/admin/faqs', data),
+  updateFaq: (id, data) => commonAPI.put(`/admin/faqs/${id}`, data),
+  deleteFaq: (id) => commonAPI.delete(`/admin/faqs/${id}`),
+
+  // Contact Us Management Endpoints
+  getContactUsEntries: (params) => commonAPI.get('/admin/contact-us', { params }),
+  getContactUsEntryById: (id) => commonAPI.get(`/admin/contact-us/${id}`),
+  updateContactUsEntry: (id, data) => commonAPI.put(`/admin/contact-us/${id}`, data),
+  deleteContactUsEntry: (id) => commonAPI.delete(`/admin/contact-us/${id}`),
+
+  // Privacy Policy Management Endpoints
+  getPrivacyPolicy: () => commonAPI.get('/admin/privacy-policy'),
+  updatePrivacyPolicy: (data) => commonAPI.put('/admin/privacy-policy', data),
+
+  // Terms & Conditions Management Endpoints
+  getTermsAndConditions: () => commonAPI.get('/admin/terms-and-conditions'),
+  updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-and-conditions', data),
+
+
+  // Generic HTTP methods
+  get: (url, config) => api.get(url, config),
+  post: (url, data, config) => api.post(url, data, config),
+  put: (url, data, config) => api.put(url, data, config),
+  delete: (url, config) => api.delete(url, config),
 };
 
 // Content Items API (for drag and drop functionality)
