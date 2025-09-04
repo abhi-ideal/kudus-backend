@@ -182,11 +182,11 @@ const adminEndpoints = {
   updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-and-conditions', data),
 
 
-  // Generic HTTP methods
-  get: (url, config) => api.get(url, config),
-  post: (url, data, config) => api.post(url, data, config),
-  put: (url, data, config) => api.put(url, data, config),
-  delete: (url, config) => api.delete(url, config),
+  // Generic HTTP methods - using commonAPI as fallback
+  get: (url, config) => commonAPI.get(url, config),
+  post: (url, data, config) => commonAPI.post(url, data, config),
+  put: (url, data, config) => commonAPI.put(url, data, config),
+  delete: (url, config) => commonAPI.delete(url, config),
 };
 
 // Content Items API (for drag and drop functionality)
