@@ -86,6 +86,117 @@ router.get('/kids', checkGeoRestriction, contentController.getKidsContent);
 
 /**
  * @swagger
+ * /api/content/search:
+ *   get:
+ *     summary: Search content by title, description, cast, or director
+ *     tags: [Content]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query (minimum 2 characters)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           description: Comma-separated content types (movie,series,documentary)
+ *       - in: query
+ *         name: genre
+ *         schema:
+ *           type: string
+ *           description: Comma-separated genres
+ *       - in: query
+ *         name: ageRating
+ *         schema:
+ *           type: string
+ *           description: Comma-separated age ratings (G,PG,PG-13,R)
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: releaseYear
+ *         schema:
+ *           type: string
+ *           description: Single year (2023) or range (2020-2023)
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [relevance, title, releaseYear, createdAt, viewCount]
+ *           default: relevance
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
+ *     responses:
+ *       200:
+ *         description: Search results retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     searchResults:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     searchQuery:
+ *                       type: string
+ *                     filters:
+ *                       type: object
+ *                     pagination:
+ *                       type: object
+ *       400:
+ *         description: Invalid search query
+ */
+router.get('/search', checkGeoRestriction, contentController.searchContent);
+
+/**
+ * @swagger
+ * /api/content/search/suggestions:
+ *   get:
+ *     summary: Get search suggestions for autocomplete
+ *     tags: [Content]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query for suggestions
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Search suggestions retrieved successfully
+ */
+router.get('/search/suggestions', checkGeoRestriction, contentController.getSearchSuggestions);
+
+/**
+ * @swagger
  * /api/content/featured:
  *   get:
  *     summary: Get featured content

@@ -361,4 +361,32 @@ router.put('/feed/:feedItemId/viewed', verifyFirebaseToken, controller.markFeedV
  */
 router.post('/logout', controller.logout);
 
+/**
+ * @swagger
+ * /api/users/delete-account:
+ *   delete:
+ *     summary: Delete user account permanently
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               confirmPassword:
+ *                 type: string
+ *                 description: Confirmation password (optional)
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Failed to delete account
+ */
+router.delete('/delete-account', verifyFirebaseToken, controller.deleteAccount);
+
 module.exports = router;

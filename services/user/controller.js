@@ -4,6 +4,7 @@ const UserProfile = require('./models/UserProfile');
 const UserFeed = require('./models/UserFeed');
 const WatchHistory = require('./models/WatchHistory');
 const logger = require('./utils/logger');
+const admin = require('./firebaseAdmin'); // Assuming firebaseAdmin is set up elsewhere
 
 // Define associations
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
@@ -1031,6 +1032,53 @@ const controller = {
         message: 'Failed to get user activity'
       });
     }
+  },
+
+  async deleteAccount(req, res) {
+    try {
+      const userId = req.user.uid;
+      const { confirmPassword } = req.body;
+
+      // Find user
+      const user = await User.findOne({ where: { firebaseUid: userId } });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      // Delete related data
+      await UserProfile.destroy({ where: { userId: user.id } });
+      await WatchHistory.destroy({ where: { userId: user.id } });
+      await UserFeed.destroy({ where: { profileId: user.id } }); // Assuming UserFeed is related to profileId
+
+      // Delete user record
+      await user.destroy();
+
+      // Delete from Firebase Auth
+      try {
+        await admin.auth().deleteUser(userId);
+      } catch (firebaseError) {
+        logger.error('Firebase delete user error:', firebaseError);
+        // Continue even if Firebase deletion fails
+      }
+
+      logger.info(`User account deleted: ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Account deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Delete account error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete account',
+        message: error.message
+      });
+    }
   }
 };
 
@@ -1060,5 +1108,6 @@ module.exports = {
   updateUserSubscription: controller.updateUserSubscription,
   getUserStatistics: controller.getUserStatistics,
   getUserActivity: controller.getUserActivity,
-  logout: controller.logout
+  logout: controller.logout,
+  deleteAccount: controller.deleteAccount
 };

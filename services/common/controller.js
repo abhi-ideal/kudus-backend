@@ -4,6 +4,8 @@ const PrivacyPolicy = require('./models/PrivacyPolicy');
 const TermsConditions = require('./models/TermsConditions');
 const s3Service = require('./services/s3Service');
 const { Op } = require('sequelize');
+const { v4: uuidv4 } = require('uuid'); // Make sure uuid is required
+const logger = require('./logger'); // Assuming a logger is available
 
 const commonController = {
   // S3 Upload URL Generation
@@ -365,42 +367,201 @@ const commonController = {
   },
 
 
-  // Support/Contact Form Operations
+  // Support/Contact Form Management
   async createSupportTicket(req, res) {
     try {
       const { name, email, subject, message, category = 'general' } = req.body;
 
-      if (!name || !email || !subject || !message) {
-        return res.status(400).json({
-          error: 'Missing required fields',
-          message: 'name, email, subject, and message are required'
-        });
-      }
-
-      const supportTicket = await Support.create({
+      const ticket = await Support.create({
+        id: uuidv4(),
         name,
         email,
         subject,
         message,
-        category
+        category,
+        status: 'open',
+        priority: 'medium'
       });
 
+      logger.info(`Support ticket created: ${ticket.id}`);
+
       res.status(201).json({
+        success: true,
         message: 'Support ticket created successfully',
-        ticket: {
-          id: supportTicket.id,
-          name: supportTicket.name,
-          email: supportTicket.email,
-          subject: supportTicket.subject,
-          category: supportTicket.category,
-          status: supportTicket.status,
-          createdAt: supportTicket.createdAt
-        }
+        ticketId: ticket.id
       });
     } catch (error) {
-      console.error('Create support ticket error:', error);
+      logger.error('Create support ticket error:', error);
       res.status(500).json({
+        success: false,
         error: 'Failed to create support ticket',
+        message: error.message
+      });
+    }
+  },
+
+  async getHelpTopics(req, res) {
+    try {
+      const helpTopics = [
+        {
+          id: 1,
+          title: 'Account Management',
+          description: 'Help with account settings, profile management, and subscriptions',
+          articles: [
+            { id: 1, title: 'How to change your password', url: '/help/change-password' },
+            { id: 2, title: 'Managing your subscription', url: '/help/subscription' },
+            { id: 3, title: 'Delete your account', url: '/help/delete-account' }
+          ]
+        },
+        {
+          id: 2,
+          title: 'Streaming Issues',
+          description: 'Troubleshooting playback, buffering, and quality issues',
+          articles: [
+            { id: 4, title: 'Video won\'t play', url: '/help/video-playback' },
+            { id: 5, title: 'Poor video quality', url: '/help/video-quality' },
+            { id: 6, title: 'Buffering problems', url: '/help/buffering' }
+          ]
+        },
+        {
+          id: 3,
+          title: 'Content & Features',
+          description: 'Information about content library and platform features',
+          articles: [
+            { id: 7, title: 'How to add to watchlist', url: '/help/watchlist' },
+            { id: 8, title: 'Using parental controls', url: '/help/parental-controls' },
+            { id: 9, title: 'Content availability', url: '/help/content-availability' }
+          ]
+        },
+        {
+          id: 4,
+          title: 'Billing & Payments',
+          description: 'Payment methods, billing cycles, and refunds',
+          articles: [
+            { id: 10, title: 'Update payment method', url: '/help/payment-method' },
+            { id: 11, title: 'Understanding your bill', url: '/help/billing' },
+            { id: 12, title: 'Request a refund', url: '/help/refund' }
+          ]
+        }
+      ];
+
+      res.json({
+        success: true,
+        helpTopics
+      });
+    } catch (error) {
+      logger.error('Get help topics error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve help topics',
+        message: error.message
+      });
+    }
+  },
+
+  async searchHelp(req, res) {
+    try {
+      const { q: query, category } = req.query;
+
+      if (!query || query.length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'Search query must be at least 2 characters long'
+        });
+      }
+
+      // Mock help articles for search
+      const allArticles = [
+        { id: 1, title: 'How to change your password', content: 'Steps to update your account password', category: 'account', url: '/help/change-password' },
+        { id: 2, title: 'Managing your subscription', content: 'Information about subscription plans and billing', category: 'billing', url: '/help/subscription' },
+        { id: 3, title: 'Delete your account', content: 'How to permanently delete your account', category: 'account', url: '/help/delete-account' },
+        { id: 4, title: 'Video won\'t play', content: 'Troubleshooting video playback issues', category: 'streaming', url: '/help/video-playback' },
+        { id: 5, title: 'Poor video quality', content: 'Improving video streaming quality', category: 'streaming', url: '/help/video-quality' },
+        { id: 6, title: 'Buffering problems', content: 'Solutions for video buffering issues', category: 'streaming', url: '/help/buffering' },
+        { id: 7, title: 'How to add to watchlist', content: 'Adding content to your watchlist', category: 'features', url: '/help/watchlist' },
+        { id: 8, title: 'Using parental controls', content: 'Setting up parental controls for child profiles', category: 'features', url: '/help/parental-controls' },
+        { id: 9, title: 'Content availability', content: 'Understanding content regional availability', category: 'content', url: '/help/content-availability' },
+        { id: 10, title: 'Update payment method', content: 'How to change your payment information', category: 'billing', url: '/help/payment-method' }
+      ];
+
+      // Filter articles based on query and category
+      let filteredArticles = allArticles.filter(article => 
+        article.title.toLowerCase().includes(query.toLowerCase()) ||
+        article.content.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (category) {
+        filteredArticles = filteredArticles.filter(article => article.category === category);
+      }
+
+      res.json({
+        success: true,
+        query,
+        category,
+        results: filteredArticles,
+        totalResults: filteredArticles.length
+      });
+    } catch (error) {
+      logger.error('Search help error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to search help articles',
+        message: error.message
+      });
+    }
+  },
+
+  async getFAQ(req, res) {
+    try {
+      const faqs = [
+        {
+          id: 1,
+          question: 'How much does the service cost?',
+          answer: 'We offer multiple subscription plans starting from $9.99/month for basic access to our content library.',
+          category: 'billing'
+        },
+        {
+          id: 2,
+          question: 'Can I watch on multiple devices?',
+          answer: 'Yes, you can stream on multiple devices. The number of simultaneous streams depends on your subscription plan.',
+          category: 'streaming'
+        },
+        {
+          id: 3,
+          question: 'Is there a free trial available?',
+          answer: 'Yes, we offer a 7-day free trial for new subscribers. You can cancel anytime during the trial period.',
+          category: 'billing'
+        },
+        {
+          id: 4,
+          question: 'How do I cancel my subscription?',
+          answer: 'You can cancel your subscription anytime from your account settings under the subscription management section.',
+          category: 'account'
+        },
+        {
+          id: 5,
+          question: 'What devices are supported?',
+          answer: 'Our service works on smart TVs, smartphones, tablets, computers, and streaming devices like Roku and Chromecast.',
+          category: 'streaming'
+        }
+      ];
+
+      const { category } = req.query;
+      let filteredFAQs = faqs;
+
+      if (category) {
+        filteredFAQs = faqs.filter(faq => faq.category === category);
+      }
+
+      res.json({
+        success: true,
+        faqs: filteredFAQs
+      });
+    } catch (error) {
+      logger.error('Get FAQ error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve FAQ',
         message: error.message
       });
     }
@@ -785,7 +946,7 @@ const commonController = {
       }
 
       const s3Service = require('./services/s3Service');
-      
+
       // Generate unique file path
       const timestamp = Date.now();
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');

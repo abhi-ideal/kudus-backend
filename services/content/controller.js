@@ -1601,7 +1601,7 @@ const contentController = {
         } else {
           where[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
         }
-        
+
         console.log('Applied child profile genre filter for featured content');
       }
 
@@ -2101,7 +2101,7 @@ const contentController = {
       // Apply content filtering for child profiles
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
           `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
@@ -2202,7 +2202,7 @@ const contentController = {
       // Apply content filtering for child profiles
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
           `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
@@ -2316,7 +2316,7 @@ const contentController = {
       // Apply content filtering for child profiles
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
           `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
@@ -2442,7 +2442,7 @@ const contentController = {
       // Apply content filtering for child profiles
       if (req.contentFilter && req.contentFilter.excludeAdultContent) {
         where.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
           `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
@@ -2523,7 +2523,269 @@ const contentController = {
         message: error.message
       });
     }
-  }
+  },
+
+  async searchContent(req, res) {
+    try {
+      const {
+        q: query,
+        page = 1,
+        limit = 20,
+        type,
+        genre,
+        ageRating,
+        language,
+        releaseYear,
+        sortBy = 'relevance',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      if (!query || query.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          error: 'Search query must be at least 2 characters long'
+        });
+      }
+
+      const offset = (page - 1) * limit;
+      const searchTerm = query.trim();
+
+      // Build where conditions
+      const where = {
+        isActive: true,
+        [Op.and]: []
+      };
+
+      // Search in title, description, director, and cast
+      const searchCondition = {
+        [Op.or]: [
+          { title: { [Op.like]: `%${searchTerm}%` } },
+          { description: { [Op.like]: `%${searchTerm}%` } },
+          { director: { [Op.like]: `%${searchTerm}%` } }
+        ]
+      };
+
+      // Search in cast array (JSON field)
+      if (sequelize.getDialect() === 'mysql') {
+        searchCondition[Op.or].push(
+          Sequelize.literal(`JSON_SEARCH(LOWER(cast), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`)
+        );
+      }
+
+      where[Op.and].push(searchCondition);
+
+      // Apply filters
+      if (type) {
+        const typeArray = type.split(',').map(t => t.trim());
+        where.type = { [Op.in]: typeArray };
+      }
+
+      if (genre) {
+        const genreArray = genre.split(',').map(g => g.trim());
+        const genreConditions = genreArray.map(g => 
+          `JSON_CONTAINS(LOWER(genre), JSON_QUOTE('${g.toLowerCase()}'))`
+        );
+
+        where[Op.and].push(Sequelize.literal(`(${genreConditions.join(' OR ')})`));
+      }
+
+      if (ageRating) {
+        const ageRatingArray = ageRating.split(',').map(ar => ar.trim());
+        where.ageRating = { [Op.in]: ageRatingArray };
+      }
+
+      if (language) {
+        where.language = language;
+      }
+
+      if (releaseYear) {
+        if (releaseYear.includes('-')) {
+          const [startYear, endYear] = releaseYear.split('-').map(y => parseInt(y.trim()));
+          where.releaseYear = { [Op.between]: [startYear, endYear] };
+        } else {
+          where.releaseYear = parseInt(releaseYear);
+        }
+      }
+
+      // Handle geo restrictions if user is available
+      if (req.userCountry && req.userCountry !== 'US') {
+        where[Op.and].push({
+          [Op.or]: [
+            { isGloballyAvailable: true },
+            { 
+              [Op.and]: [
+                Sequelize.literal(`JSON_CONTAINS(availableCountries, JSON_QUOTE('${req.userCountry}'))`),
+                { 
+                  [Op.or]: [
+                    { restrictedCountries: { [Op.is]: null } },
+                    Sequelize.literal(`NOT JSON_CONTAINS(restrictedCountries, JSON_QUOTE('${req.userCountry}'))`)
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+
+      // Child profile filtering
+      if (req.activeProfile?.isChild) {
+        where.showOnChildProfile = true;
+        where.ageRating = { [Op.in]: ['G', 'PG'] };
+      }
+
+      // Build order clause
+      let order = [];
+
+      if (sortBy === 'relevance') {
+        // Relevance scoring: exact title matches first, then partial matches
+        order = [
+          [
+            Sequelize.literal(`
+              CASE 
+                WHEN LOWER(title) = '${searchTerm.toLowerCase()}' THEN 1
+                WHEN LOWER(title) LIKE '${searchTerm.toLowerCase()}%' THEN 2
+                WHEN LOWER(title) LIKE '%${searchTerm.toLowerCase()}%' THEN 3
+                ELSE 4
+              END
+            `),
+            'ASC'
+          ],
+          ['createdAt', 'DESC']
+        ];
+      } else {
+        const validSortBy = ['title', 'releaseYear', 'createdAt', 'viewCount'];
+        const sortField = validSortBy.includes(sortBy) ? sortBy : 'createdAt';
+        order = [[sortField, sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC']];
+      }
+
+      const { count, rows } = await Content.findAndCountAll({
+        where,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order,
+        include: [
+          {
+            model: Season,
+            as: 'seasons',
+            required: false,
+            include: [{ 
+              model: Episode, 
+              as: 'episodes',
+              required: false,
+              limit: 1 // Only get first episode for preview
+            }]
+          }
+        ]
+      });
+
+      // Add search highlights to results
+      const highlightedResults = rows.map(content => {
+        const contentData = content.toJSON();
+
+        // Highlight search term in title and description
+        const highlightText = (text) => {
+          if (!text) return text;
+          const regex = new RegExp(`(${searchTerm})`, 'gi');
+          return text.replace(regex, '<mark>$1</mark>');
+        };
+
+        contentData.highlightedTitle = highlightText(contentData.title);
+        contentData.highlightedDescription = highlightText(contentData.description);
+
+        return contentData;
+      });
+
+      res.json({
+        success: true,
+        data: {
+          searchResults: highlightedResults,
+          searchQuery: searchTerm,
+          filters: {
+            type: type || null,
+            genre: genre || null,
+            ageRating: ageRating || null,
+            language: language || null,
+            releaseYear: releaseYear || null
+          },
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(count / limit),
+            totalItems: count,
+            itemsPerPage: parseInt(limit),
+            hasNext: page * limit < count,
+            hasPrevious: page > 1
+          },
+          sortBy,
+          sortOrder
+        }
+      });
+    } catch (error) {
+      logger.error('Search content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to search content',
+        message: error.message
+      });
+    }
+  },
+
+  async getSearchSuggestions(req, res) {
+    try {
+      const { q: query, limit = 10 } = req.query;
+
+      if (!query || query.trim().length < 1) {
+        return res.json({
+          success: true,
+          suggestions: []
+        });
+      }
+
+      const searchTerm = query.trim();
+
+      // Get content titles and directors for suggestions
+      const suggestions = await Content.findAll({
+        where: {
+          isActive: true,
+          [Op.or]: [
+            { title: { [Op.like]: `${searchTerm}%` } },
+            { director: { [Op.like]: `${searchTerm}%` } }
+          ]
+        },
+        attributes: ['title', 'director', 'type'],
+        limit: parseInt(limit),
+        order: [['title', 'ASC']]
+      });
+
+      // Extract unique suggestions
+      const suggestionSet = new Set();
+
+      suggestions.forEach(content => {
+        if (content.title.toLowerCase().startsWith(searchTerm.toLowerCase())) {
+          suggestionSet.add(content.title);
+        }
+        if (content.director && content.director.toLowerCase().startsWith(searchTerm.toLowerCase())) {
+          suggestionSet.add(content.director);
+        }
+      });
+
+      const suggestionArray = Array.from(suggestionSet).slice(0, parseInt(limit));
+
+      res.json({
+        success: true,
+        suggestions: suggestionArray.map(suggestion => ({
+          text: suggestion,
+          type: 'content'
+        }))
+      });
+    } catch (error) {
+      logger.error('Get search suggestions error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get search suggestions',
+        message: error.message
+      });
+    }
+  },
 };
 
 module.exports = {
@@ -2563,5 +2825,7 @@ module.exports = {
   getUpcomingSoon: contentController.getUpcomingSoon,
   getEveryonesWatching: contentController.getEveryonesWatching,
   getTop10Series: contentController.getTop10Series,
-  getTop10Movies: contentController.getTop10Movies
+  getTop10Movies: contentController.getTop10Movies,
+  searchContent: contentController.searchContent,
+  getSearchSuggestions: contentController.getSearchSuggestions
 };

@@ -644,4 +644,59 @@ router.post('/terms-conditions', verifyFirebaseToken, validate('termsConditions'
  */
 router.put('/terms-conditions/:id', verifyFirebaseToken, validate('termsConditionsUpdate'), commonController.updateTermsConditions);
 
+// Help & Support Routes
+/**
+ * @swagger
+ * /api/common/help/topics:
+ *   get:
+ *     summary: Get help topics and articles
+ *     tags: [Help & Support]
+ *     responses:
+ *       200:
+ *         description: Help topics retrieved successfully
+ */
+router.get('/help/topics', commonController.getHelpTopics);
+
+/**
+ * @swagger
+ * /api/common/help/search:
+ *   get:
+ *     summary: Search help articles
+ *     tags: [Help & Support]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [account, billing, streaming, features, content]
+ *     responses:
+ *       200:
+ *         description: Search results retrieved successfully
+ */
+router.get('/help/search', commonController.searchHelp);
+
+/**
+ * @swagger
+ * /api/common/help/faq:
+ *   get:
+ *     summary: Get frequently asked questions
+ *     tags: [Help & Support]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [account, billing, streaming, features, content]
+ *     responses:
+ *       200:
+ *         description: FAQ retrieved successfully
+ */
+router.get('/help/faq', commonController.getFAQ);
+
 module.exports = router;
