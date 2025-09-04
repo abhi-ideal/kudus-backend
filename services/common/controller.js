@@ -5,7 +5,7 @@ const TermsConditions = require('./models/TermsConditions');
 const s3Service = require('./services/s3Service');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid'); // Make sure uuid is required
-const logger = require('./logger'); // Assuming a logger is available
+const logger = require('./utils/logger'); // Fixed logger path
 
 const commonController = {
   // S3 Upload URL Generation
