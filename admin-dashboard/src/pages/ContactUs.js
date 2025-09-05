@@ -1,28 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
+  Card,
   Button,
   Modal,
   Form,
   Input,
   Select,
-  Space,
-  message,
   Tag,
   Typography,
-  Card,
   Row,
   Col,
-  Badge,
-  Descriptions,
+  message,
+  Space,
+  Descriptions
 } from 'antd';
-import {
-  EyeOutlined,
-  EditOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { EyeOutlined, MessageOutlined, ReloadOutlined } from '@ant-design/icons';
+import { commonAPI } from '../utils/api';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -43,7 +37,8 @@ const ContactUs = () => {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/contact-us');
+      // Changed API endpoint from '/contact-us' to '/admin/contact-us'
+      const response = await commonAPI.get('/admin/contact-us');
       setTickets(response.data.tickets || []);
     } catch (error) {
       message.error('Failed to load support tickets');
@@ -55,7 +50,12 @@ const ContactUs = () => {
 
   const handleResponse = async (values) => {
     try {
-      await adminAPI.put(`/contact-us/${selectedTicket.id}`, values);
+      // Changed API endpoint and structure for response
+      await commonAPI.put(`/admin/contact-us/${selectedTicket.id}`, {
+        status: values.status,
+        priority: values.priority,
+        adminResponse: values.adminResponse
+      });
       message.success('Response sent successfully');
       setResponseModalVisible(false);
       setSelectedTicket(null);
