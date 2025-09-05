@@ -8,7 +8,7 @@ const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http:/
 const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
 const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
 const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006/api';
-const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007/api/common';
+const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://localhost:3007/api/common';
 
 // Create service-specific API instances
 const createServiceAPI = (baseURL) => axios.create({
@@ -160,12 +160,12 @@ const adminEndpoints = {
   updateContentMapping: (id, data) => contentAPI.put(`/mappings/${id}`, data),
   deleteContentMapping: (id) => contentAPI.delete(`/mappings/${id}`),
 
-  // FAQ Management Endpoints
-  getFaqs: (params) => commonAPI.get('/admin/faqs', { params }),
-  getFaqById: (id) => commonAPI.get(`/admin/faqs/${id}`),
-  createFaq: (data) => commonAPI.post('/admin/faqs', data),
-  updateFaq: (id, data) => commonAPI.put(`/admin/faqs/${id}`, data),
-  deleteFaq: (id) => commonAPI.delete(`/admin/faqs/${id}`),
+  // FAQ Management Endpoints - using help-articles endpoint from routes
+  getFaqs: (params) => commonAPI.get('/admin/help-articles', { params: { ...params, isFAQ: true } }),
+  getFaqById: (id) => commonAPI.get(`/admin/help-articles/${id}`),
+  createFaq: (data) => commonAPI.post('/admin/help-articles', { ...data, isFAQ: true }),
+  updateFaq: (id, data) => commonAPI.put(`/admin/help-articles/${id}`, data),
+  deleteFaq: (id) => commonAPI.delete(`/admin/help-articles/${id}`),
 
   // Contact Us Management Endpoints
   getContactUsEntries: (params) => commonAPI.get('/admin/contact-us', { params }),
@@ -174,12 +174,12 @@ const adminEndpoints = {
   deleteContactUsEntry: (id) => commonAPI.delete(`/admin/contact-us/${id}`),
 
   // Privacy Policy Management Endpoints
-  getPrivacyPolicy: () => commonAPI.get('/admin/privacy-policy'),
-  updatePrivacyPolicy: (data) => commonAPI.put('/admin/privacy-policy', data),
+  getPrivacyPolicy: () => commonAPI.get('/admin/privacy-policies'),
+  updatePrivacyPolicy: (data) => commonAPI.put('/admin/privacy-policies', data),
 
   // Terms & Conditions Management Endpoints
   getTermsConditions: () => commonAPI.get('/admin/terms-conditions-list'),
-  updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-and-conditions', data),
+  updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-conditions', data),
 
 
   // Generic HTTP methods - using commonAPI as fallback

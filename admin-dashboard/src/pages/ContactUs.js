@@ -37,7 +37,7 @@ const ContactUs = () => {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      // Changed API endpoint from '/contact-us' to '/admin/contact-us'
+      // Use correct endpoint without duplicate admin prefix
       const response = await commonAPI.get('/admin/contact-us');
       setTickets(response.data.tickets || []);
     } catch (error) {
