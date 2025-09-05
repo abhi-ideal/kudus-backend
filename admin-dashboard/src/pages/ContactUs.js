@@ -38,7 +38,7 @@ const ContactUs = () => {
     try {
       setLoading(true);
       // Use correct endpoint without duplicate admin prefix
-      const response = await commonAPI.get('/admin/contact-us');
+      const response = await commonAPI.get('/contact-us');
       setTickets(response.data.tickets || []);
     } catch (error) {
       message.error('Failed to load support tickets');
@@ -51,7 +51,7 @@ const ContactUs = () => {
   const handleResponse = async (values) => {
     try {
       // Changed API endpoint and structure for response
-      await commonAPI.put(`/admin/contact-us/${selectedTicket.id}`, {
+      await commonAPI.put(`/contact-us/${selectedTicket.id}`, {
         status: values.status,
         priority: values.priority,
         adminResponse: values.adminResponse
