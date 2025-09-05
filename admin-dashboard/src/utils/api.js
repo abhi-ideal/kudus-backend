@@ -178,7 +178,7 @@ const adminEndpoints = {
   updatePrivacyPolicy: (data) => commonAPI.put('/admin/privacy-policy', data),
 
   // Terms & Conditions Management Endpoints
-  getTermsAndConditions: () => commonAPI.get('/admin/terms-and-conditions'),
+  getTermsConditions: () => commonAPI.get('/admin/terms-conditions-list'),
   updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-and-conditions', data),
 
 

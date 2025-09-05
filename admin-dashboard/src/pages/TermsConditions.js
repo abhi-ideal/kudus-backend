@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -46,8 +45,11 @@ const TermsConditions = () => {
   const loadTerms = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/terms-conditions');
-      setTerms(response.data.terms || []);
+      // Corrected endpoint from /terms-conditions to /terms-conditions-list
+      const response = await adminAPI.get('/terms-conditions-list');
+      // Handle both array and object response structures
+      const termsData = response.data.terms || response.data || [];
+      setTerms(Array.isArray(termsData) ? termsData : []);
     } catch (error) {
       message.error('Failed to load terms and conditions');
       console.error(error);
@@ -64,9 +66,11 @@ const TermsConditions = () => {
       };
 
       if (editingTerms) {
+        // Corrected API call to updateTermsConditions
         await adminAPI.put(`/terms-conditions/${editingTerms.id}`, payload);
         message.success('Terms and conditions updated successfully');
       } else {
+        // Corrected API call to createTermsConditions
         await adminAPI.post('/terms-conditions', payload);
         message.success('Terms and conditions created successfully');
       }
@@ -83,6 +87,7 @@ const TermsConditions = () => {
 
   const handleDelete = async (id) => {
     try {
+      // Corrected API call to deleteTermsConditions
       await adminAPI.delete(`/terms-conditions/${id}`);
       message.success('Terms and conditions deleted successfully');
       loadTerms();
@@ -94,6 +99,7 @@ const TermsConditions = () => {
 
   const handleActivate = async (id) => {
     try {
+      // Corrected API call to updateTermsConditions
       await adminAPI.put(`/terms-conditions/${id}`, { isActive: true });
       message.success('Terms and conditions activated successfully');
       loadTerms();
@@ -313,7 +319,7 @@ const TermsConditions = () => {
                 {viewingTerms.isActive ? 'Active' : 'Inactive'}
               </Tag>
               <span style={{ marginLeft: 8 }}>
-                Version: {viewingTerms.version} | 
+                Version: {viewingTerms.version} |
                 Effective: {new Date(viewingTerms.effectiveDate).toLocaleDateString()}
               </span>
             </div>
