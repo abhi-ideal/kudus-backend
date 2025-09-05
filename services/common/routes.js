@@ -487,7 +487,7 @@ router.get('/privacy-policy', commonController.getActivePrivacyPolicy);
  *       200:
  *         description: List of privacy policies
  */
-router.get('/privacy-policies', verifyFirebaseToken, commonController.getPrivacyPolicies);
+router.get('/admin/privacy-policies', verifyFirebaseToken, commonController.getPrivacyPolicies);
 
 /**
  * @swagger
@@ -524,7 +524,7 @@ router.get('/privacy-policies', verifyFirebaseToken, commonController.getPrivacy
  *       201:
  *         description: Privacy policy created successfully
  */
-router.post('/privacy-policies', verifyFirebaseToken, validate('privacyPolicy'), commonController.createPrivacyPolicy);
+router.post('/admin/privacy-policies', verifyFirebaseToken, validate('privacyPolicy'), commonController.createPrivacyPolicy);
 
 /**
  * @swagger
@@ -544,7 +544,7 @@ router.post('/privacy-policies', verifyFirebaseToken, validate('privacyPolicy'),
  *       200:
  *         description: Privacy policy updated successfully
  */
-router.put('/privacy-policies/:id', verifyFirebaseToken, validate('privacyPolicyUpdate'), commonController.updatePrivacyPolicy);
+router.put('/admin/privacy-policies/:id', verifyFirebaseToken, validate('privacyPolicyUpdate'), commonController.updatePrivacyPolicy);
 
 // Terms and Conditions Routes
 /**
@@ -557,7 +557,7 @@ router.put('/privacy-policies/:id', verifyFirebaseToken, validate('privacyPolicy
  *       200:
  *         description: Active terms and conditions
  */
-router.get('/terms-conditions', commonController.getActiveTermsConditions);
+router.get('/admin/terms-conditions', commonController.getActiveTermsConditions);
 
 /**
  * @swagger
@@ -585,7 +585,7 @@ router.get('/terms-conditions', commonController.getActiveTermsConditions);
  *       200:
  *         description: List of terms and conditions
  */
-router.get('/terms-conditions-list', verifyFirebaseToken, commonController.getTermsConditions);
+router.get('/admin/terms-conditions-list', verifyFirebaseToken, commonController.getTermsConditions);
 
 /**
  * @swagger
@@ -622,7 +622,7 @@ router.get('/terms-conditions-list', verifyFirebaseToken, commonController.getTe
  *       201:
  *         description: Terms and conditions created successfully
  */
-router.post('/terms-conditions', verifyFirebaseToken, validate('termsConditions'), commonController.createTermsConditions);
+router.post('/admin/terms-conditions', verifyFirebaseToken, validate('termsConditions'), commonController.createTermsConditions);
 
 /**
  * @swagger
@@ -642,7 +642,7 @@ router.post('/terms-conditions', verifyFirebaseToken, validate('termsConditions'
  *       200:
  *         description: Terms and conditions updated successfully
  */
-router.put('/terms-conditions/:id', verifyFirebaseToken, validate('termsConditionsUpdate'), commonController.updateTermsConditions);
+router.put('/admin/terms-conditions/:id', verifyFirebaseToken, validate('termsConditionsUpdate'), commonController.updateTermsConditions);
 
 // Admin Help Articles Management
 /**

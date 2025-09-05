@@ -46,7 +46,7 @@ const TermsConditions = () => {
   const loadTerms = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/common/terms-conditions');
+      const response = await adminAPI.get('/terms-conditions');
       setTerms(response.data.terms || []);
     } catch (error) {
       message.error('Failed to load terms and conditions');
@@ -64,10 +64,10 @@ const TermsConditions = () => {
       };
 
       if (editingTerms) {
-        await adminAPI.put(`/common/terms-conditions/${editingTerms.id}`, payload);
+        await adminAPI.put(`/terms-conditions/${editingTerms.id}`, payload);
         message.success('Terms and conditions updated successfully');
       } else {
-        await adminAPI.post('/common/terms-conditions', payload);
+        await adminAPI.post('/terms-conditions', payload);
         message.success('Terms and conditions created successfully');
       }
 
@@ -83,7 +83,7 @@ const TermsConditions = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminAPI.delete(`/common/terms-conditions/${id}`);
+      await adminAPI.delete(`/terms-conditions/${id}`);
       message.success('Terms and conditions deleted successfully');
       loadTerms();
     } catch (error) {
@@ -94,7 +94,7 @@ const TermsConditions = () => {
 
   const handleActivate = async (id) => {
     try {
-      await adminAPI.put(`/common/terms-conditions/${id}`, { isActive: true });
+      await adminAPI.put(`/terms-conditions/${id}`, { isActive: true });
       message.success('Terms and conditions activated successfully');
       loadTerms();
     } catch (error) {

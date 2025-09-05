@@ -105,7 +105,7 @@ const adminEndpoints = {
   getUserActivity: (userId, params = {}) =>
     userAPI.get(`/users/${userId}/activity`, { params }),
 
-  getUserStatistics: () => userAPI.get('/admin/users/statistics'),
+  getUserStatistics: () => userAPI.get('/users/statistics'),
 
   // Content management
   getContent: (params) => contentAPI.get('/content', { params }),

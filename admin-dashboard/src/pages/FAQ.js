@@ -45,7 +45,7 @@ const FAQ = () => {
   const loadFAQs = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/common/admin/help-articles');
+      const response = await adminAPI.get('/help-articles');
       setFaqs(response.data.articles || []);
     } catch (error) {
       message.error('Failed to load FAQs');
@@ -64,10 +64,10 @@ const FAQ = () => {
       };
 
       if (editingFaq) {
-        await adminAPI.put(`/common/admin/help-articles/${editingFaq.id}`, payload);
+        await adminAPI.put(`/help-articles/${editingFaq.id}`, payload);
         message.success('FAQ updated successfully');
       } else {
-        await adminAPI.post('/common/admin/help-articles', payload);
+        await adminAPI.post('/help-articles', payload);
         message.success('FAQ created successfully');
       }
 
@@ -83,7 +83,7 @@ const FAQ = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminAPI.delete(`/common/admin/help-articles/${id}`);
+      await adminAPI.delete(`/help-articles/${id}`);
       message.success('FAQ deleted successfully');
       loadFAQs();
     } catch (error) {

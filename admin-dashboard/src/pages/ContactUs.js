@@ -43,7 +43,7 @@ const ContactUs = () => {
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/common/support');
+      const response = await adminAPI.get('/contact-us');
       setTickets(response.data.tickets || []);
     } catch (error) {
       message.error('Failed to load support tickets');
@@ -55,7 +55,7 @@ const ContactUs = () => {
 
   const handleResponse = async (values) => {
     try {
-      await adminAPI.put(`/common/support/${selectedTicket.id}`, values);
+      await adminAPI.put(`/contact-us/${selectedTicket.id}`, values);
       message.success('Response sent successfully');
       setResponseModalVisible(false);
       setSelectedTicket(null);
