@@ -17,6 +17,15 @@ const ownerProfileOnly = async (req, res, next) => {
       });
     }
 
+    // Check if the profile ID in the token matches the requested profile ID
+    const tokenProfileId = req.user.profile_id || req.user.default_profile_id;
+    if (tokenProfileId && tokenProfileId !== profileId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. The profile ID in your token does not match the requested profile.'
+      });
+    }
+
     // Find the user
     const user = await User.findOne({ where: { firebaseUid: userId } });
     if (!user) {
