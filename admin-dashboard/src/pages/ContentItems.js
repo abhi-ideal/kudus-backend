@@ -98,10 +98,10 @@ const ContentItems = () => {
       const response = await adminAPI.getContentItems(params);
 
       if (response.data.success) {
-        setContentItems(response.data.items);
+        setContentItems(response.data.items || response.data.data || []);
         setPagination(prev => ({
           ...prev,
-          total: response.data.total
+          total: response.data.total || response.data.pagination?.total || 0
         }));
       }
     } catch (error) {
