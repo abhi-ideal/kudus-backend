@@ -163,7 +163,8 @@ const schemas = {
     slug: Joi.string().required().min(2).max(100).pattern(/^[a-z0-9-]+$/),
     description: Joi.string().max(500).optional(),
     displayOrder: Joi.number().integer().min(0).optional(),
-    isActive: Joi.boolean().optional()
+    isActive: Joi.boolean().optional(),
+    showOnChildProfile: Joi.boolean().optional()
   }),
 
   contentItemUpdate: Joi.object({
