@@ -557,7 +557,7 @@ router.put('/admin/privacy-policies/:id', verifyFirebaseToken, validate('privacy
  *       200:
  *         description: Active terms and conditions
  */
-router.get('/admin/terms-conditions', commonController.getActiveTermsConditions);
+router.get('/terms-conditions', commonController.getActiveTermsConditions);
 
 /**
  * @swagger
