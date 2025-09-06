@@ -520,7 +520,7 @@ router.get('/top-10-movies', authenticate, profileAuth, childProfileFilter, chec
  *       403:
  *         description: Admin access required
  */
-router.post('/admin/items', adminAuth, validate(schemas.contentItem), contentController.createContentItem);
+router.post('/admin/items', adminAuth, validate(schemas.contentItemCreate), contentController.createContentItem);
 
 /**
  * @swagger
@@ -612,7 +612,7 @@ router.get('/admin/items/:id', adminAuth, contentController.getContentItemById);
  *       404:
  *         description: Content item not found
  */
-router.put('/admin/items/:id', adminAuth, contentController.updateContentItem);
+router.put('/admin/items/:id', adminAuth, validate(schemas.contentItemUpdate), contentController.updateContentItem);
 
 /**
  * @swagger
