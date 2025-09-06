@@ -135,11 +135,11 @@ const adminEndpoints = {
   deleteGenre: (id) => commonAPI.delete(`/admin/genres/${id}`),
 
   // Content Items API
-  getContentItems: (params) => contentAPI.get('/content/admin/items', { params }),
-  getAllContentItems: (params) => contentAPI.get('/content/admin/items', { params }),
-  createContentItem: (data) => contentAPI.post('/content/items', data),
-  updateContentItem: (id, data) => contentAPI.put(`/content/items/${id}`, data),
-  deleteContentItem: (id) => contentAPI.delete(`/content/items/${id}`),
+  getContentItems: (params) => contentAPI.get('/items', { params }),
+  getAllContentItems: (params) => contentAPI.get('/items', { params }),
+  createContentItem: (data) => contentAPI.post('/items', data),
+  updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
+  deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
 
   // Thumbnail Management API
   updateContentThumbnails: (contentId, thumbnails) => 
