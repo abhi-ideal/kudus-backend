@@ -127,16 +127,16 @@ const adminEndpoints = {
   // Common Service Endpoints
   // Genres
   getGenres: () => commonAPI.get('/genres'),
-  getAllGenresAdmin: () => commonAPI.get('/admin/genres'),
-  createGenre: (data) => commonAPI.post('/admin/genres', data),
-  updateGenre: (id, data) => commonAPI.put(`/admin/genres/${id}`, data),
+  getAllGenresAdmin: () => commonAPI.get('/genres'),
+  createGenre: (data) => commonAPI.post('/genres', data),
+  updateGenre: (id, data) => commonAPI.put(`/genres/${id}`, data),
   updateGenreChildProfile: (id, data) =>
     commonAPI.patch(`/genres/${id}/child-profile`, data),
   deleteGenre: (id) => commonAPI.delete(`/admin/genres/${id}`),
 
   // Content Items API
-  getContentItems: (params) => contentAPI.get('/admin/items', { params }),
-  getAllContentItems: (params) => contentAPI.get('/admin/items', { params }),
+  getContentItems: (params) => contentAPI.get('/items', { params }),
+  getAllContentItems: (params) => contentAPI.get('/items', { params }),
   createContentItem: (data) => contentAPI.post('/items', data),
   updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
   deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
