@@ -4,7 +4,7 @@ import { message } from 'antd';
 // Individual microservice URLs - use dedicated admin service for user management
 const AUTH_SERVICE_URL = process.env.REACT_APP_AUTH_SERVICE_URL || 'http://0.0.0.0:3001/api/auth/admin';
 const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3006/api'; // Use admin service for user management
-const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://0.0.0.0:3005/api';
+const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://localhost:3005/api';
 const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
 const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
 const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006/api';
@@ -135,11 +135,11 @@ const adminEndpoints = {
   deleteGenre: (id) => commonAPI.delete(`/admin/genres/${id}`),
 
   // Content Items API
-  getContentItems: (params) => contentAPI.get('/items', { params }),
-  getAllContentItems: (params) => contentAPI.get('/items', { params }),
-  createContentItem: (data) => contentAPI.post('/items', data),
-  updateContentItem: (id, data) => contentAPI.put(`/items/${id}`, data),
-  deleteContentItem: (id) => contentAPI.delete(`/items/${id}`),
+  getContentItems: (params) => contentAPI.get('/content/admin/items', { params }),
+  getAllContentItems: (params) => contentAPI.get('/content/admin/items', { params }),
+  createContentItem: (data) => contentAPI.post('/content/items', data),
+  updateContentItem: (id, data) => contentAPI.put(`/content/items/${id}`, data),
+  deleteContentItem: (id) => contentAPI.delete(`/content/items/${id}`),
 
   // Thumbnail Management API
   updateContentThumbnails: (contentId, thumbnails) => 
@@ -150,9 +150,9 @@ const adminEndpoints = {
     commonAPI.post('/upload/thumbnail/signed-url', uploadData),
   getThumbnailRatios: () => contentAPI.get('/thumbnail-ratios'),
   updateContentItemOrder: (id, orderData) =>
-    contentAPI.patch(`/items/${id}/order`, orderData),
+    contentAPI.patch(`/content/items/${id}/order`, orderData),
   updateContentItemChildProfile: (id, data) =>
-    contentAPI.patch(`/items/${id}/child-profile`, data),
+    contentAPI.patch(`/content/items/${id}/child-profile`, data),
 
   // Content Mappings API
   getContentMappings: (params) => contentAPI.get('/mappings', { params }),
