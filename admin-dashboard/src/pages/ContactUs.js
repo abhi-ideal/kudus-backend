@@ -15,7 +15,7 @@ import {
   Space,
   Descriptions
 } from 'antd';
-import { EyeOutlined, MessageOutlined, ReloadOutlined } from '@ant-design/icons';
+import { EyeOutlined, EditOutlined, MessageOutlined, ReloadOutlined } from '@ant-design/icons';
 import { commonAPI } from '../utils/api';
 
 const { Option } = Select;
@@ -38,8 +38,8 @@ const ContactUs = () => {
     try {
       setLoading(true);
       // Use correct endpoint without duplicate admin prefix
-      const response = await commonAPI.get('/contact-us');
-      setTickets(response.data.tickets || []);
+      const response = await commonAPI.get('/admin/contact-us');
+      setTickets(response.data.contacts || []);
     } catch (error) {
       message.error('Failed to load support tickets');
       console.error(error);
