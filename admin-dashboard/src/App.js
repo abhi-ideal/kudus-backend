@@ -14,6 +14,7 @@ import ContactUs from './pages/ContactUs';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import ContentMappings from './pages/ContentMappings';
+import ContentItems from './pages/ContentItems';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -42,6 +43,7 @@ function App() {
                       <Route path="/users/:id" element={<UserDetails />} /> {/* Added route for UserDetails */}
                       <Route path="/content" element={<Content />} />
                       <Route path="/content/:id" element={<ContentDetails />} /> {/* Added route for ContentDetails */}
+                      <Route path="/content-items" element={<ContentItems />} />
                       <Route path="/content-mappings" element={<ContentMappings />} />
                       <Route path="/genres" element={<Genres />} />
                       <Route path="/faq" element={<FAQ />} />
