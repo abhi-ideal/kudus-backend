@@ -4,6 +4,7 @@ const { validate, schemas } = require('./utils/validation');
 const controller = require('./controller');
 const { createAdminRouter, standardAdminEndpoints } = require('./utils/adminRoutes');
 const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
+const { ownerProfileOnly } = require('./middleware/ownerAuth');
 
 const router = express.Router();
 
@@ -365,10 +366,17 @@ router.post('/logout', controller.logout);
  * @swagger
  * /api/users/delete-account:
  *   delete:
- *     summary: Delete user account permanently
+ *     summary: Delete user account permanently (Owner profile only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: profile_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Owner profile ID
  *     requestBody:
  *       required: true
  *       content:
@@ -379,14 +387,21 @@ router.post('/logout', controller.logout);
  *               confirmPassword:
  *                 type: string
  *                 description: Confirmation password (optional)
+ *               profile_id:
+ *                 type: string
+ *                 description: Owner profile ID (can also be passed in query)
  *     responses:
  *       200:
  *         description: Account deleted successfully
+ *       400:
+ *         description: Profile ID required
+ *       403:
+ *         description: Access denied - Owner profile required
  *       404:
  *         description: User not found
  *       500:
  *         description: Failed to delete account
  */
-router.delete('/delete-account', verifyFirebaseToken, controller.deleteAccount);
+router.delete('/delete-account', verifyFirebaseToken, ownerProfileOnly, controller.deleteAccount);
 
 module.exports = router;

@@ -72,113 +72,90 @@ const controller = {
   // Create or update user profile
   async createOrUpdateProfile(req, res) {
     try {
-      const { uid } = req.user;
+      const userId = req.user.uid;
       const { profileId, profileName, isChild, avatarUrl, preferences } = req.body;
 
       // Find the user first
-      const user = await User.findOne({ where: { firebaseUid: uid } });
+      const user = await User.findOne({ where: { firebaseUid: userId } });
       if (!user) {
         return res.status(404).json({
-          error: 'User not found',
-          message: 'User account not found'
+          success: false,
+          error: 'User not found'
         });
       }
 
-      // If profileId is provided, update existing profile
       if (profileId) {
-        // Find the profile to update
+        // Update existing profile
         const profile = await UserProfile.findOne({
-          where: {
+          where: { 
             id: profileId,
-            userId: user.id,
-            isActive: true
+            userId: user.id 
           }
         });
 
         if (!profile) {
           return res.status(404).json({
-            error: 'Profile not found',
-            message: 'Profile not found or does not belong to user'
+            success: false,
+            error: 'Profile not found'
           });
         }
 
-        // Check if new profile name conflicts with existing ones
-        if (profileName && profileName.trim() !== profile.name) {
-          const existingProfile = await UserProfile.findOne({
-            where: {
-              userId: user.id,
-              name: profileName.trim(),
-              isActive: true,
-              id: { [Op.ne]: profileId }
-            }
-          });
+        await profile.update({
+          name: profileName || profile.name,
+          isKidsProfile: isChild !== undefined ? isChild : profile.isKidsProfile,
+          avatar: avatarUrl || profile.avatar,
+          preferences: preferences || profile.preferences
+        });
 
-          if (existingProfile) {
-            return res.status(400).json({
-              error: 'Profile name already exists',
-              message: 'A profile with this name already exists'
-            });
-          }
-        }
-
-        // Prepare update data
-        const updateData = {};
-        if (profileName !== undefined) updateData.name = profileName.trim();
-        if (typeof isChild === 'boolean') updateData.isKidsProfile = isChild;
-        if (avatarUrl !== undefined) updateData.avatar = avatarUrl;
-        if (preferences !== undefined) updateData.preferences = preferences;
-
-        await profile.update(updateData);
-
-        return res.json({
+        res.json({
           success: true,
-          data: profile,
-          message: 'Profile updated successfully'
+          message: 'Profile updated successfully',
+          profile: {
+            id: profile.id,
+            name: profile.name,
+            isKidsProfile: profile.isKidsProfile,
+            isOwner: profile.isOwner,
+            avatar: profile.avatar,
+            preferences: profile.preferences
+          }
         });
       } else {
-        // Create new profile
-        if (!profileName || !profileName.trim()) {
-          return res.status(400).json({
-            error: 'Profile name required',
-            message: 'Profile name is required for creating a new profile'
-          });
-        }
-
-        // Check if profile name already exists
-        const existingProfile = await UserProfile.findOne({
-          where: {
-            userId: user.id,
-            name: profileName.trim(),
-            isActive: true
-          }
+        // Check if this is the first profile for the user (should be owner)
+        const existingProfilesCount = await UserProfile.count({
+          where: { userId: user.id }
         });
 
-        if (existingProfile) {
-          return res.status(400).json({
-            error: 'Profile name already exists',
-            message: 'A profile with this name already exists'
-          });
-        }
+        const isOwner = existingProfilesCount === 0;
 
+        // Create new profile
         const profile = await UserProfile.create({
           userId: user.id,
-          name: profileName.trim(),
+          name: profileName,
           isKidsProfile: isChild || false,
+          isOwner: isOwner,
           avatar: avatarUrl,
           preferences: preferences || {}
         });
 
-        return res.status(201).json({
+        res.status(201).json({
           success: true,
-          data: profile,
-          message: 'Profile created successfully'
+          message: 'Profile created successfully',
+          profile: {
+            id: profile.id,
+            name: profile.name,
+            isKidsProfile: profile.isKidsProfile,
+            isOwner: profile.isOwner,
+            avatar: profile.avatar,
+            preferences: profile.preferences
+          }
         });
       }
     } catch (error) {
-      logger.error('Create or update profile error:', error);
+      logger.error('Create/Update profile error:', error);
       res.status(500).json({
-        error: 'Internal server error',
-        message: 'Failed to create or update profile'
+        success: false,
+        error: 'Failed to create/update profile',
+        message: error.message
       });
     }
   },
@@ -186,33 +163,44 @@ const controller = {
   // Get user profiles
   async getProfiles(req, res) {
     try {
-      const { uid } = req.user;
+      const userId = req.user.uid;
 
-      let user = await User.findOne({ where: { firebaseUid: uid } });
-
+      // Find the user first
+      const user = await User.findOne({ where: { firebaseUid: userId } });
       if (!user) {
-        // Create user if doesn't exist
-        user = await User.create({
-          firebaseUid: uid,
-          email: req.user.email,
-          displayName: req.user.name || req.user.email,
-          photoURL: req.user.picture
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
         });
       }
 
       const profiles = await UserProfile.findAll({
-        where: { userId: user.id, isActive: true }
+        where: { 
+          userId: user.id,
+          isActive: true
+        },
+        attributes: ['id', 'name', 'avatar', 'isKidsProfile', 'isOwner', 'preferences', 'createdAt'],
+        order: [['isOwner', 'DESC'], ['createdAt', 'ASC']] // Owner profile first
       });
 
       res.json({
         success: true,
-        data: profiles
+        profiles: profiles.map(profile => ({
+          id: profile.id,
+          name: profile.name,
+          avatar: profile.avatar,
+          isKidsProfile: profile.isKidsProfile,
+          isOwner: profile.isOwner,
+          preferences: profile.preferences,
+          createdAt: profile.createdAt
+        }))
       });
     } catch (error) {
       logger.error('Get profiles error:', error);
       res.status(500).json({
-        error: 'Internal server error',
-        message: 'Failed to get profiles'
+        success: false,
+        error: 'Failed to retrieve profiles',
+        message: error.message
       });
     }
   },
@@ -1064,6 +1052,21 @@ const controller = {
         return res.status(404).json({
           success: false,
           error: 'User not found'
+        });
+      }
+
+      // Check if the user is the owner of any profile before deleting the account
+      const ownerProfile = await UserProfile.findOne({
+        where: {
+          userId: user.id,
+          isOwner: true
+        }
+      });
+
+      if (!ownerProfile) {
+        return res.status(403).json({
+          success: false,
+          error: 'Cannot delete account: You are not the owner of any profile.'
         });
       }
 
