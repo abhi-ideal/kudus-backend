@@ -5,11 +5,63 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Custom styles for login page */
+.ant-input:focus,
+.ant-input-focused {
+  border-color: #e50914 !important;
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.1) !important;
+}
+
+.ant-input-password:focus,
+.ant-input-password-focused {
+  border-color: #e50914 !important;
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.1) !important;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500 !important;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+  .login-container {
+    flex-direction: column !important;
+  }
+  
+  .slider-section {
+    flex: 0 0 60% !important;
+  }
+  
+  .form-section {
+    flex: 0 0 40% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .slider-section {
+    flex: 0 0 50% !important;
+  }
+  
+  .form-section {
+    flex: 0 0 50% !important;
+    padding: 20px !important;
+  }
+  
+  .slider-content h1 {
+    font-size: 32px !important;
+  }
+  
+  .slider-content p {
+    font-size: 18px !important;
+  }
 }
 
 .ant-layout {
