@@ -46,7 +46,7 @@ const userController = {
           model: UserProfile,
           as: 'profiles',
           required: false,
-          attributes: ['id', 'profileName', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
+          attributes: ['id', 'name', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
         }]
       });
 
@@ -86,7 +86,7 @@ const userController = {
           {
             model: UserProfile,
             as: 'profiles',
-            attributes: ['id', 'profileName', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
+            attributes: ['id', 'name', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
           },
           {
             model: WatchHistory,
