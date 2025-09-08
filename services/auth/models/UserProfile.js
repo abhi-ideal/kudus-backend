@@ -1,4 +1,6 @@
+` tags.
 
+<replit_final_file>
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -17,7 +19,7 @@ const UserProfile = sequelize.define('UserProfile', {
       key: 'id'
     }
   },
-  name: {
+  profileName: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -25,41 +27,17 @@ const UserProfile = sequelize.define('UserProfile', {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  isKidsProfile: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  ageRating: {
-    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
-    defaultValue: 'R'
-  },
   language: {
-    type: DataTypes.STRING,
-    defaultValue: 'en'
-  },
-  autoplayNext: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  autoplayPreviews: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  subtitles: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  subtitleLanguage: {
-    type: DataTypes.STRING,
-    defaultValue: 'en'
-  },
-  audioLanguage: {
     type: DataTypes.STRING,
     defaultValue: 'en'
   },
   maturityLevel: {
     type: DataTypes.INTEGER,
-    defaultValue: 18
+    defaultValue: 18,
+    validate: {
+      min: 0,
+      max: 18
+    }
   },
   isOwner: {
     type: DataTypes.BOOLEAN,
@@ -70,6 +48,14 @@ const UserProfile = sequelize.define('UserProfile', {
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  preferences: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  parentalControls: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   }
 }, {
   tableName: 'user_profiles',

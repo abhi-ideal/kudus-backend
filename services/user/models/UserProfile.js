@@ -1,9 +1,33 @@
-// Reference to shared UserProfile model from auth service
-const UserProfile = require('../../auth/models/UserProfile');
-const { DataTypes } = require('sequelize');
 
-UserProfile.init({
-  // ... other fields
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const UserProfile = sequelize.define('UserProfile', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  profileName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  avatar: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  language: {
+    type: DataTypes.STRING,
+    defaultValue: 'en'
+  },
   maturityLevel: {
     type: DataTypes.INTEGER,
     defaultValue: 18,
@@ -21,9 +45,18 @@ UserProfile.init({
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  preferences: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  parentalControls: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   }
 }, {
-  // ... other options
+  tableName: 'user_profiles',
+  timestamps: true
 });
 
 module.exports = UserProfile;
