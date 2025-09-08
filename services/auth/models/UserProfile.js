@@ -61,6 +61,12 @@ const UserProfile = sequelize.define('UserProfile', {
     type: DataTypes.INTEGER,
     defaultValue: 18
   },
+  isOwner: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: false,
+    comment: 'Indicates if this profile is the account owner profile'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true

@@ -661,6 +661,7 @@ const authController = {
           parentalControls: {},
           language: 'en',
           isActive: true,
+          isOwner: true, // First user is owner
           emailVerified: false
         }, { transaction });
 
