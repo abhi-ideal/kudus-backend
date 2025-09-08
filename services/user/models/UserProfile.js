@@ -16,7 +16,7 @@ const UserProfile = sequelize.define('UserProfile', {
       key: 'id'
     }
   },
-  profileName: {
+  name: {
     type: DataTypes.STRING,
     allowNull: false
   },
