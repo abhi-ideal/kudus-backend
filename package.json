@@ -9,21 +9,20 @@
   ],
   "scripts": {
     "start": "node index.js",
-    "dev": "concurrently \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:user\" \"npm run start:content\" \"npm run start:streaming\" \"npm run start:recommendation\" \"npm run start:admin\" \"npm run start:common\"",
+    "dev": "concurrently \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:user\" \"npm run start:content\" \"npm run start:streaming\" \"npm run start:recommendation\" \"npm run start:common\"",
     "start:gateway": "cd gateway && npm start",
     "start:auth": "cd services/auth && npm run dev",
     "start:user": "cd services/user && npm run dev",
     "start:content": "cd services/content && npm run dev",
     "start:streaming": "cd services/streaming && npm run dev",
     "start:recommendation": "cd services/recommendation && npm run dev",
-    "start:admin": "cd services/admin && npm run dev",
     "start:common": "cd services/common && npm run dev",
     "setup-dbs": "node scripts/setup-databases.js",
     "setup-env": "node scripts/setup-env.js",
     "test": "jest",
     "test:services": "npm run test --prefix services/auth && npm run test --prefix services/user && npm run test --prefix services/content && npm run test --prefix services/common",
-    "migrate": "npm run migrate --prefix services/auth && npm run migrate --prefix services/user && npm run migrate --prefix services/content && npm run migrate --prefix services/streaming && npm run migrate --prefix services/recommendation && npm run migrate --prefix services/admin && npm run migrate --prefix services/common",
-    "seed": "npm run seed --prefix services/auth && npm run seed --prefix services/user && npm run seed --prefix services/content && npm run seed --prefix services/streaming && npm run seed --prefix services/recommendation && npm run seed --prefix services/admin && npm run seed --prefix services/common"
+    "migrate": "npm run migrate --prefix services/auth && npm run migrate --prefix services/user && npm run migrate --prefix services/content && npm run migrate --prefix services/streaming && npm run migrate --prefix services/recommendation && npm run migrate --prefix services/common",
+    "seed": "npm run seed --prefix services/auth && npm run seed --prefix services/user && npm run seed --prefix services/content && npm run seed --prefix services/streaming && npm run seed --prefix services/recommendation && npm run seed --prefix services/common"
   },
   "dependencies": {
     "axios": "^1.11.0",

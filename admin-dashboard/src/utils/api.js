@@ -1,14 +1,13 @@
 import axios from 'axios';
 import { message } from 'antd';
 
-// Individual microservice URLs - use dedicated admin service for user management
+// Individual microservice URLs with admin endpoints
 const AUTH_SERVICE_URL = process.env.REACT_APP_AUTH_SERVICE_URL || 'http://0.0.0.0:3001/api/auth/admin';
-const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3006/api'; // Use admin service for user management
-const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://localhost:3005/api';
+const USER_SERVICE_URL = process.env.REACT_APP_USER_SERVICE_URL || 'http://0.0.0.0:3002/api/users/admin';
+const CONTENT_SERVICE_URL = process.env.REACT_APP_CONTENT_SERVICE_URL || 'http://0.0.0.0:3005/api/content/admin';
 const STREAMING_SERVICE_URL = process.env.REACT_APP_STREAMING_SERVICE_URL || 'http://0.0.0.0:3004/api/streaming/admin';
-const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3005/api/recommendations/admin';
-const ADMIN_SERVICE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'http://0.0.0.0:3006/api';
-const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://localhost:3007/api/common';
+const RECOMMENDATION_SERVICE_URL = process.env.REACT_APP_RECOMMENDATION_SERVICE_URL || 'http://0.0.0.0:3003/api/recommendations/admin';
+const COMMON_SERVICE_URL = process.env.REACT_APP_COMMON_SERVICE_URL || 'http://0.0.0.0:3007/api/common/admin';
 
 // Create service-specific API instances
 const createServiceAPI = (baseURL) => axios.create({
@@ -24,7 +23,6 @@ const userAPI = createServiceAPI(USER_SERVICE_URL);
 const contentAPI = createServiceAPI(CONTENT_SERVICE_URL);
 const streamingAPI = createServiceAPI(STREAMING_SERVICE_URL);
 const recommendationAPI = createServiceAPI(RECOMMENDATION_SERVICE_URL);
-const adminAPI = createServiceAPI(ADMIN_SERVICE_URL);
 const commonAPI = createServiceAPI(COMMON_SERVICE_URL); // Use the base common service URL
 
 // Setup interceptors for all service APIs
@@ -94,7 +92,7 @@ const setupInterceptors = (apiInstance) => {
 
 // Admin endpoints object with all admin API functions
 const adminEndpoints = {
-  // Users API - using userAPI which now points to admin service
+  // Users API - using userAPI which points to user service admin endpoint
   getUsers: (params) => userAPI.get('/users', { params }),
   getUserById: (userId) => userAPI.get(`/users/${userId}`),
   blockUser: (userId, reason) => userAPI.patch(`/users/${userId}/block`, { reason }),
@@ -113,8 +111,8 @@ const adminEndpoints = {
   createContent: (data) => contentAPI.post('/content', data),
   updateContent: (contentId, data) => contentAPI.put(`/content/${contentId}`, data),
   deleteContent: (contentId) => contentAPI.delete(`/content/${contentId}`),
-  featureContent: (id) => adminAPI.post(`/content/${id}/feature`),
-  unfeatureContent: (id) => adminAPI.post(`/content/${id}/unfeature`),
+  featureContent: (id) => contentAPI.post(`/content/${id}/feature`),
+  unfeatureContent: (id) => contentAPI.post(`/content/${id}/unfeature`),
 
   // Season management
   createSeason: (data) => contentAPI.post('/content/seasons', data),
@@ -207,7 +205,6 @@ const contentItemsAPI = {
 export { authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI };
 export { contentItemsAPI };
 
-// Export adminEndpoints and adminAPI for backward compatibility
+// Export adminEndpoints for admin functionality
 export { adminEndpoints };
-export { adminEndpoints as adminAPI };
 export default adminEndpoints;
