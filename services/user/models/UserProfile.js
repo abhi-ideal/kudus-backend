@@ -1,5 +1,6 @@
 // Reference to shared UserProfile model from auth service
 const UserProfile = require('../../auth/models/UserProfile');
+const { DataTypes } = require('sequelize');
 
 UserProfile.init({
   // ... other fields
