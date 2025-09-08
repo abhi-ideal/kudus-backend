@@ -45,7 +45,8 @@ const userController = {
         include: [{
           model: UserProfile,
           as: 'profiles',
-          required: false
+          required: false,
+          attributes: ['id', 'profileName', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
         }]
       });
 
@@ -84,7 +85,8 @@ const userController = {
         include: [
           {
             model: UserProfile,
-            as: 'profiles'
+            as: 'profiles',
+            attributes: ['id', 'profileName', 'avatar', 'isOwner', 'maturityLevel', 'isActive', 'createdAt']
           },
           {
             model: WatchHistory,
