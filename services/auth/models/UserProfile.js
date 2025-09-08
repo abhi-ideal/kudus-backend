@@ -1,6 +1,4 @@
-` tags.
 
-<replit_final_file>
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
