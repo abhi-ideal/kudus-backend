@@ -19,7 +19,7 @@ import {
   Select
 } from 'antd';
 import { UploadOutlined, DeleteOutlined, EyeOutlined, PictureOutlined, EditOutlined } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -75,7 +75,7 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
 
   const fetchThumbnailRatios = async () => {
     try {
-      const response = await adminAPI.getThumbnailRatios();
+      const response = await adminEndpoints.getThumbnailRatios();
       if (response.data.success) {
         setRatioSpecs(response.data.ratios);
       }
@@ -117,7 +117,7 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      await adminAPI.updateContentThumbnails(contentId, thumbnails);
+      await adminEndpoints.updateContentThumbnails(contentId, thumbnails);
       message.success('Thumbnails updated successfully');
       onUpdate && onUpdate(thumbnails);
       onCancel();
@@ -131,7 +131,7 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails = {}
 
   const getSignedUrl = async (fileName, fileType, fileSize) => {
     try {
-      const response = await adminAPI.getSignedUrlForThumbnailUpload({
+      const response = await adminEndpoints.getSignedUrlForThumbnailUpload({
         fileName,
         fileType,
         fileSize
