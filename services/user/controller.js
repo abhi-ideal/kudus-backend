@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
 const WatchHistory = require('./models/WatchHistory');
+const ContentLike = require('./models/ContentLike');
 const logger = require('./utils/logger');
 const admin = require('firebase-admin');
 
