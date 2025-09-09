@@ -88,7 +88,7 @@ const setupInterceptors = (apiInstance) => {
 };
 
 // Apply interceptors to all service APIs
-[authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, adminAPI, commonAPI].forEach(setupInterceptors);
+[authAPI, userAPI, contentAPI, streamingAPI, recommendationAPI, commonAPI].forEach(setupInterceptors);
 
 // Admin endpoints object with all admin API functions
 const adminEndpoints = {
