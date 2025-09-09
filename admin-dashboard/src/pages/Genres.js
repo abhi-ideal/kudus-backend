@@ -21,7 +21,7 @@ import {
   DeleteOutlined,
   SearchOutlined
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { Option } = Select;
 
@@ -55,7 +55,7 @@ const Genres = () => {
         search: filters.search || undefined
       };
 
-      const response = await adminAPI.getGenres(params);
+      const response = await adminEndpoints.getGenres(params);
 
       if (response.data.success) {
         setGenres(response.data.genres);
@@ -105,10 +105,10 @@ const Genres = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingGenre) {
-        await adminAPI.updateGenre(editingGenre.id, values);
+        await adminEndpoints.updateGenre(editingGenre.id, values);
         message.success('Genre updated successfully');
       } else {
-        await adminAPI.createGenre(values);
+        await adminEndpoints.createGenre(values);
         message.success('Genre created successfully');
       }
 
@@ -127,7 +127,7 @@ const Genres = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminAPI.deleteGenre(id);
+      await adminEndpoints.deleteGenre(id);
       message.success('Genre deleted successfully');
       fetchGenres();
     } catch (error) {
@@ -138,7 +138,7 @@ const Genres = () => {
 
   const handleToggleStatus = async (genre) => {
     try {
-      await adminAPI.updateGenre(genre.id, {
+      await adminEndpoints.updateGenre(genre.id, {
         name: genre.name,
         slug: genre.slug,
         description: genre.description,
@@ -154,7 +154,7 @@ const Genres = () => {
 
   const handleChildProfileToggle = async (id, showOnChildProfile) => {
     try {
-      await adminAPI.updateGenreChildProfile(id, { showOnChildProfile });
+      await adminEndpoints.updateGenreChildProfile(id, { showOnChildProfile });
       message.success('Genre child profile visibility updated');
       fetchGenres();
     } catch (error) {

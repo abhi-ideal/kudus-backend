@@ -31,7 +31,7 @@ import {
   StarOutlined,
   StarFilled,
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
 
 // Assume ThumbnailManager is imported from a separate file
@@ -56,7 +56,7 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails, onU
     try {
       const values = await form.validateFields();
       setLoading(true);
-      await adminAPI.updateContentThumbnails(contentId, {
+      await adminEndpoints.updateContentThumbnails(contentId, {
         thumbnailUrl: {
           banner: values.banner,
           landscape: values.landscape,
@@ -204,7 +204,7 @@ const Content = () => {
         params.featured = featuredFilter;
       }
 
-      const response = await adminAPI.getContent(params);
+      const response = await adminEndpoints.getContent(params);
       const { content: contentData, pagination: paginationData } = response.data;
 
       setContent(contentData);
@@ -222,7 +222,7 @@ const Content = () => {
   const fetchGenres = async () => {
     setGenresLoading(true);
     try {
-      const response = await adminAPI.getGenres({ active: true, limit: 100 });
+      const response = await adminEndpoints.getGenres({ active: true, limit: 100 });
 
       if (response.data && response.data.genres) {
         setGenres(response.data.genres);
@@ -270,7 +270,7 @@ const Content = () => {
 
   const handleDeleteContent = async (contentId) => {
     try {
-      await adminAPI.deleteContent(contentId);
+      await adminEndpoints.deleteContent(contentId);
       message.success('Content deleted successfully');
       loadContent();
     } catch (error) {
@@ -281,10 +281,10 @@ const Content = () => {
   const handleFeatureContent = async (contentId, isFeatured) => {
     try {
       if (isFeatured) {
-        await adminAPI.unfeatureContent(contentId);
+        await adminEndpoints.unfeatureContent(contentId);
         message.success('Content unfeatured successfully');
       } else {
-        await adminAPI.featureContent(contentId);
+        await adminEndpoints.featureContent(contentId);
         message.success('Content featured successfully');
       }
       loadContent();
@@ -305,10 +305,10 @@ const Content = () => {
       };
 
       if (modalType === 'create') {
-        await adminAPI.createContent(submitData);
+        await adminEndpoints.createContent(submitData);
         message.success('Content created successfully');
       } else {
-        await adminAPI.updateContent(selectedContent.id, submitData);
+        await adminEndpoints.updateContent(selectedContent.id, submitData);
         message.success('Content updated successfully');
       }
 

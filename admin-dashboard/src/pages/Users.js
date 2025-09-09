@@ -25,7 +25,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
 
 const { Title } = Typography;
@@ -76,7 +76,7 @@ const Users = () => {
       }
       
       console.log('Loading users with params:', params);
-      const response = await adminAPI.getUsers(params);
+      const response = await adminEndpoints.getUsers(params);
       console.log('API Response:', response.data);
        
       
@@ -144,7 +144,7 @@ const Users = () => {
 
   const handleBlockUser = async (userId) => {
     try {
-      await adminAPI.blockUser(userId, 'Blocked by admin');
+      await adminEndpoints.blockUser(userId, 'Blocked by admin');
       message.success('User blocked successfully');
       loadUsers();
     } catch (error) {
@@ -154,7 +154,7 @@ const Users = () => {
 
   const handleUnblockUser = async (userId) => {
     try {
-      await adminAPI.unblockUser(userId);
+      await adminEndpoints.unblockUser(userId);
       message.success('User unblocked successfully');
       loadUsers();
     } catch (error) {
@@ -175,7 +175,7 @@ const Users = () => {
   const handleSubscriptionSubmit = async () => {
     try {
       const values = await form.validateFields();
-      await adminAPI.updateUserSubscription(selectedUser.id, values);
+      await adminEndpoints.updateUserSubscription(selectedUser.id, values);
       message.success('Subscription updated successfully');
       setModalVisible(false);
       loadUsers();
