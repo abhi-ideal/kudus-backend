@@ -195,6 +195,114 @@ router.get('/search', checkGeoRestriction, contentController.searchContent);
  */
 router.get('/search/suggestions', checkGeoRestriction, contentController.getSearchSuggestions);
 
+// Content Like Routes
+/**
+ * @swagger
+ * /api/content/likes:
+ *   post:
+ *     summary: Like content
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contentId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Content liked successfully
+ *       409:
+ *         description: Content already liked
+ */
+router.post('/likes', authenticate, authenticateProfile, contentController.likeContent);
+
+/**
+ * @swagger
+ * /api/content/likes:
+ *   get:
+ *     summary: Get user's liked content
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: likedAt
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
+ *     responses:
+ *       200:
+ *         description: Liked content retrieved successfully
+ */
+router.get('/likes', authenticate, authenticateProfile, contentController.getLikedContent);
+
+/**
+ * @swagger
+ * /api/content/likes/{contentId}:
+ *   delete:
+ *     summary: Unlike content
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Content unliked successfully
+ *       404:
+ *         description: Like not found
+ */
+router.delete('/likes/:contentId', authenticate, authenticateProfile, contentController.unlikeContent);
+
+/**
+ * @swagger
+ * /api/content/{contentId}/like-status:
+ *   get:
+ *     summary: Check if content is liked
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Like status retrieved successfully
+ */
+router.get('/:contentId/like-status', authenticate, authenticateProfile, contentController.checkLikeStatus);
+
 /**
  * @swagger
  * /api/content/featured:

@@ -8,6 +8,7 @@ const Watchlist = require('./models/Watchlist');
 const WatchHistory = require('./models/WatchHistory');
 const ContentItem = require('./models/ContentItem');
 const ContentItemMapping = require('./models/ContentItemMapping');
+const ContentLike = require('./models/ContentLike');
 const { Sequelize } = require('sequelize');
 
 // Initialize associations
@@ -2785,6 +2786,232 @@ const contentController = {
       });
     }
   },
+
+  // Content Like functionality
+  async likeContent(req, res) {
+    try {
+      const { contentId } = req.body;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required',
+          message: 'Please select a profile to like content'
+        });
+      }
+
+      if (!contentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Content ID required'
+        });
+      }
+
+      // Check if content exists and is active
+      const content = await Content.findOne({
+        where: {
+          id: contentId,
+          isActive: true
+        }
+      });
+
+      if (!content) {
+        return res.status(404).json({
+          success: false,
+          error: 'Content not found'
+        });
+      }
+
+      // Check if already liked
+      const existingLike = await ContentLike.findOne({
+        where: {
+          profileId,
+          contentId
+        }
+      });
+
+      if (existingLike) {
+        return res.status(409).json({
+          success: false,
+          error: 'Content already liked'
+        });
+      }
+
+      // Create like
+      const like = await ContentLike.create({
+        profileId,
+        contentId
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Content liked successfully',
+        data: {
+          likeId: like.id,
+          contentId,
+          contentTitle: content.title,
+          likedAt: like.likedAt
+        }
+      });
+    } catch (error) {
+      logger.error('Like content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to like content',
+        message: error.message
+      });
+    }
+  },
+
+  async unlikeContent(req, res) {
+    try {
+      const { contentId } = req.params;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const deletedRows = await ContentLike.destroy({
+        where: {
+          profileId,
+          contentId
+        }
+      });
+
+      if (deletedRows === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Like not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Content unliked successfully'
+      });
+    } catch (error) {
+      logger.error('Unlike content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to unlike content',
+        message: error.message
+      });
+    }
+  },
+
+  async getLikedContent(req, res) {
+    try {
+      const profileId = req.activeProfile?.id;
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        sortBy = 'likedAt',
+        sortOrder = 'DESC'
+      } = req.query;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const offset = (page - 1) * limit;
+      const whereClause = { isActive: true };
+
+      if (type) whereClause.type = type;
+
+      const { count, rows: likedContent } = await ContentLike.findAndCountAll({
+        where: { profileId },
+        include: [
+          {
+            model: Content,
+            as: 'content',
+            where: whereClause,
+            attributes: [
+              'id', 'title', 'description', 'type', 'genre',
+              'duration', 'releaseYear', 'rating', 'ageRating',
+              'language', 'thumbnailUrl', 'trailerUrl', 'status'
+            ]
+          }
+        ],
+        limit: parseInt(limit),
+        offset: offset,
+        order: [[sortBy, sortOrder]],
+        distinct: true
+      });
+
+      res.json({
+        success: true,
+        data: {
+          likedContent: likedContent.map(item => ({
+            likeId: item.id,
+            likedAt: item.likedAt,
+            content: item.content
+          })),
+          pagination: {
+            total: count,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+          }
+        },
+        profileContext: {
+          profileId: profileId,
+          isChildProfile: req.activeProfile?.isChild || false
+        }
+      });
+    } catch (error) {
+      logger.error('Get liked content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to fetch liked content',
+        message: error.message
+      });
+    }
+  },
+
+  async checkLikeStatus(req, res) {
+    try {
+      const { contentId } = req.params;
+      const profileId = req.activeProfile?.id;
+
+      if (!profileId) {
+        return res.status(401).json({
+          success: false,
+          error: 'Profile required'
+        });
+      }
+
+      const like = await ContentLike.findOne({
+        where: {
+          profileId,
+          contentId
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          isLiked: !!like,
+          likedAt: like?.likedAt || null
+        }
+      });
+    } catch (error) {
+      logger.error('Check like status error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check like status',
+        message: error.message
+      });
+    }
+  },
 };
 
 module.exports = {
@@ -2826,5 +3053,9 @@ module.exports = {
   getTop10Series: contentController.getTop10Series,
   getTop10Movies: contentController.getTop10Movies,
   searchContent: contentController.searchContent,
-  getSearchSuggestions: contentController.getSearchSuggestions
+  getSearchSuggestions: contentController.getSearchSuggestions,
+  likeContent: contentController.likeContent,
+  unlikeContent: contentController.unlikeContent,
+  getLikedContent: contentController.getLikedContent,
+  checkLikeStatus: contentController.checkLikeStatus
 };
