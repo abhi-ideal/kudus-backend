@@ -1139,38 +1139,37 @@ const controller = {
       // Get all user profiles first to use their IDs for cleanup
       const userProfiles = await UserProfile.findAll({
         where: { userId: user.id },
-        attributes: ['id'],
+        attributes: ['id', 'name'],
         transaction
       });
 
       const profileIds = userProfiles.map(profile => profile.id);
+      logger.info(`Found ${userProfiles.length} profiles for user ${userId}: ${userProfiles.map(p => p.name).join(', ')}`);
 
       // Delete related data in proper order
       if (profileIds.length > 0) {
         // Delete watch history using profileId (not userId)
-        await WatchHistory.destroy({ 
+        const watchHistoryDeleted = await WatchHistory.destroy({ 
           where: { profileId: profileIds },
           transaction
         });
-
-        // Delete user feed using profileId
-        await UserFeed.destroy({ 
-          where: { profileId: profileIds },
-          transaction
-        });
+        logger.info(`Deleted ${watchHistoryDeleted} watch history records for profiles: ${profileIds.join(', ')}`);
       }
 
-      // Delete user profiles
-      await UserProfile.destroy({ 
+      // Delete user profiles and record the count
+      const profilesDeleted = await UserProfile.destroy({ 
         where: { userId: user.id },
         transaction
       });
+      logger.info(`Deleted ${profilesDeleted} user profiles for user ${userId}`);
 
-      // Delete user record
+      // Delete user record and record the operation
       await user.destroy({ transaction });
+      logger.info(`Deleted user record from database for user ${userId}`);
 
       // Commit the transaction
       await transaction.commit();
+      logger.info(`Database transaction committed successfully for user ${userId}`);
 
       // Delete from Firebase Auth (outside transaction)
       try {
@@ -1211,7 +1210,11 @@ const controller = {
     } catch (error) {
       // Rollback transaction on any error
       await transaction.rollback();
-      logger.error('Delete account error:', error);
+      logger.error('Delete account error - transaction rolled back:', {
+        userId: userId,
+        error: error.message,
+        stack: error.stack
+      });
       res.status(500).json({
         success: false,
         error: 'Failed to delete account',
