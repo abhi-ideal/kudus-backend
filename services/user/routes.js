@@ -430,4 +430,145 @@ router.delete('/delete-account', verifyFirebaseToken, ownerProfileOnly, controll
  */
 router.delete('/admin/cleanup-firebase/:firebaseUid', verifyFirebaseToken, controller.cleanupFirebaseUser);
 
+// Content Like Routes
+
+/**
+ * @swagger
+ * /api/users/content/{contentId}/like:
+ *   post:
+ *     summary: Like or dislike content
+ *     tags: [Content Likes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Content ID to like/dislike
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileId:
+ *                 type: string
+ *                 description: Profile ID (optional)
+ *               isLiked:
+ *                 type: boolean
+ *                 description: True for like, false for dislike (default: true)
+ *     responses:
+ *       200:
+ *         description: Content liked/disliked successfully
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: User not found
+ */
+router.post('/content/:contentId/like', verifyFirebaseToken, controller.likeContent);
+
+/**
+ * @swagger
+ * /api/users/content/{contentId}/like:
+ *   delete:
+ *     summary: Remove like/dislike from content
+ *     tags: [Content Likes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Content ID to remove like from
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileId:
+ *                 type: string
+ *                 description: Profile ID (optional)
+ *     responses:
+ *       200:
+ *         description: Like removed successfully
+ *       404:
+ *         description: Like not found
+ */
+router.delete('/content/:contentId/like', verifyFirebaseToken, controller.removeLike);
+
+/**
+ * @swagger
+ * /api/users/content/{contentId}/like-status:
+ *   get:
+ *     summary: Check if content is liked by user
+ *     tags: [Content Likes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: contentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Content ID to check
+ *       - in: query
+ *         name: profileId
+ *         schema:
+ *           type: string
+ *         description: Profile ID (optional)
+ *     responses:
+ *       200:
+ *         description: Like status retrieved successfully
+ *       404:
+ *         description: User not found
+ */
+router.get('/content/:contentId/like-status', verifyFirebaseToken, controller.checkContentLikeStatus);
+
+/**
+ * @swagger
+ * /api/users/liked-content:
+ *   get:
+ *     summary: Get user's liked content list
+ *     tags: [Content Likes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: profileId
+ *         schema:
+ *           type: string
+ *         description: Filter by profile ID
+ *       - in: query
+ *         name: isLiked
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Filter by like status (true for likes, false for dislikes)
+ *     responses:
+ *       200:
+ *         description: Liked content retrieved successfully
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: User not found
+ */
+router.get('/liked-content', verifyFirebaseToken, controller.getLikedContent);
+
 module.exports = router;

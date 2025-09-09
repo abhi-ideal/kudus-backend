@@ -3,6 +3,7 @@ const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
 const UserFeed = require('./models/UserFeed');
 const WatchHistory = require('./models/WatchHistory');
+const ContentLike = require('./models/ContentLike');
 const logger = require('./utils/logger');
 const admin = require('firebase-admin');
 
@@ -38,6 +39,10 @@ User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
 UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
 WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(ContentLike, { foreignKey: 'userId', as: 'contentLikes' });
+ContentLike.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+UserProfile.hasMany(ContentLike, { foreignKey: 'profileId', as: 'contentLikes' });
+ContentLike.belongsTo(UserProfile, { foreignKey: 'profileId', as: 'profile' });
 
 const controller = {
   // Utility function to check if Firebase user exists
@@ -1158,7 +1163,21 @@ const controller = {
           transaction
         });
         logger.info(`Deleted ${watchHistoryDeleted} watch history records for profiles: ${profileIds.join(', ')}`);
+
+        // Delete content likes for profiles
+        const profileLikesDeleted = await ContentLike.destroy({
+          where: { profileId: profileIds },
+          transaction
+        });
+        logger.info(`Deleted ${profileLikesDeleted} content likes for profiles: ${profileIds.join(', ')}`);
       }
+
+      // Delete user-level content likes (where profileId is null)
+      const userLikesDeleted = await ContentLike.destroy({
+        where: { userId: user.id, profileId: null },
+        transaction
+      });
+      logger.info(`Deleted ${userLikesDeleted} user-level content likes for user ${userId}`);
 
       // Delete user profiles and record the count
       const profilesDeleted = await UserProfile.destroy({ 
@@ -1280,6 +1299,250 @@ const controller = {
         message: error.message
       });
     }
+  },
+
+  // Like content
+  async likeContent(req, res) {
+    try {
+      const { uid } = req.user;
+      const { contentId } = req.params;
+      const { profileId, isLiked = true } = req.body;
+
+      // Find the user
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      // Verify profile belongs to user if profileId is provided
+      if (profileId) {
+        const profile = await UserProfile.findOne({
+          where: { id: profileId, userId: user.id, isActive: true }
+        });
+
+        if (!profile) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied - Profile not found or does not belong to user'
+          });
+        }
+      }
+
+      // Check if like already exists
+      const existingLike = await ContentLike.findOne({
+        where: {
+          userId: user.id,
+          profileId: profileId || null,
+          contentId
+        }
+      });
+
+      let contentLike;
+
+      if (existingLike) {
+        // Update existing like
+        await existingLike.update({ isLiked: Boolean(isLiked) });
+        contentLike = existingLike;
+      } else {
+        // Create new like
+        contentLike = await ContentLike.create({
+          userId: user.id,
+          profileId: profileId || null,
+          contentId,
+          isLiked: Boolean(isLiked)
+        });
+      }
+
+      res.json({
+        success: true,
+        message: `Content ${isLiked ? 'liked' : 'disliked'} successfully`,
+        data: {
+          id: contentLike.id,
+          contentId,
+          isLiked: contentLike.isLiked,
+          profileId: contentLike.profileId
+        }
+      });
+    } catch (error) {
+      logger.error('Like content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to like content'
+      });
+    }
+  },
+
+  // Remove like/dislike from content
+  async removeLike(req, res) {
+    try {
+      const { uid } = req.user;
+      const { contentId } = req.params;
+      const { profileId } = req.body;
+
+      // Find the user
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      // Find and delete the like
+      const contentLike = await ContentLike.findOne({
+        where: {
+          userId: user.id,
+          profileId: profileId || null,
+          contentId
+        }
+      });
+
+      if (!contentLike) {
+        return res.status(404).json({
+          success: false,
+          error: 'Like not found'
+        });
+      }
+
+      await contentLike.destroy();
+
+      res.json({
+        success: true,
+        message: 'Like removed successfully'
+      });
+    } catch (error) {
+      logger.error('Remove like error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to remove like'
+      });
+    }
+  },
+
+  // Get user's liked content
+  async getLikedContent(req, res) {
+    try {
+      const { uid } = req.user;
+      const { page = 1, limit = 20, profileId, isLiked = true } = req.query;
+      const offset = (page - 1) * limit;
+
+      // Find the user
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      const whereClause = {
+        userId: user.id,
+        isLiked: Boolean(isLiked === 'true')
+      };
+
+      if (profileId) {
+        // Verify profile belongs to user
+        const profile = await UserProfile.findOne({
+          where: { id: profileId, userId: user.id, isActive: true }
+        });
+
+        if (!profile) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied - Profile not found or does not belong to user'
+          });
+        }
+
+        whereClause.profileId = profileId;
+      }
+
+      const { count, rows: likedContent } = await ContentLike.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']],
+        include: [
+          {
+            model: UserProfile,
+            as: 'profile',
+            attributes: ['id', 'name', 'avatar', 'isKidsProfile']
+          }
+        ]
+      });
+
+      res.json({
+        success: true,
+        data: {
+          likedContent: likedContent.map(like => ({
+            id: like.id,
+            contentId: like.contentId,
+            isLiked: like.isLiked,
+            profile: like.profile,
+            createdAt: like.createdAt
+          })),
+          pagination: {
+            totalItems: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: parseInt(page),
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Get liked content error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to get liked content'
+      });
+    }
+  },
+
+  // Check if content is liked by user
+  async checkContentLikeStatus(req, res) {
+    try {
+      const { uid } = req.user;
+      const { contentId } = req.params;
+      const { profileId } = req.query;
+
+      // Find the user
+      const user = await User.findOne({ where: { firebaseUid: uid } });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found'
+        });
+      }
+
+      const contentLike = await ContentLike.findOne({
+        where: {
+          userId: user.id,
+          profileId: profileId || null,
+          contentId
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          contentId,
+          isLiked: contentLike ? contentLike.isLiked : null,
+          hasInteraction: !!contentLike
+        }
+      });
+    } catch (error) {
+      logger.error('Check content like status error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: 'Failed to check like status'
+      });
+    }
   }
 };
 
@@ -1312,5 +1575,9 @@ module.exports = {
   logout: controller.logout,
   deleteAccount: controller.deleteAccount,
   cleanupFirebaseUser: controller.cleanupFirebaseUser,
-  checkFirebaseUser: controller.checkFirebaseUser
+  checkFirebaseUser: controller.checkFirebaseUser,
+  likeContent: controller.likeContent,
+  removeLike: controller.removeLike,
+  getLikedContent: controller.getLikedContent,
+  checkContentLikeStatus: controller.checkContentLikeStatus
 };
