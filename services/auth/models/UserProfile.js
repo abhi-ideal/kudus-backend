@@ -17,7 +17,7 @@ const UserProfile = sequelize.define('UserProfile', {
       key: 'id'
     }
   },
-  profileName: {
+  name: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -25,7 +25,35 @@ const UserProfile = sequelize.define('UserProfile', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  isKidsProfile: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  ageRating: {
+    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'),
+    defaultValue: 'R'
+  },
   language: {
+    type: DataTypes.STRING,
+    defaultValue: 'en'
+  },
+  autoplayNext: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  autoplayPreviews: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  subtitles: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  subtitleLanguage: {
+    type: DataTypes.STRING,
+    defaultValue: 'en'
+  },
+  audioLanguage: {
     type: DataTypes.STRING,
     defaultValue: 'en'
   },
@@ -46,14 +74,6 @@ const UserProfile = sequelize.define('UserProfile', {
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
-  },
-  preferences: {
-    type: DataTypes.JSON,
-    defaultValue: {}
-  },
-  parentalControls: {
-    type: DataTypes.JSON,
-    defaultValue: {}
   }
 }, {
   tableName: 'user_profiles',

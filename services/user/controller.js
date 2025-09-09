@@ -758,7 +758,8 @@ const controller = {
           model: UserProfile,
           as: 'profiles',
           where: { isActive: true },
-          required: false
+          required: false,
+          attributes: ['id', 'name', 'avatar', 'isKidsProfile', 'ageRating', 'language', 'autoplayNext', 'autoplayPreviews', 'subtitles', 'subtitleLanguage', 'audioLanguage', 'maturityLevel', 'isActive', 'isOwner', 'createdAt', 'updatedAt']
         }],
         limit: parseInt(limit),
         offset: parseInt(offset),
@@ -795,7 +796,8 @@ const controller = {
           model: UserProfile,
           as: 'profiles',
           where: { isActive: true },
-          required: false
+          required: false,
+          attributes: ['id', 'name', 'avatar', 'isKidsProfile', 'ageRating', 'language', 'autoplayNext', 'autoplayPreviews', 'subtitles', 'subtitleLanguage', 'audioLanguage', 'maturityLevel', 'isActive', 'isOwner', 'createdAt', 'updatedAt']
         }]
       });
 
