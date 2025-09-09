@@ -18,18 +18,39 @@ if (!admin.apps.length) {
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     };
 
+    // Validate Firebase credentials
+    if (!serviceAccount.projectId || !serviceAccount.privateKey || !serviceAccount.clientEmail) {
+      throw new Error('Missing Firebase credentials in environment variables');
+    }
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
     logger.info('Firebase Admin initialized successfully in user service');
   } catch (error) {
     logger.error('Failed to initialize Firebase Admin in user service:', error);
+    throw error; // Re-throw to make it visible during startup
   }
 }
 
 // Define associations
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
 UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+
+
+  // Utility function to check if Firebase user exists
+  async checkFirebaseUser(firebaseUid) {
+    try {
+      const user = await admin.auth().getUser(firebaseUid);
+      return { exists: true, user };
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return { exists: false, error: 'User not found in Firebase' };
+      }
+      return { exists: false, error: error.message };
+    }
+  },
 
 User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
 WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -946,6 +967,63 @@ const controller = {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const userGrowth = await User.findAll({
+
+
+  // Manual Firebase cleanup endpoint (Admin only)
+  async cleanupFirebaseUser(req, res) {
+    try {
+      const { firebaseUid } = req.params;
+
+      if (!firebaseUid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Firebase UID is required'
+        });
+      }
+
+      logger.info(`Manual Firebase cleanup requested for user: ${firebaseUid}`);
+
+      try {
+        // Check if user exists in Firebase
+        const firebaseUser = await admin.auth().getUser(firebaseUid);
+        logger.info(`Firebase user found: ${firebaseUser.email || firebaseUser.uid}`);
+
+        // Delete from Firebase
+        await admin.auth().deleteUser(firebaseUid);
+        logger.info(`Firebase user manually deleted: ${firebaseUid}`);
+
+        // Revoke tokens
+        await admin.auth().revokeRefreshTokens(firebaseUid);
+        logger.info(`Firebase tokens revoked for: ${firebaseUid}`);
+
+        res.json({
+          success: true,
+          message: 'Firebase user cleaned up successfully',
+          deletedUid: firebaseUid
+        });
+
+      } catch (firebaseError) {
+        if (firebaseError.code === 'auth/user-not-found') {
+          res.json({
+            success: true,
+            message: 'Firebase user was already deleted',
+            uid: firebaseUid
+          });
+        } else {
+          throw firebaseError;
+        }
+      }
+
+    } catch (error) {
+      logger.error('Manual Firebase cleanup error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to cleanup Firebase user',
+        message: error.message
+      });
+    }
+  },
+
         attributes: [
           [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
           [sequelize.fn('COUNT', sequelize.col('id')), 'count']
@@ -1161,11 +1239,32 @@ const controller = {
 
       // Delete from Firebase Auth (outside transaction)
       try {
+        // First verify the user exists in Firebase
+        const firebaseUser = await admin.auth().getUser(userId);
+        logger.info(`Found Firebase user: ${firebaseUser.uid}, attempting deletion...`);
+        
+        // Delete the user from Firebase
         await admin.auth().deleteUser(userId);
-        logger.info(`Firebase user deleted: ${userId}`);
+        logger.info(`Firebase user successfully deleted: ${userId}`);
+        
+        // Also revoke all refresh tokens for this user
+        await admin.auth().revokeRefreshTokens(userId);
+        logger.info(`Firebase refresh tokens revoked for user: ${userId}`);
+        
       } catch (firebaseError) {
-        logger.error('Firebase delete user error:', firebaseError);
-        // Log error but don't fail the operation since DB cleanup was successful
+        logger.error('Firebase delete user error:', {
+          error: firebaseError.message,
+          code: firebaseError.code,
+          userId: userId
+        });
+        
+        // If user doesn't exist in Firebase, that's actually fine for our purposes
+        if (firebaseError.code === 'auth/user-not-found') {
+          logger.warn(`Firebase user ${userId} was already deleted or never existed`);
+        } else {
+          // For other errors, we should still log them but not fail the DB cleanup
+          logger.error(`Critical: Failed to delete Firebase user ${userId}. Manual cleanup may be required.`);
+        }
       }
 
       logger.info(`User account deleted successfully: ${userId}`);
@@ -1214,5 +1313,6 @@ module.exports = {
   getUserStatistics: controller.getUserStatistics,
   getUserActivity: controller.getUserActivity,
   logout: controller.logout,
-  deleteAccount: controller.deleteAccount
+  deleteAccount: controller.deleteAccount,
+  cleanupFirebaseUser: controller.cleanupFirebaseUser
 };

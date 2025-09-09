@@ -405,4 +405,29 @@ router.post('/logout', controller.logout);
  */
 router.delete('/delete-account', verifyFirebaseToken, ownerProfileOnly, controller.deleteAccount);
 
+/**
+ * @swagger
+ * /api/users/admin/cleanup-firebase/{firebaseUid}:
+ *   delete:
+ *     summary: Manual Firebase user cleanup (Admin only)
+ *     tags: [Users - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: firebaseUid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Firebase UID to cleanup
+ *     responses:
+ *       200:
+ *         description: Firebase user cleaned up successfully
+ *       400:
+ *         description: Firebase UID required
+ *       500:
+ *         description: Failed to cleanup Firebase user
+ */
+router.delete('/admin/cleanup-firebase/:firebaseUid', verifyFirebaseToken, controller.cleanupFirebaseUser);
+
 module.exports = router;
