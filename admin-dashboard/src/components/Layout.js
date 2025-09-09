@@ -71,8 +71,32 @@ const Layout = ({ children }) => {
   return (
     <AntLayout>
       <Sider trigger={null} collapsible collapsed={collapsed} theme="dark">
-        <div className="logo">
-          {collapsed ? 'OTT' : 'OTT Admin'}
+        <div className="logo" style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          padding: '16px',
+          marginBottom: '16px'
+        }}>
+          <img 
+            src="/logo.png" 
+            alt="Kudus" 
+            style={{ 
+              height: collapsed ? '24px' : '32px',
+              width: 'auto',
+              objectFit: 'contain'
+            }} 
+          />
+          {!collapsed && (
+            <span style={{ 
+              color: '#fff', 
+              marginLeft: '8px', 
+              fontSize: '16px',
+              fontWeight: '600'
+            }}>
+              Admin
+            </span>
+          )}
         </div>
         <Menu
           theme="dark"

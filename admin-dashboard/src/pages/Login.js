@@ -183,7 +183,7 @@ const Login = () => {
               marginBottom: '8px',
               fontWeight: '700'
             }}>
-              OTT Admin
+              Kudus Admin
             </Title>
             <Text style={{ 
               color: '#666', 
