@@ -26,7 +26,7 @@ import {
   SearchOutlined,
   LinkOutlined
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

@@ -23,7 +23,7 @@ import {
   DeleteOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { Option } = Select;
 const { TextArea } = Input;

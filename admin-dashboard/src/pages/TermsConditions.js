@@ -24,7 +24,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import moment from 'moment';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { TextArea } = Input;
 const { Title } = Typography;

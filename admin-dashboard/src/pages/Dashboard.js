@@ -8,7 +8,7 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { adminAPI } from '../utils/api';
+import { adminEndpoints } from '../utils/api';
 
 const { Title } = Typography;
 
@@ -25,7 +25,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const [userStatsRes] = await Promise.all([
-        adminAPI.getUserStatistics(),
+        adminEndpoints.getUserStatistics(),
         // You can add content stats API call here when available
       ]);
       console.log("userStatsRes");
