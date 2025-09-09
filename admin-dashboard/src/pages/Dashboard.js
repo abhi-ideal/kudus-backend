@@ -58,7 +58,7 @@ const Dashboard = () => {
   }
 
   const userGrowthData = userStats?.userGrowth?.map(item => ({
-    date: item.date,
+    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     users: parseInt(item.count)
   })) || [];
 

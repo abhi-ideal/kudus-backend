@@ -1,5 +1,6 @@
 const express = require('express');
 const { verifyFirebaseToken } = require('./middleware/auth');
+const { authAdmin } = require('./middleware/adminAuth');
 const { validate, schemas } = require('./utils/validation');
 const controller = require('./controller');
 const { createAdminRouter, standardAdminEndpoints } = require('./utils/adminRoutes');
@@ -113,12 +114,12 @@ adminRouter.get('/health', standardAdminEndpoints.health);
 adminRouter.get('/stats', standardAdminEndpoints.stats);
 
 // Add user-specific admin endpoints
-adminRouter.get('/users', controller.getUsers);
-adminRouter.get('/users/statistics', controller.getUserStatistics);
-adminRouter.get('/users/:id', controller.getUserById);
-adminRouter.patch('/users/:id/block', controller.blockUser);
-adminRouter.patch('/users/:id/unblock', controller.unblockUser);
-adminRouter.patch('/users/:id/subscription', controller.updateUserSubscription);
+adminRouter.get('/users', authAdmin, controller.getUsers);
+adminRouter.get('/users/statistics', authAdmin, controller.getUserStatistics);
+adminRouter.get('/users/:id', authAdmin, controller.getUserById);
+adminRouter.patch('/users/:id/block', authAdmin, controller.blockUser);
+adminRouter.patch('/users/:id/unblock', authAdmin, controller.unblockUser);
+adminRouter.patch('/users/:id/subscription', authAdmin, controller.updateUserSubscription);
 
 router.use('/admin', adminRouter);
 

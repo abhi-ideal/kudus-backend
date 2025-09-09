@@ -6,6 +6,9 @@ const WatchHistory = require('./models/WatchHistory');
 const logger = require('./utils/logger');
 const admin = require('firebase-admin');
 
+// Get sequelize instance from User model
+const { sequelize } = User;
+
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   try {
@@ -938,6 +941,35 @@ const controller = {
       const familyUsers = await User.count({ where: { subscriptionType: 'family' } });
       const basicUsers = await User.count({ where: { subscriptionType: 'basic' } });
 
+      // Get user growth data for last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const userGrowth = await User.findAll({
+        attributes: [
+          [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        where: {
+          createdAt: {
+            [Op.gte]: thirtyDaysAgo
+          }
+        },
+        group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
+        order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
+        raw: true
+      });
+
+      // Get subscription breakdown
+      const subscriptionBreakdown = await User.findAll({
+        attributes: [
+          'subscriptionType',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
+        group: ['subscriptionType'],
+        raw: true
+      });
+
       const statistics = {
         totalUsers,
         activeUsers,
@@ -945,7 +977,18 @@ const controller = {
         premiumUsers,
         familyUsers,
         basicUsers,
-        freeUsers: totalUsers - premiumUsers - familyUsers - basicUsers
+        freeUsers: totalUsers - premiumUsers - familyUsers - basicUsers,
+        userGrowth: userGrowth.map(item => ({
+          date: item.date,
+          count: parseInt(item.count)
+        })),
+        subscriptionBreakdown: subscriptionBreakdown.map(item => ({
+          subscription: item.subscriptionType || 'free',
+          count: parseInt(item.count)
+        })),
+        overview: {
+          activePercentage: totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0
+        }
       };
 
       res.json({
