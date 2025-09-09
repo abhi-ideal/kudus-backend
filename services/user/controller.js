@@ -36,9 +36,10 @@ if (!admin.apps.length) {
 // Define associations
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
 UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
+WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-
-
+const controller = {
   // Utility function to check if Firebase user exists
   async checkFirebaseUser(firebaseUid) {
     try {
@@ -51,11 +52,6 @@ UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
       return { exists: false, error: error.message };
     }
   },
-
-User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
-WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-const controller = {
   // Get user profile
   async getProfile(req, res) {
     try {
@@ -1314,5 +1310,6 @@ module.exports = {
   getUserActivity: controller.getUserActivity,
   logout: controller.logout,
   deleteAccount: controller.deleteAccount,
-  cleanupFirebaseUser: controller.cleanupFirebaseUser
+  cleanupFirebaseUser: controller.cleanupFirebaseUser,
+  checkFirebaseUser: controller.checkFirebaseUser
 };
