@@ -3,26 +3,21 @@ const UserProfile = require('../models/UserProfile');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
+const User = require('../models/User');
+const UserProfile = require('../models/UserProfile');
+
 const ownerProfileOnly = async (req, res, next) => {
   try {
     const userId = req.user.uid;
     
-    // Get profile_id from query, body, or headers
-    const profileId = req.query.profile_id || req.body.profile_id || req.headers['x-profile-id'];
+    // Get profile_id from token first, then fallback to query, body, or headers
+    const profileId = req.user.profile_id || req.user.default_profile_id || 
+                     req.query.profile_id || req.body.profile_id || req.headers['x-profile-id'];
     
     if (!profileId) {
       return res.status(400).json({
         success: false,
         error: 'Profile ID is required for this operation'
-      });
-    }
-
-    // Check if the profile ID in the token matches the requested profile ID
-    const tokenProfileId = req.user.profile_id || req.user.default_profile_id;
-    if (tokenProfileId && tokenProfileId !== profileId) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied. The profile ID in your token does not match the requested profile.'
       });
     }
 
