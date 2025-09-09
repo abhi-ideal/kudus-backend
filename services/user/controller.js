@@ -963,6 +963,10 @@ const controller = {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const userGrowth = await User.findAll({
+        attributes: [
+          [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        ],
         where: {
           createdAt: {
             [Op.gte]: thirtyDaysAgo
