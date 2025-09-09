@@ -1086,14 +1086,20 @@ const controller = {
   },
 
   async deleteAccount(req, res) {
+    const transaction = await sequelize.transaction();
+    
     try {
       const userId = req.user.uid;
       const { confirmPassword } = req.body;
 
       // Find user
-      const user = await User.findOne({ where: { firebaseUid: userId } });
+      const user = await User.findOne({ 
+        where: { firebaseUid: userId },
+        transaction
+      });
 
       if (!user) {
+        await transaction.rollback();
         return res.status(404).json({
           success: false,
           error: 'User not found'
@@ -1105,39 +1111,72 @@ const controller = {
         where: {
           userId: user.id,
           isOwner: true
-        }
+        },
+        transaction
       });
 
       if (!ownerProfile) {
+        await transaction.rollback();
         return res.status(403).json({
           success: false,
           error: 'Cannot delete account: You are not the owner of any profile.'
         });
       }
 
-      // Delete related data
-      await UserProfile.destroy({ where: { userId: user.id } });
-      await WatchHistory.destroy({ where: { userId: user.id } });
-      await UserFeed.destroy({ where: { profileId: user.id } }); // Assuming UserFeed is related to profileId
+      // Get all user profiles first to use their IDs for cleanup
+      const userProfiles = await UserProfile.findAll({
+        where: { userId: user.id },
+        attributes: ['id'],
+        transaction
+      });
 
-      // Delete user record
-      await user.destroy();
+      const profileIds = userProfiles.map(profile => profile.id);
 
-      // Delete from Firebase Auth
-      try {
-        await admin.auth().deleteUser(userId);
-      } catch (firebaseError) {
-        logger.error('Firebase delete user error:', firebaseError);
-        // Continue even if Firebase deletion fails
+      // Delete related data in proper order
+      if (profileIds.length > 0) {
+        // Delete watch history using profileId (not userId)
+        await WatchHistory.destroy({ 
+          where: { profileId: profileIds },
+          transaction
+        });
+
+        // Delete user feed using profileId
+        await UserFeed.destroy({ 
+          where: { profileId: profileIds },
+          transaction
+        });
       }
 
-      logger.info(`User account deleted: ${userId}`);
+      // Delete user profiles
+      await UserProfile.destroy({ 
+        where: { userId: user.id },
+        transaction
+      });
+
+      // Delete user record
+      await user.destroy({ transaction });
+
+      // Commit the transaction
+      await transaction.commit();
+
+      // Delete from Firebase Auth (outside transaction)
+      try {
+        await admin.auth().deleteUser(userId);
+        logger.info(`Firebase user deleted: ${userId}`);
+      } catch (firebaseError) {
+        logger.error('Firebase delete user error:', firebaseError);
+        // Log error but don't fail the operation since DB cleanup was successful
+      }
+
+      logger.info(`User account deleted successfully: ${userId}`);
 
       res.json({
         success: true,
         message: 'Account deleted successfully'
       });
     } catch (error) {
+      // Rollback transaction on any error
+      await transaction.rollback();
       logger.error('Delete account error:', error);
       res.status(500).json({
         success: false,
