@@ -1,9 +1,7 @@
 const { Op } = require('sequelize');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
-const UserFeed = require('./models/UserFeed');
 const WatchHistory = require('./models/WatchHistory');
-const ContentLike = require('./models/ContentLike');
 const logger = require('./utils/logger');
 const admin = require('firebase-admin');
 
@@ -112,9 +110,9 @@ const controller = {
       if (profileId) {
         // Update existing profile
         const profile = await UserProfile.findOne({
-          where: { 
+          where: {
             id: profileId,
-            userId: user.id 
+            userId: user.id
           }
         });
 
@@ -200,7 +198,7 @@ const controller = {
       }
 
       const profiles = await UserProfile.findAll({
-        where: { 
+        where: {
           userId: user.id,
           isActive: true
         },
@@ -1115,7 +1113,7 @@ const controller = {
       const { confirmPassword } = req.body;
 
       // Find user
-      const user = await User.findOne({ 
+      const user = await User.findOne({
         where: { firebaseUid: userId },
         transaction
       });
@@ -1158,7 +1156,7 @@ const controller = {
       // Delete related data in proper order
       if (profileIds.length > 0) {
         // Delete watch history using profileId (not userId)
-        const watchHistoryDeleted = await WatchHistory.destroy({ 
+        const watchHistoryDeleted = await WatchHistory.destroy({
           where: { profileId: profileIds },
           transaction
         });
@@ -1180,7 +1178,7 @@ const controller = {
       logger.info(`Deleted ${userLikesDeleted} user-level content likes for user ${userId}`);
 
       // Delete user profiles and record the count
-      const profilesDeleted = await UserProfile.destroy({ 
+      const profilesDeleted = await UserProfile.destroy({
         where: { userId: user.id },
         transaction
       });
@@ -1575,9 +1573,5 @@ module.exports = {
   logout: controller.logout,
   deleteAccount: controller.deleteAccount,
   cleanupFirebaseUser: controller.cleanupFirebaseUser,
-  checkFirebaseUser: controller.checkFirebaseUser,
-  likeContent: controller.likeContent,
-  removeLike: controller.removeLike,
-  getLikedContent: controller.getLikedContent,
-  checkContentLikeStatus: controller.checkContentLikeStatus
+  checkFirebaseUser: controller.checkFirebaseUser
 };
