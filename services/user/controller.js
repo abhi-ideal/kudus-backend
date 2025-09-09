@@ -1177,13 +1177,13 @@ const controller = {
         const firebaseUser = await admin.auth().getUser(userId);
         logger.info(`Found Firebase user: ${firebaseUser.uid}, attempting deletion...`);
 
-        // Delete the user from Firebase
-        await admin.auth().deleteUser(userId);
-        logger.info(`Firebase user successfully deleted: ${userId}`);
-
-        // Also revoke all refresh tokens for this user
+        // Revoke all refresh tokens BEFORE deleting the user
         await admin.auth().revokeRefreshTokens(userId);
         logger.info(`Firebase refresh tokens revoked for user: ${userId}`);
+
+        // Then delete the user from Firebase
+        await admin.auth().deleteUser(userId);
+        logger.info(`Firebase user successfully deleted: ${userId}`);
 
       } catch (firebaseError) {
         logger.error('Firebase delete user error:', {
