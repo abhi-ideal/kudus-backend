@@ -3,8 +3,6 @@ const UserProfile = require('../models/UserProfile');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 
-const User = require('../models/User');
-const UserProfile = require('../models/UserProfile');
 
 const ownerProfileOnly = async (req, res, next) => {
   try {
