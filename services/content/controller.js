@@ -1375,6 +1375,7 @@ const contentController = {
       } = req.query;
 
       const offset = (page - 1) * limit;
+      const profileId = req.activeProfile?.id;
 
       // Build content where clause for filtering
       const contentWhere = { isActive: true };
@@ -1438,6 +1439,26 @@ const contentController = {
         }]
       });
 
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+
+      if (profileId) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
       // Filter items that have content and transform data
       let itemsWithContent = contentItems
         .filter(item => item.itemMappings && item.itemMappings.length > 0)
@@ -1450,7 +1471,14 @@ const contentController = {
           showOnChildProfile: item.showOnChildProfile,
           isActive: item.isActive,
           contentCount: item.itemMappings.length,
-          content: item.itemMappings.map(mapping => mapping.content).filter(Boolean)
+          content: item.itemMappings.map(mapping => {
+            const content = mapping.content;
+            return {
+              ...content.toJSON(),
+              isLiked: profileId ? userLikes.includes(content.id) : false,
+              isWatchlist: profileId ? userWatchlist.includes(content.id) : false
+            };
+          }).filter(Boolean)
         }));
 
       // For child profiles, apply additional filtering
@@ -1491,7 +1519,11 @@ const contentController = {
             totalItems: totalItems,
             itemsPerPage: parseInt(limit)
           }
-        }
+        },
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
       });
     } catch (error) {
       logger.error('Get content grouped by items error:', error);

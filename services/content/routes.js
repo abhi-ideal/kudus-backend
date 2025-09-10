@@ -844,7 +844,7 @@ router.delete('/admin/items/:id', adminAuth, contentController.deleteContentItem
  *                             type: array
  *                             maxItems: 10
  */
-router.get('/items', authenticate, profileAuth, childProfileFilter, checkGeoRestriction, contentController.getContentGroupedByItems);
+router.get('/items', authenticate, authenticateProfile, checkGeoRestriction, contentController.getContentGroupedByItems);
 
 /**
  * @swagger
