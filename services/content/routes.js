@@ -7,16 +7,34 @@ const { profileAuth, childProfileFilter } = require('./middleware/profileAuth');
 const { validate, schemas } = require('./utils/validation');
 
 // Simple profile authentication middleware for content service
-const authenticateProfile = (req, res, next) => {
-  // Add basic profile context if user is authenticated
-  if (req.user) {
-    req.activeProfile = {
-      id: req.user.uid || req.user.id,
-      isChild: false, // Default to adult profile
-      userId: req.user.uid || req.user.id
-    };
+const authenticateProfile = async (req, res, next) => {
+  try {
+    // Add basic profile context if user is authenticated
+    if (req.user) {
+      const { profileId } = req.headers;
+      
+      if (profileId) {
+        // Use the provided profile ID from headers
+        req.activeProfile = {
+          id: profileId,
+          isChild: false, // You can add logic to check if it's a child profile
+          userId: req.user.uid || req.user.id
+        };
+      } else {
+        // If no profile ID provided, you might want to get the default profile
+        // For now, we'll use the user ID as a fallback
+        req.activeProfile = {
+          id: req.user.uid || req.user.id,
+          isChild: false,
+          userId: req.user.uid || req.user.id
+        };
+      }
+    }
+    next();
+  } catch (error) {
+    console.error('Profile authentication error:', error);
+    next();
   }
-  next();
 };
 
 // Simple geo restriction middleware
