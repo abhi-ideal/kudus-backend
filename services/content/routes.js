@@ -11,22 +11,23 @@ const authenticateProfile = async (req, res, next) => {
   try {
     // Add basic profile context if user is authenticated
     if (req.user) {
-      const { profileId } = req.headers;
+      // Use profile_id from the decoded Firebase token
+      const profileId = req.user.profile_id;
+      const isChild = req.user.child || false;
       
       if (profileId) {
-        // Use the provided profile ID from headers
+        // Use the profile ID from the Firebase token
         req.activeProfile = {
           id: profileId,
-          isChild: false, // You can add logic to check if it's a child profile
-          userId: req.user.uid || req.user.id
+          isChild: isChild,
+          userId: req.user.uid || req.user.user_id
         };
       } else {
-        // If no profile ID provided, you might want to get the default profile
-        // For now, we'll use the user ID as a fallback
+        // Fallback to user ID if no profile_id is found
         req.activeProfile = {
-          id: req.user.uid || req.user.id,
+          id: req.user.uid || req.user.user_id,
           isChild: false,
-          userId: req.user.uid || req.user.id
+          userId: req.user.uid || req.user.user_id
         };
       }
     }
