@@ -12,13 +12,7 @@ module.exports = {
       },
       profileId: {
         type: Sequelize.UUID,
-        allowNull: false,
-        references: {
-          model: 'user_profiles',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        allowNull: false
       },
       contentId: {
         type: Sequelize.UUID,
