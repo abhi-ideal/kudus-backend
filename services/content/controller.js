@@ -55,17 +55,18 @@ const contentController = {
         }
       }
 
-      // Add comprehensive search functionality
+      // Add comprehensive search functionality with relevance
       if (search && search.trim().length > 0) {
         const searchTerm = search.trim();
         
         const searchConditions = [
           { title: { [Op.like]: `%${searchTerm}%` } },
           { description: { [Op.like]: `%${searchTerm}%` } },
-          { director: { [Op.like]: `%${searchTerm}%` } }
+          { director: { [Op.like]: `%${searchTerm}%` } },
+          { type: { [Op.like]: `%${searchTerm}%` } }
         ];
 
-        // Search in JSON fields (cast, genre, subtitles)
+        // Search in JSON fields (cast, genre, subtitles, characters)
         if (sequelize.getDialect() === 'mysql') {
           searchConditions.push(
             // Search in cast array
@@ -73,7 +74,9 @@ const contentController = {
             // Search in genre array
             sequelize.literal(`JSON_SEARCH(LOWER(genre), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`),
             // Search in subtitles
-            sequelize.literal(`JSON_SEARCH(LOWER(subtitles), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`)
+            sequelize.literal(`JSON_SEARCH(LOWER(subtitles), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`),
+            // Search in characters (if exists)
+            sequelize.literal(`JSON_SEARCH(LOWER(characters), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`)
           );
         }
 
@@ -126,11 +129,37 @@ const contentController = {
         }
       }
 
+      // Determine order clause - use relevance scoring if searching
+      let orderClause;
+      if (search && search.trim().length > 0 && sortBy === 'createdAt') {
+        const searchTerm = search.trim();
+        const relevanceScore = `
+          CASE 
+            WHEN LOWER(title) LIKE '%${searchTerm.toLowerCase()}%' THEN 8
+            WHEN JSON_SEARCH(LOWER(subtitles), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 7
+            WHEN JSON_SEARCH(LOWER(cast), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 6
+            WHEN JSON_SEARCH(LOWER(characters), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 5
+            WHEN LOWER(director) LIKE '%${searchTerm.toLowerCase()}%' THEN 4
+            WHEN LOWER(description) LIKE '%${searchTerm.toLowerCase()}%' THEN 3
+            WHEN LOWER(type) LIKE '%${searchTerm.toLowerCase()}%' THEN 2
+            WHEN JSON_SEARCH(LOWER(genre), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 1
+            ELSE 0
+          END
+        `;
+        
+        orderClause = [
+          [sequelize.literal(relevanceScore), 'DESC'],
+          [sortBy, sortOrder.toUpperCase()]
+        ];
+      } else {
+        orderClause = [[sortBy, sortOrder.toUpperCase()]];
+      }
+
       const { count, rows: content } = await Content.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [[sortBy, sortOrder.toUpperCase()]],
+        order: orderClause,
         attributes: {
           exclude: ['streamingUrl', 'downloadUrl']
         }
@@ -2764,9 +2793,26 @@ const contentController = {
           break;
         case 'relevance':
         default:
-          // For relevance, we could implement a scoring system
-          // For now, use title relevance + creation date
-          orderClause = [[sequelize.col('Content.createdAt'), 'DESC']];
+          // Calculate relevance score based on field priority
+          // Priority: title > subtitles > cast > characters > director > description > type > genre
+          const relevanceScore = `
+            CASE 
+              WHEN LOWER(title) LIKE '%${searchTerm.toLowerCase()}%' THEN 8
+              WHEN JSON_SEARCH(LOWER(subtitles), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 7
+              WHEN JSON_SEARCH(LOWER(cast), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 6
+              WHEN JSON_SEARCH(LOWER(characters), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 5
+              WHEN LOWER(director) LIKE '%${searchTerm.toLowerCase()}%' THEN 4
+              WHEN LOWER(description) LIKE '%${searchTerm.toLowerCase()}%' THEN 3
+              WHEN LOWER(type) LIKE '%${searchTerm.toLowerCase()}%' THEN 2
+              WHEN JSON_SEARCH(LOWER(genre), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL THEN 1
+              ELSE 0
+            END
+          `;
+          
+          orderClause = [
+            [sequelize.literal(relevanceScore), 'DESC'],
+            [sequelize.col('Content.createdAt'), 'DESC']
+          ];
           break;
       }
 
