@@ -46,4 +46,14 @@ const ContentLike = sequelize.define('ContentLike', {
   ]
 });
 
+// Define associations
+ContentLike.associate = (models) => {
+  if (models.Content) {
+    ContentLike.belongsTo(models.Content, {
+      foreignKey: 'contentId',
+      as: 'content'
+    });
+  }
+};
+
 module.exports = ContentLike;

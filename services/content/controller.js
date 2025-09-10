@@ -12,7 +12,7 @@ const ContentLike = require('./models/ContentLike');
 const { Sequelize } = require('sequelize');
 
 // Initialize associations
-const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory };
+const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     models[modelName].associate(models);

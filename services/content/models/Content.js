@@ -166,6 +166,14 @@ Content.associate = (models) => {
       as: 'watchHistory'
     });
   }
+
+  // Content likes association
+  if (models.ContentLike) {
+    Content.hasMany(models.ContentLike, {
+      foreignKey: 'contentId',
+      as: 'contentLikes'
+    });
+  }
 };
 
 module.exports = Content;
