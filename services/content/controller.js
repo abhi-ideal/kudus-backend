@@ -104,8 +104,11 @@ const contentController = {
     try {
       const { id } = req.params;
 
-      const content = await Content.findByPk(id, {
-        attributes: { exclude: ['s3Key', 'videoQualities'] },
+      const content = await Content.findOne({
+        where: {
+          id,
+          isActive: true
+        },
         include: [
           {
             model: Season,
@@ -180,7 +183,7 @@ const contentController = {
             contentId: id
           }
         });
-        
+
         likeStatus = {
           isLiked: !!contentLike,
           likedAt: contentLike?.likedAt || null

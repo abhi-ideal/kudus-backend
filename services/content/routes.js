@@ -1150,6 +1150,8 @@ router.get('/episode/:episodeId', checkGeoRestriction, contentController.getEpis
  *   get:
  *     summary: Get content by ID
  *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -1160,7 +1162,7 @@ router.get('/episode/:episodeId', checkGeoRestriction, contentController.getEpis
  *       200:
  *         description: Content retrieved successfully
  */
-router.get('/:id', checkGeoRestriction, contentController.getContentById);
+router.get('/:id', authenticate, authenticateProfile, checkGeoRestriction, contentController.getContentById);
 
 /**
  * @swagger
