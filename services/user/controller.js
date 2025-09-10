@@ -2,7 +2,6 @@ const { Op } = require('sequelize');
 const User = require('./models/User');
 const UserProfile = require('./models/UserProfile');
 const WatchHistory = require('./models/WatchHistory');
-const ContentLike = require('./models/ContentLike');
 const logger = require('./utils/logger');
 const admin = require('firebase-admin');
 
@@ -36,12 +35,12 @@ if (!admin.apps.length) {
 // Define associations
 User.hasMany(UserProfile, { foreignKey: 'userId', as: 'profiles' });
 UserProfile.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 User.hasMany(WatchHistory, { foreignKey: 'userId', as: 'watchHistory' });
 WatchHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasMany(ContentLike, { foreignKey: 'userId', as: 'contentLikes' });
-ContentLike.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-UserProfile.hasMany(ContentLike, { foreignKey: 'profileId', as: 'contentLikes' });
-ContentLike.belongsTo(UserProfile, { foreignKey: 'profileId', as: 'profile' });
+
+UserProfile.hasMany(WatchHistory, { foreignKey: 'profileId', as: 'watchHistory' });
+WatchHistory.belongsTo(UserProfile, { foreignKey: 'profileId', as: 'profile' });
 
 const controller = {
   // Utility function to check if Firebase user exists
@@ -1163,20 +1162,7 @@ const controller = {
         });
         logger.info(`Deleted ${watchHistoryDeleted} watch history records for profiles: ${profileIds.join(', ')}`);
 
-        // Delete content likes for profiles
-        const profileLikesDeleted = await ContentLike.destroy({
-          where: { profileId: profileIds },
-          transaction
-        });
-        logger.info(`Deleted ${profileLikesDeleted} content likes for profiles: ${profileIds.join(', ')}`);
       }
-
-      // Delete user-level content likes (where profileId is null)
-      const userLikesDeleted = await ContentLike.destroy({
-        where: { userId: user.id, profileId: null },
-        transaction
-      });
-      logger.info(`Deleted ${userLikesDeleted} user-level content likes for user ${userId}`);
 
       // Delete user profiles and record the count
       const profilesDeleted = await UserProfile.destroy({
