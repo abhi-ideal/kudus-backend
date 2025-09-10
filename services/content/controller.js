@@ -171,12 +171,29 @@ const contentController = {
         };
       }
 
+      // Check like status if profile is provided
+      let likeStatus = null;
+      if (req.activeProfile?.id) {
+        const contentLike = await ContentLike.findOne({
+          where: {
+            profileId: req.activeProfile.id,
+            contentId: id
+          }
+        });
+        
+        likeStatus = {
+          isLiked: !!contentLike,
+          likedAt: contentLike?.likedAt || null
+        };
+      }
+
       // Format response with additional metadata
       const response = {
         success: true,
         data: {
           ...content.toJSON(),
           streamingInfo,
+          likeStatus,
           totalSeasons: content.seasons ? content.seasons.length : 0,
           totalEpisodes: content.seasons
             ? content.seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0)
