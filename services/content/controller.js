@@ -30,12 +30,59 @@ const contentController = {
         genre,
         language,
         ageRating,
+        search,
         sortBy = 'createdAt',
         sortOrder = 'DESC'
       } = req.query;
 
       const offset = (page - 1) * limit;
       const whereClause = { isActive: true };
+
+      // Apply child profile filtering based on token
+      if (req.activeProfile && req.activeProfile.isChild === true) {
+        whereClause.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
+        
+        // Add genre filter for child profiles
+        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
+        const allowedGenreConditions = allowedGenres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (whereClause[Op.and]) {
+          whereClause[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
+        } else {
+          whereClause[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
+        }
+      }
+
+      // Add comprehensive search functionality
+      if (search && search.trim().length > 0) {
+        const searchTerm = search.trim();
+        
+        const searchConditions = [
+          { title: { [Op.like]: `%${searchTerm}%` } },
+          { description: { [Op.like]: `%${searchTerm}%` } },
+          { director: { [Op.like]: `%${searchTerm}%` } }
+        ];
+
+        // Search in JSON fields (cast, genre, subtitles)
+        if (sequelize.getDialect() === 'mysql') {
+          searchConditions.push(
+            // Search in cast array
+            sequelize.literal(`JSON_SEARCH(LOWER(cast), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`),
+            // Search in genre array
+            sequelize.literal(`JSON_SEARCH(LOWER(genre), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`),
+            // Search in subtitles
+            sequelize.literal(`JSON_SEARCH(LOWER(subtitles), 'one', '%${searchTerm.toLowerCase()}%') IS NOT NULL`)
+          );
+        }
+
+        if (whereClause[Op.and]) {
+          whereClause[Op.and].push({ [Op.or]: searchConditions });
+        } else {
+          whereClause[Op.and] = [{ [Op.or]: searchConditions }];
+        }
+      }
 
       // Apply filters
       if (type) {
@@ -44,9 +91,15 @@ const contentController = {
 
       if (genre) {
         const genres = genre.split(',').map(g => g.trim());
-        whereClause.genre = {
-          [Op.overlap]: genres
-        };
+        const genreConditions = genres.map(g => 
+          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
+        );
+
+        if (whereClause[Op.and]) {
+          whereClause[Op.and].push(sequelize.literal(`(${genreConditions.join(' OR ')})`));
+        } else {
+          whereClause[Op.and] = [sequelize.literal(`(${genreConditions.join(' OR ')})`)];
+        }
       }
 
       if (language) {
@@ -59,10 +112,18 @@ const contentController = {
 
       // Check geo restrictions
       if (req.userCountry && req.userCountry !== 'US') {
-        whereClause[Op.or] = [
-          { availableCountries: { [Op.is]: null } },
-          { availableCountries: { [Op.contains]: [req.userCountry] } }
-        ];
+        const geoCondition = {
+          [Op.or]: [
+            { availableCountries: { [Op.is]: null } },
+            { availableCountries: { [Op.contains]: [req.userCountry] } }
+          ]
+        };
+
+        if (whereClause[Op.and]) {
+          whereClause[Op.and].push(geoCondition);
+        } else {
+          whereClause[Op.and] = [geoCondition];
+        }
       }
 
       const { count, rows: content } = await Content.findAndCountAll({
@@ -77,10 +138,29 @@ const contentController = {
 
       const totalPages = Math.ceil(count / limit);
 
+      // Add search highlights if search term is provided
+      let processedContent = content;
+      if (search && search.trim().length > 0) {
+        const searchTerm = search.trim();
+        const highlightText = (text) => {
+          if (!text) return text;
+          const regex = new RegExp(`(${searchTerm})`, 'gi');
+          return text.replace(regex, '<mark>$1</mark>');
+        };
+
+        processedContent = content.map(item => {
+          const contentData = item.toJSON();
+          contentData.highlightedTitle = highlightText(contentData.title);
+          contentData.highlightedDescription = highlightText(contentData.description);
+          return contentData;
+        });
+      }
+
       res.json({
         success: true,
         data: {
-          content,
+          content: processedContent,
+          searchQuery: search || null,
           pagination: {
             currentPage: parseInt(page),
             totalPages,
@@ -89,6 +169,18 @@ const contentController = {
             hasNextPage: page < totalPages,
             hasPreviousPage: page > 1
           }
+        },
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null,
+        appliedFilters: {
+          search: search || null,
+          type: type || null,
+          genre: genre || null,
+          language: language || null,
+          ageRating: ageRating || null,
+          childProfileFilter: req.activeProfile?.isChild || false
         }
       });
     } catch (error) {

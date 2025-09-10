@@ -49,8 +49,10 @@ const checkGeoRestriction = (req, res, next) => {
  * @swagger
  * /api/content:
  *   get:
- *     summary: Get all content with pagination and filtering
+ *     summary: Get all content with pagination, filtering, and search
  *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -68,11 +70,35 @@ const checkGeoRestriction = (req, res, next) => {
  *         name: genre
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search across title, description, director, cast, genre, subtitles
+ *       - in: query
+ *         name: language
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: ageRating
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
- *         description: Content list retrieved successfully
+ *         description: Content list retrieved successfully with search results
  */
-router.get('/', checkGeoRestriction, contentController.getAllContent);
+router.get('/', authenticate, authenticateProfile, checkGeoRestriction, contentController.getAllContent);
 
 /**
  * @swagger
