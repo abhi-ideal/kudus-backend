@@ -141,7 +141,7 @@ const adminEndpoints = {
 
   // Thumbnail Management API
   updateContentThumbnails: (contentId, thumbnails) => 
-    contentAPI.patch(`/admin/content/${contentId}/thumbnails`, { thumbnails }),
+    contentAPI.patch(`/content/${contentId}/thumbnails`, { thumbnails }),
 
   // Get signed URL for thumbnail upload
   getSignedUrlForThumbnailUpload: (uploadData) =>
