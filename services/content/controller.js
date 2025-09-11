@@ -4,17 +4,24 @@ const adminEndpoints = require('./utils/adminRoutes');
 const sequelize = require('./config/database');
 const logger = require('./utils/logger');
 
-// Initialize associations only once
-const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
+// Initialize models and associations
+const models = {
+  Content,
+  ContentItem,
+  ContentItemMapping,
+  Season,
+  Episode,
+  Watchlist,
+  WatchHistory,
+  ContentLike
+};
 
-// Check if associations are already initialized to prevent duplicates
-if (!Content.associations || Object.keys(Content.associations).length === 0) {
-  Object.keys(models).forEach(modelName => {
-    if (models[modelName].associate && typeof models[modelName].associate === 'function') {
-      models[modelName].associate(models);
-    }
-  });
-}
+// Set up associations
+Object.values(models).forEach(model => {
+  if (model.associate) {
+    model.associate(models);
+  }
+});
 
 const contentController = {
   // Get all content with pagination and filtering
