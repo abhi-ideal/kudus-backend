@@ -243,7 +243,7 @@ const contentController = {
                 include: req.activeProfile?.id ? [
                   {
                     model: models.WatchHistory,
-                    as: 'watchHistory',
+                    as: 'episodeWatchHistory',
                     where: {
                       profileId: req.activeProfile.id
                     },
@@ -678,7 +678,7 @@ const contentController = {
             include: req.activeProfile?.id ? [
               {
                 model: models.WatchHistory,
-                as: 'watchHistory',
+                as: 'episodeWatchHistory',
                 where: {
                   profileId: req.activeProfile.id
                 },
@@ -757,7 +757,7 @@ const contentController = {
           ...(req.activeProfile?.id ? [
             {
               model: models.WatchHistory,
-              as: 'watchHistory',
+              as: 'episodeWatchHistory',
               where: {
                 profileId: req.activeProfile.id,
                 episodeId: episodeId
