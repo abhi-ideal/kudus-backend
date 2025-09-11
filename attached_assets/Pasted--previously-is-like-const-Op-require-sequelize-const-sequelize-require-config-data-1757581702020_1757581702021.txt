@@ -1,0 +1,59 @@
+
+previously is like 
+
+
+const { Op } = require('sequelize');
+const sequelize = require('./config/database');
+const logger = require('./utils/logger');
+const Content = require('./models/Content');
+const Season = require('./models/Season');
+const Episode = require('./models/Episode');
+const Watchlist = require('./models/Watchlist');
+const WatchHistory = require('./models/WatchHistory');
+const ContentItem = require('./models/ContentItem');
+const ContentItemMapping = require('./models/ContentItemMapping');
+const ContentLike = require('./models/ContentLike');
+const { Sequelize } = require('sequelize');
+
+and now 
+const { Op, Sequelize } = require('sequelize');
+const { Content, ContentItem, ContentItemMapping, Watchlist, WatchHistory, ContentLike, Season, Episode } = require('./models');
+const adminEndpoints = require('./utils/adminRoutes');
+const sequelize = require('./config/database');
+const logger = require('./utils/logger');
+
+// Initialize associations
+const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
+Object.keys(models).forEach(modelName => {
+  if (models[modelName].associate) {
+    models[modelName].associate(models);
+  }
+});
+
+
+
+// Initialize associations
+const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
+Object.keys(models).forEach(modelName => {
+  if (models[modelName].associate) {
+    models[modelName].associate(models);
+  }
+});
+
+but still got same isssue 
+
+/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/associations/base.js:13
+[3]       throw new AssociationError(`You have used the alias ${options.as} in two separate associations. Aliased associations must have unique aliases.`);
+[3]       ^
+[3] 
+[3] AssociationError [SequelizeAssociationError]: You have used the alias mappedItems in two separate associations. Aliased associations must have unique aliases.
+[3]     at new Association (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/associations/base.js:13:13)
+[3]     at new BelongsToMany (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/associations/belongs-to-many.js:33:5)
+[3]     at Content.belongsToMany (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/node_modules/sequelize/lib/associations/mixin.js:43:25)
+[3]     at Content.associate (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/content/models/Content.js:123:13)
+[3]     at /home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/content/controller.js:11:23
+[3]     at Array.forEach (<anonymous>)
+[3]     at Object.<anonymous> (/home/ajay221/gitlab/mygitlab/kudus/abhishek-repo/kudus-backend/services/content/controller.js:9:21)
+[3]     at Module._compile (node:internal/modules/cjs/loader:1369:14)
+[3]     at Module._extensions..js (node:internal/modules/cjs/loader:1427:10)
+[3]     at Module.load (node:internal/modules/cjs/loader:1206:32)
