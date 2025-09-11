@@ -124,7 +124,7 @@ Content.associate = (models) => {
       through: models.ContentItemMapping,
       foreignKey: 'contentId',
       otherKey: 'itemId',
-      as: 'items'
+      as: 'contentItems'
     });
   }
   
