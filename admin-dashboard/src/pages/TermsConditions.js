@@ -46,7 +46,7 @@ const TermsConditions = () => {
     try {
       setLoading(true);
       // Corrected endpoint from /terms-conditions to /terms-conditions-list
-      const response = await adminAPI.get('/terms-conditions-list');
+      const response = await adminEndpoints.getTermsConditions();
       // Handle both array and object response structures
       const termsData = response.data.terms || response.data || [];
       setTerms(Array.isArray(termsData) ? termsData : []);
@@ -67,11 +67,11 @@ const TermsConditions = () => {
 
       if (editingTerms) {
         // Corrected API call to updateTermsConditions
-        await adminAPI.put(`/terms-conditions/${editingTerms.id}`, payload);
+        await adminEndpoints.updateTermsAndConditions(payload);
         message.success('Terms and conditions updated successfully');
       } else {
         // Corrected API call to createTermsConditions
-        await adminAPI.post('/terms-conditions', payload);
+        await adminEndpoints.updateTermsAndConditions(payload);
         message.success('Terms and conditions created successfully');
       }
 
@@ -88,7 +88,7 @@ const TermsConditions = () => {
   const handleDelete = async (id) => {
     try {
       // Corrected API call to deleteTermsConditions
-      await adminAPI.delete(`/terms-conditions/${id}`);
+      await adminEndpoints.updateTermsAndConditions({ id, isActive: false });
       message.success('Terms and conditions deleted successfully');
       loadTerms();
     } catch (error) {
@@ -100,7 +100,7 @@ const TermsConditions = () => {
   const handleActivate = async (id) => {
     try {
       // Corrected API call to updateTermsConditions
-      await adminAPI.put(`/terms-conditions/${id}`, { isActive: true });
+      await adminEndpoints.updateTermsAndConditions({ id, isActive: true });
       message.success('Terms and conditions activated successfully');
       loadTerms();
     } catch (error) {

@@ -66,7 +66,7 @@ const ContentMappings = () => {
         ...filters
       };
       
-      const response = await adminAPI.getContentMappings(params);
+      const response = await adminEndpoints.getContentMappings(params);
       setMappings(response.data.mappings || []);
       setPagination(prev => ({
         ...prev,
@@ -82,7 +82,7 @@ const ContentMappings = () => {
 
   const fetchContentItems = async () => {
     try {
-      const response = await adminAPI.getContentItems({ limit: 100 });
+      const response = await adminEndpoints.getContentItems({ limit: 100 });
       setContentItems(response.data.data || response.data.items || []);
     } catch (error) {
       console.error('Error fetching content items:', error);
@@ -91,7 +91,7 @@ const ContentMappings = () => {
 
   const fetchAllContent = async () => {
     try {
-      const response = await adminAPI.getContent({ limit: 1000 });
+      const response = await adminEndpoints.getContent({ limit: 1000 });
       setAllContent(response.data.content || []);
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -118,10 +118,10 @@ const ContentMappings = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingMapping) {
-        await adminAPI.updateContentMapping(editingMapping.id, values);
+        await adminEndpoints.updateContentMapping(editingMapping.id, values);
         message.success('Content mapping updated successfully');
       } else {
-        await adminAPI.createContentMapping(values);
+        await adminEndpoints.createContentMapping(values);
         message.success('Content mapping created successfully');
       }
       
@@ -136,7 +136,7 @@ const ContentMappings = () => {
 
   const handleDeleteMapping = async (id) => {
     try {
-      await adminAPI.deleteContentMapping(id);
+      await adminEndpoints.deleteContentMapping(id);
       message.success('Content mapping deleted successfully');
       fetchMappings();
     } catch (error) {

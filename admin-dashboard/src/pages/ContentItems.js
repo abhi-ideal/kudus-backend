@@ -95,7 +95,7 @@ const ContentItems = () => {
         search: filters.search || undefined
       };
 
-      const response = await adminAPI.getContentItems(params);
+      const response = await adminEndpoints.getContentItems(params);
 
       if (response.data.success) {
         setContentItems(response.data.items || response.data.data || []);
@@ -124,7 +124,7 @@ const ContentItems = () => {
 
     try {
       // Update display order on server
-      await adminAPI.updateContentItemOrder(dragItem.id, {
+      await adminEndpoints.updateContentItemOrder(dragItem.id, {
         newOrder: hoverItem.displayOrder,
         oldOrder: dragItem.displayOrder
       });
@@ -172,10 +172,10 @@ const ContentItems = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingItem) {
-        await adminAPI.updateContentItem(editingItem.id, values);
+        await adminEndpoints.updateContentItem(editingItem.id, values);
         message.success('Content item updated successfully');
       } else {
-        await adminAPI.createContentItem(values);
+        await adminEndpoints.createContentItem(values);
         message.success('Content item created successfully');
       }
 
@@ -194,7 +194,7 @@ const ContentItems = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminAPI.deleteContentItem(id);
+      await adminEndpoints.deleteContentItem(id);
       message.success('Content item deleted successfully');
       fetchContentItems();
     } catch (error) {
@@ -204,7 +204,7 @@ const ContentItems = () => {
 
   const handleChildProfileToggle = async (id, showOnChildProfile) => {
     try {
-      await adminAPI.updateContentItemChildProfile(id, { showOnChildProfile });
+      await adminEndpoints.updateContentItemChildProfile(id, { showOnChildProfile });
       message.success('Content item child profile visibility updated');
       fetchContentItems();
     } catch (error) {
@@ -214,7 +214,7 @@ const ContentItems = () => {
 
   const handleToggleStatus = async (item) => {
     try {
-      await adminAPI.updateContentItem(item.id, {
+      await adminEndpoints.updateContentItem(item.id, {
         name: item.name,
         slug: item.slug,
         description: item.description,

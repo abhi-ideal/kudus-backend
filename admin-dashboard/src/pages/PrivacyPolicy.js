@@ -46,7 +46,7 @@ const PrivacyPolicy = () => {
   const loadPolicies = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.get('/privacy-policies');
+      const response = await adminEndpoints.getPrivacyPolicy();
       setPolicies(response.data.policies || []);
     } catch (error) {
       message.error('Failed to load privacy policies');
@@ -64,10 +64,10 @@ const PrivacyPolicy = () => {
       };
 
       if (editingPolicy) {
-        await adminAPI.put(`/privacy-policies/${editingPolicy.id}`, payload);
+        await adminEndpoints.updatePrivacyPolicy(payload);
         message.success('Privacy policy updated successfully');
       } else {
-        await adminAPI.post('/privacy-policies', payload);
+        await adminEndpoints.updatePrivacyPolicy(payload);
         message.success('Privacy policy created successfully');
       }
 
@@ -83,7 +83,7 @@ const PrivacyPolicy = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminAPI.delete(`/privacy-policies/${id}`);
+      await adminEndpoints.updatePrivacyPolicy({ id, isActive: false });
       message.success('Privacy policy deleted successfully');
       loadPolicies();
     } catch (error) {
@@ -94,7 +94,7 @@ const PrivacyPolicy = () => {
 
   const handleActivate = async (id) => {
     try {
-      await adminAPI.put(`/privacy-policies/${id}`, { isActive: true });
+      await adminEndpoints.updatePrivacyPolicy({ id, isActive: true });
       message.success('Privacy policy activated successfully');
       loadPolicies();
     } catch (error) {
