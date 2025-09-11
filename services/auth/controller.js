@@ -661,7 +661,6 @@ const authController = {
           parentalControls: {},
           language: 'en',
           isActive: true,
-          isOwner: 1, // First user is owner
           emailVerified: false
         }, { transaction });
 
@@ -686,6 +685,7 @@ const authController = {
         subtitleLanguage: 'en',
         audioLanguage: 'en',
         maturityLevel: 18,
+        isOwner: 1, // First user is owner
         isActive: true
       }, { transaction });
 
