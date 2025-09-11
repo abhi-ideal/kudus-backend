@@ -4,12 +4,12 @@ const sequelize = require('../config/database');
 
 const ContentItemMapping = sequelize.define('ContentItemMapping', {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
   contentId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'content',
@@ -17,7 +17,7 @@ const ContentItemMapping = sequelize.define('ContentItemMapping', {
     }
   },
   itemId: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'content_items',
