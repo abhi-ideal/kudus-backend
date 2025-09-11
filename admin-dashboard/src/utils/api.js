@@ -173,11 +173,13 @@ const adminEndpoints = {
 
   // Privacy Policy Management Endpoints
   getPrivacyPolicy: () => commonAPI.get('/privacy-policies'),
-  updatePrivacyPolicy: (data) => commonAPI.put('/privacy-policies', data),
+  createPrivacyPolicy: (data) => commonAPI.post('/privacy-policies', data),
+  updatePrivacyPolicy: (id, data) => commonAPI.put(`/privacy-policies/${id}`, data),
 
   // Terms & Conditions Management Endpoints
   getTermsConditions: () => commonAPI.get('/terms-conditions-list'),
-  updateTermsAndConditions: (data) => commonAPI.put('/terms-conditions', data),
+  createTermsConditions: (data) => commonAPI.post('/terms-conditions', data),
+  updateTermsConditions: (id, data) => commonAPI.put(`/terms-conditions/${id}`, data),
 
 
   // Generic HTTP methods - using commonAPI as fallback

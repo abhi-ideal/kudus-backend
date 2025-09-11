@@ -66,12 +66,10 @@ const TermsConditions = () => {
       };
 
       if (editingTerms) {
-        // Corrected API call to updateTermsConditions
-        await adminEndpoints.updateTermsAndConditions(payload);
+        await adminEndpoints.updateTermsConditions(editingTerms.id, payload);
         message.success('Terms and conditions updated successfully');
       } else {
-        // Corrected API call to createTermsConditions
-        await adminEndpoints.updateTermsAndConditions(payload);
+        await adminEndpoints.createTermsConditions(payload);
         message.success('Terms and conditions created successfully');
       }
 
@@ -87,8 +85,7 @@ const TermsConditions = () => {
 
   const handleDelete = async (id) => {
     try {
-      // Corrected API call to deleteTermsConditions
-      await adminEndpoints.updateTermsAndConditions({ id, isActive: false });
+      await adminEndpoints.updateTermsConditions(id, { isActive: false });
       message.success('Terms and conditions deleted successfully');
       loadTerms();
     } catch (error) {
@@ -99,8 +96,7 @@ const TermsConditions = () => {
 
   const handleActivate = async (id) => {
     try {
-      // Corrected API call to updateTermsConditions
-      await adminEndpoints.updateTermsAndConditions({ id, isActive: true });
+      await adminEndpoints.updateTermsConditions(id, { isActive: true });
       message.success('Terms and conditions activated successfully');
       loadTerms();
     } catch (error) {

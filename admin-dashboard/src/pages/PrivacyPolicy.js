@@ -64,10 +64,10 @@ const PrivacyPolicy = () => {
       };
 
       if (editingPolicy) {
-        await adminEndpoints.updatePrivacyPolicy(payload);
+        await adminEndpoints.updatePrivacyPolicy(editingPolicy.id, payload);
         message.success('Privacy policy updated successfully');
       } else {
-        await adminEndpoints.updatePrivacyPolicy(payload);
+        await adminEndpoints.createPrivacyPolicy(payload);
         message.success('Privacy policy created successfully');
       }
 
@@ -83,7 +83,7 @@ const PrivacyPolicy = () => {
 
   const handleDelete = async (id) => {
     try {
-      await adminEndpoints.updatePrivacyPolicy({ id, isActive: false });
+      await adminEndpoints.updatePrivacyPolicy(id, { isActive: false });
       message.success('Privacy policy deleted successfully');
       loadPolicies();
     } catch (error) {
@@ -94,7 +94,7 @@ const PrivacyPolicy = () => {
 
   const handleActivate = async (id) => {
     try {
-      await adminEndpoints.updatePrivacyPolicy({ id, isActive: true });
+      await adminEndpoints.updatePrivacyPolicy(id, { isActive: true });
       message.success('Privacy policy activated successfully');
       loadPolicies();
     } catch (error) {
