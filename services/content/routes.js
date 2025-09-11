@@ -14,7 +14,7 @@ const authenticateProfile = async (req, res, next) => {
       // Use profile_id from the decoded Firebase token
       const profileId = req.user.profile_id;
       const isChild = req.user.child || false;
-      
+
       if (profileId) {
         // Use the profile ID from the Firebase token
         req.activeProfile = {
@@ -1571,4 +1571,20 @@ router.put('/admin/content/:id', validate(schemas.content), contentController.up
  */
 router.delete('/admin/content/:id', contentController.deleteContent);
 
+// Admin routes for content management
+router.use('/admin', adminAuth);
+
+// Seasons management endpoints
+router.get('/admin/series/:seriesId/seasons', contentController.getSeriesSeasons);
+router.post('/admin/seasons', contentController.createSeason);
+router.put('/admin/seasons/:seasonId', contentController.updateSeason);
+router.delete('/admin/seasons/:seasonId', contentController.deleteSeason);
+
+// Episodes management endpoints
+router.get('/admin/seasons/:seasonId/episodes', contentController.getSeasonEpisodes);
+router.post('/admin/episodes', contentController.createEpisode);
+router.put('/admin/episodes/:episodeId', contentController.updateEpisode);
+router.delete('/admin/episodes/:episodeId', contentController.deleteEpisode);
+
+// Content management endpoints
 module.exports = router;

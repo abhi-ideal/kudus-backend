@@ -181,6 +181,18 @@ const adminEndpoints = {
   createTermsConditions: (data) => commonAPI.post('/terms-conditions', data),
   updateTermsConditions: (id, data) => commonAPI.put(`/terms-conditions/${id}`, data),
 
+  // Seasons Management Endpoints
+  getSeriesSeasons: (seriesId) => contentAPI.get(`/admin/series/${seriesId}/seasons`),
+  createSeason: (data) => contentAPI.post('/admin/seasons', data),
+  updateSeason: (seasonId, data) => contentAPI.put(`/admin/seasons/${seasonId}`, data),
+  deleteSeason: (seasonId) => contentAPI.delete(`/admin/seasons/${seasonId}`),
+
+  // Episodes Management Endpoints
+  getSeasonEpisodes: (seasonId) => contentAPI.get(`/admin/seasons/${seasonId}/episodes`),
+  createEpisode: (data) => contentAPI.post('/admin/episodes', data),
+  updateEpisode: (episodeId, data) => contentAPI.put(`/admin/episodes/${episodeId}`, data),
+  deleteEpisode: (episodeId) => contentAPI.delete(`/admin/episodes/${episodeId}`),
+
 
   // Generic HTTP methods - using commonAPI as fallback
   get: (url, config) => commonAPI.get(url, config),

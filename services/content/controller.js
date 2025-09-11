@@ -1,15 +1,8 @@
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
+const { Content, ContentItem, ContentItemMapping, Watchlist, WatchHistory, ContentLike, Season, Episode } = require('./models');
+const adminEndpoints = require('./utils/adminRoutes');
 const sequelize = require('./config/database');
 const logger = require('./utils/logger');
-const Content = require('./models/Content');
-const Season = require('./models/Season');
-const Episode = require('./models/Episode');
-const Watchlist = require('./models/Watchlist');
-const WatchHistory = require('./models/WatchHistory');
-const ContentItem = require('./models/ContentItem');
-const ContentItemMapping = require('./models/ContentItemMapping');
-const ContentLike = require('./models/ContentLike');
-const { Sequelize } = require('sequelize');
 
 // Initialize associations
 const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
@@ -41,7 +34,7 @@ const contentController = {
       // Apply child profile filtering based on token
       if (req.activeProfile && req.activeProfile.isChild === true) {
         whereClause.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
+
         // Add genre filter for child profiles
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
@@ -58,7 +51,7 @@ const contentController = {
       // Add comprehensive search functionality with relevance
       if (search && search.trim().length > 0) {
         const searchTerm = search.trim();
-        
+
         const searchConditions = [
           { title: { [Op.like]: `%${searchTerm}%` } },
           { description: { [Op.like]: `%${searchTerm}%` } },
@@ -146,7 +139,7 @@ const contentController = {
             ELSE 0
           END
         `;
-        
+
         orderClause = [
           [sequelize.literal(relevanceScore), 'DESC'],
           [sortBy, sortOrder.toUpperCase()]
@@ -2840,7 +2833,7 @@ const contentController = {
               ELSE 0
             END
           `;
-          
+
           orderClause = [
             [sequelize.literal(relevanceScore), 'DESC'],
             [sequelize.col('Content.createdAt'), 'DESC']
@@ -3204,6 +3197,7 @@ const contentController = {
   },
 };
 
+// Export controller functions
 module.exports = {
   getAllContent: contentController.getAllContent,
   getContentById: contentController.getContentById,
@@ -3213,7 +3207,7 @@ module.exports = {
   getStreamingUrl: contentController.getStreamingUrl,
   getKidsContent: contentController.getKidsContent,
   getSeriesDetails: contentController.getSeriesDetails,
-  getSeasonEpisodes: contentController.getSeasonEpisodes,
+  getSeasonEpisodes: contentController.getSeasonEpisodes, // Renamed from getSeasonEpisodes to avoid conflict
   getEpisodeDetails: contentController.getEpisodeDetails,
   addToWatchlist: contentController.addToWatchlist,
   removeFromWatchlist: contentController.removeFromWatchlist,
@@ -3247,5 +3241,16 @@ module.exports = {
   likeContent: contentController.likeContent,
   unlikeContent: contentController.unlikeContent,
   getLikedContent: contentController.getLikedContent,
-  checkLikeStatus: contentController.checkLikeStatus
+  checkLikeStatus: contentController.checkLikeStatus,
+
+  // Seasons management
+  getSeriesSeasons: contentController.getSeriesSeasons,
+  createSeason: contentController.createSeason,
+  updateSeason: contentController.updateSeason,
+  deleteSeason: contentController.deleteSeason,
+
+  // Episodes management
+  createEpisode: contentController.createEpisode,
+  updateEpisode: contentController.updateEpisode,
+  deleteEpisode: contentController.deleteEpisode,
 };

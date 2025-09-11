@@ -19,6 +19,10 @@ import {
   Col,
   Switch,
   Image,
+  Tabs,
+  Collapse,
+  DatePicker,
+  Divider,
 } from 'antd';
 import {
   PlusOutlined,
@@ -30,6 +34,9 @@ import {
   SearchOutlined,
   StarOutlined,
   StarFilled,
+  PlayCircleOutlined,
+  CalendarOutlined,
+  VideoCameraOutlined,
 } from '@ant-design/icons';
 import { adminEndpoints } from '../utils/api';
 import moment from 'moment';
@@ -129,6 +136,569 @@ const ThumbnailManager = ({ visible, onCancel, contentId, currentThumbnails, onU
   );
 };
 
+// Seasons and Episodes Manager Component
+const SeasonsEpisodesManager = ({ visible, onCancel, contentId, onUpdate }) => {
+  const [seasons, setSeasons] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [seasonForm] = Form.useForm();
+  const [episodeForm] = Form.useForm();
+  const [isSeasonModalVisible, setIsSeasonModalVisible] = useState(false);
+  const [isEpisodeModalVisible, setIsEpisodeModalVisible] = useState(false);
+  const [editingSeason, setEditingSeason] = useState(null);
+  const [editingEpisode, setEditingEpisode] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [episodes, setEpisodes] = useState([]);
+
+  useEffect(() => {
+    if (visible && contentId) {
+      fetchSeasons();
+    }
+  }, [visible, contentId]);
+
+  const fetchSeasons = async () => {
+    try {
+      setLoading(true);
+      const response = await adminEndpoints.getSeriesSeasons(contentId);
+      setSeasons(response.data.seasons || []);
+    } catch (error) {
+      console.error('Error fetching seasons:', error);
+      message.error('Failed to fetch seasons');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEpisodes = async (seasonId) => {
+    try {
+      const response = await adminEndpoints.getSeasonEpisodes(seasonId);
+      setEpisodes(response.data.episodes || []);
+    } catch (error) {
+      console.error('Error fetching episodes:', error);
+      message.error('Failed to fetch episodes');
+    }
+  };
+
+  const handleCreateSeason = () => {
+    setEditingSeason(null);
+    seasonForm.resetFields();
+    setIsSeasonModalVisible(true);
+  };
+
+  const handleEditSeason = (season) => {
+    setEditingSeason(season);
+    seasonForm.setFieldsValue({
+      seasonNumber: season.seasonNumber,
+      title: season.title,
+      description: season.description,
+      releaseDate: season.releaseDate ? moment(season.releaseDate) : null,
+      status: season.status,
+      bannerUrl: season.posterImages?.banner,
+      landscapeUrl: season.posterImages?.landscape,
+      portraitUrl: season.posterImages?.portrait,
+      squareUrl: season.posterImages?.square,
+    });
+    setIsSeasonModalVisible(true);
+  };
+
+  const handleSeasonSubmit = async () => {
+    try {
+      const values = await seasonForm.validateFields();
+      const seasonData = {
+        ...values,
+        seriesId: contentId,
+        posterImages: {
+          banner: values.bannerUrl,
+          landscape: values.landscapeUrl,
+          portrait: values.portraitUrl,
+          square: values.squareUrl,
+        },
+        releaseDate: values.releaseDate ? values.releaseDate.toISOString() : null,
+      };
+
+      if (editingSeason) {
+        await adminEndpoints.updateSeason(editingSeason.id, seasonData);
+        message.success('Season updated successfully');
+      } else {
+        await adminEndpoints.createSeason(seasonData);
+        message.success('Season created successfully');
+      }
+
+      setIsSeasonModalVisible(false);
+      fetchSeasons();
+    } catch (error) {
+      console.error('Error saving season:', error);
+      message.error(`Failed to ${editingSeason ? 'update' : 'create'} season`);
+    }
+  };
+
+  const handleDeleteSeason = async (seasonId) => {
+    try {
+      await adminEndpoints.deleteSeason(seasonId);
+      message.success('Season deleted successfully');
+      fetchSeasons();
+    } catch (error) {
+      console.error('Error deleting season:', error);
+      message.error('Failed to delete season');
+    }
+  };
+
+  const handleCreateEpisode = (season) => {
+    setSelectedSeason(season);
+    setEditingEpisode(null);
+    episodeForm.resetFields();
+    episodeForm.setFieldsValue({
+      seasonId: season.id,
+      episodeNumber: (season.episodes?.length || 0) + 1,
+    });
+    setIsEpisodeModalVisible(true);
+  };
+
+  const handleEditEpisode = (episode, season) => {
+    setSelectedSeason(season);
+    setEditingEpisode(episode);
+    episodeForm.setFieldsValue({
+      seasonId: episode.seasonId,
+      episodeNumber: episode.episodeNumber,
+      title: episode.title,
+      description: episode.description,
+      duration: episode.duration,
+      airDate: episode.airDate ? moment(episode.airDate) : null,
+      videoUrl: episode.videoUrl,
+      s3Key: episode.s3Key,
+      bannerUrl: episode.thumbnailUrl?.banner,
+      landscapeUrl: episode.thumbnailUrl?.landscape,
+      portraitUrl: episode.thumbnailUrl?.portrait,
+      squareUrl: episode.thumbnailUrl?.square,
+    });
+    setIsEpisodeModalVisible(true);
+  };
+
+  const handleEpisodeSubmit = async () => {
+    try {
+      const values = await episodeForm.validateFields();
+      const episodeData = {
+        ...values,
+        seriesId: contentId,
+        thumbnailUrl: {
+          banner: values.bannerUrl,
+          landscape: values.landscapeUrl,
+          portrait: values.portraitUrl,
+          square: values.squareUrl,
+        },
+        airDate: values.airDate ? values.airDate.toISOString() : null,
+      };
+
+      if (editingEpisode) {
+        await adminEndpoints.updateEpisode(editingEpisode.id, episodeData);
+        message.success('Episode updated successfully');
+      } else {
+        await adminEndpoints.createEpisode(episodeData);
+        message.success('Episode created successfully');
+      }
+
+      setIsEpisodeModalVisible(false);
+      fetchSeasons();
+    } catch (error) {
+      console.error('Error saving episode:', error);
+      message.error(`Failed to ${editingEpisode ? 'update' : 'create'} episode`);
+    }
+  };
+
+  const handleDeleteEpisode = async (episodeId) => {
+    try {
+      await adminEndpoints.deleteEpisode(episodeId);
+      message.success('Episode deleted successfully');
+      fetchSeasons();
+    } catch (error) {
+      console.error('Error deleting episode:', error);
+      message.error('Failed to delete episode');
+    }
+  };
+
+  const seasonColumns = [
+    {
+      title: 'Season #',
+      dataIndex: 'seasonNumber',
+      key: 'seasonNumber',
+      width: 100,
+      render: (num) => <Tag color="blue">S{num}</Tag>
+    },
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Episodes',
+      dataIndex: 'totalEpisodes',
+      key: 'totalEpisodes',
+      width: 100,
+      render: (total) => <Tag>{total || 0}</Tag>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status) => (
+        <Tag color={
+          status === 'completed' ? 'green' :
+          status === 'airing' ? 'blue' :
+          status === 'upcoming' ? 'orange' : 'red'
+        }>
+          {status?.toUpperCase()}
+        </Tag>
+      )
+    },
+    {
+      title: 'Release Date',
+      dataIndex: 'releaseDate',
+      key: 'releaseDate',
+      width: 120,
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-'
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 200,
+      render: (_, season) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEditSeason(season)}
+          >
+            Edit
+          </Button>
+          <Button
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => handleCreateEpisode(season)}
+          >
+            Add Episode
+          </Button>
+          <Popconfirm
+            title="Delete this season?"
+            onConfirm={() => handleDeleteSeason(season.id)}
+          >
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ];
+
+  const episodeColumns = [
+    {
+      title: 'Episode #',
+      dataIndex: 'episodeNumber',
+      key: 'episodeNumber',
+      width: 100,
+      render: (num) => <Tag color="green">E{num}</Tag>
+    },
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      width: 100,
+      render: (duration) => duration ? `${duration}m` : '-'
+    },
+    {
+      title: 'Air Date',
+      dataIndex: 'airDate',
+      key: 'airDate',
+      width: 120,
+      render: (date) => date ? new Date(date).toLocaleDateString() : '-'
+    },
+    {
+      title: 'Video',
+      dataIndex: 'videoUrl',
+      key: 'videoUrl',
+      width: 80,
+      render: (url) => url ? <VideoCameraOutlined style={{ color: 'green' }} /> : <VideoCameraOutlined style={{ color: 'red' }} />
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 150,
+      render: (_, episode) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEditEpisode(episode, selectedSeason)}
+          >
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete this episode?"
+            onConfirm={() => handleDeleteEpisode(episode.id)}
+          >
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      )
+    }
+  ];
+
+  return (
+    <>
+      <Modal
+        title="Manage Seasons & Episodes"
+        visible={visible}
+        onCancel={onCancel}
+        footer={[
+          <Button key="cancel" onClick={onCancel}>Close</Button>
+        ]}
+        width={1200}
+        style={{ top: 20 }}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreateSeason}
+          >
+            Add Season
+          </Button>
+        </div>
+
+        <Collapse>
+          {seasons.map(season => (
+            <Collapse.Panel
+              key={season.id}
+              header={
+                <Space>
+                  <Tag color="blue">Season {season.seasonNumber}</Tag>
+                  <span>{season.title}</span>
+                  <Tag>{season.episodes?.length || 0} episodes</Tag>
+                </Space>
+              }
+              extra={
+                <Space onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEditSeason(season)}
+                  />
+                  <Button
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => handleCreateEpisode(season)}
+                  />
+                </Space>
+              }
+            >
+              <Table
+                columns={episodeColumns}
+                dataSource={season.episodes || []}
+                rowKey="id"
+                size="small"
+                pagination={false}
+                locale={{ emptyText: 'No episodes found' }}
+              />
+            </Collapse.Panel>
+          ))}
+        </Collapse>
+
+        {seasons.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+            <CalendarOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+            <div>No seasons found. Click "Add Season" to get started.</div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Season Modal */}
+      <Modal
+        title={editingSeason ? 'Edit Season' : 'Add Season'}
+        visible={isSeasonModalVisible}
+        onCancel={() => setIsSeasonModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsSeasonModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button key="save" type="primary" onClick={handleSeasonSubmit}>
+            {editingSeason ? 'Update' : 'Create'} Season
+          </Button>
+        ]}
+        width={600}
+      >
+        <Form form={seasonForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="seasonNumber"
+                label="Season Number"
+                rules={[{ required: true, message: 'Season number is required' }]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item
+                name="title"
+                label="Season Title"
+                rules={[{ required: true, message: 'Season title is required' }]}
+              >
+                <Input placeholder="e.g., Season 1: The Beginning" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} placeholder="Season description..." />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="releaseDate" label="Release Date">
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="status" label="Status">
+                <Select placeholder="Select status">
+                  <Select.Option value="upcoming">Upcoming</Select.Option>
+                  <Select.Option value="airing">Airing</Select.Option>
+                  <Select.Option value="completed">Completed</Select.Option>
+                  <Select.Option value="cancelled">Cancelled</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider>Season Images</Divider>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="bannerUrl" label="Banner URL">
+                <Input placeholder="Banner image URL" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="landscapeUrl" label="Landscape URL">
+                <Input placeholder="Landscape image URL" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="portraitUrl" label="Portrait URL">
+                <Input placeholder="Portrait image URL" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="squareUrl" label="Square URL">
+                <Input placeholder="Square image URL" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+
+      {/* Episode Modal */}
+      <Modal
+        title={editingEpisode ? 'Edit Episode' : 'Add Episode'}
+        visible={isEpisodeModalVisible}
+        onCancel={() => setIsEpisodeModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsEpisodeModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button key="save" type="primary" onClick={handleEpisodeSubmit}>
+            {editingEpisode ? 'Update' : 'Create'} Episode
+          </Button>
+        ]}
+        width={700}
+      >
+        <Form form={episodeForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="episodeNumber"
+                label="Episode Number"
+                rules={[{ required: true, message: 'Episode number is required' }]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item
+                name="title"
+                label="Episode Title"
+                rules={[{ required: true, message: 'Episode title is required' }]}
+              >
+                <Input placeholder="Episode title" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} placeholder="Episode description..." />
+          </Form.Item>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="duration"
+                label="Duration (minutes)"
+                rules={[{ required: true, message: 'Duration is required' }]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={16}>
+              <Form.Item name="airDate" label="Air Date">
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider>Video Information</Divider>
+          <Form.Item name="videoUrl" label="Video URL">
+            <Input placeholder="Video streaming URL" />
+          </Form.Item>
+
+          <Form.Item name="s3Key" label="S3 Key">
+            <Input placeholder="S3 storage key (optional)" />
+          </Form.Item>
+
+          <Divider>Episode Images</Divider>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="bannerUrl" label="Banner URL">
+                <Input placeholder="Banner image URL" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="landscapeUrl" label="Landscape URL">
+                <Input placeholder="Landscape image URL" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="portraitUrl" label="Portrait URL">
+                <Input placeholder="Portrait image URL" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="squareUrl" label="Square URL">
+                <Input placeholder="Square image URL" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+    </>
+  );
+};
+
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -147,6 +717,8 @@ const Content = () => {
   const [selectedContent, setSelectedContent] = useState(null);
   const [isThumbnailModalVisible, setIsThumbnailModalVisible] = useState(false);
   const [selectedContentForThumbnails, setSelectedContentForThumbnails] = useState(null);
+  const [isSeasonsEpisodesModalVisible, setIsSeasonsEpisodesModalVisible] = useState(false);
+  const [selectedContentForSeasons, setSelectedContentForSeasons] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -553,6 +1125,18 @@ const Content = () => {
           >
             Thumbnails
           </Button>
+          {record.type === 'series' && (
+            <Button
+              type="link"
+              icon={<PlayCircleOutlined />}
+              onClick={() => {
+                setSelectedContentForSeasons(record);
+                setIsSeasonsEpisodesModalVisible(true);
+              }}
+            >
+              Seasons/Episodes
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -856,6 +1440,20 @@ const Content = () => {
           fetchContent();
           setIsThumbnailModalVisible(false);
           setSelectedContentForThumbnails(null);
+        }}
+      />
+
+      <SeasonsEpisodesManager
+        visible={isSeasonsEpisodesModalVisible}
+        onCancel={() => {
+          setIsSeasonsEpisodesModalVisible(false);
+          setSelectedContentForSeasons(null);
+        }}
+        contentId={selectedContentForSeasons?.id}
+        onUpdate={() => {
+          fetchContent();
+          setIsSeasonsEpisodesModalVisible(false);
+          setSelectedContentForSeasons(null);
         }}
       />
     </div>
