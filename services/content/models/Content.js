@@ -163,7 +163,7 @@ Content.associate = (models) => {
   if (models.WatchHistory) {
     Content.hasMany(models.WatchHistory, {
       foreignKey: 'contentId',
-      as: 'watchHistory'
+      as: 'contentWatchHistory'
     });
   }
 

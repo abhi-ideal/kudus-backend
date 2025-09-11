@@ -1,4 +1,3 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Content = require('./Content');
@@ -56,16 +55,35 @@ const WatchHistory = sequelize.define('WatchHistory', {
 
 // Define associations
 WatchHistory.associate = (models) => {
-  if (models.Content) {
-    WatchHistory.belongsTo(models.Content, { 
-      foreignKey: 'contentId', 
-      as: 'content' 
+  // User association
+  if (models.User) {
+    WatchHistory.belongsTo(models.User, {
+      foreignKey: 'userId',
+      as: 'user'
     });
   }
+
+  // Profile association
+  if (models.UserProfile) {
+    WatchHistory.belongsTo(models.UserProfile, {
+      foreignKey: 'profileId', 
+      as: 'profile'
+    });
+  }
+
+  // Content association
+  if (models.Content) {
+    WatchHistory.belongsTo(models.Content, {
+      foreignKey: 'contentId',
+      as: 'content'
+    });
+  }
+
+  // Episode association
   if (models.Episode) {
-    WatchHistory.belongsTo(models.Episode, { 
-      foreignKey: 'episodeId', 
-      as: 'episode' 
+    WatchHistory.belongsTo(models.Episode, {
+      foreignKey: 'episodeId',
+      as: 'episode'
     });
   }
 };

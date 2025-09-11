@@ -2519,7 +2519,7 @@ const contentController = {
         include: [
           {
             model: WatchHistory,
-            as: 'watchHistory',
+            as: 'contentWatchHistory',
             attributes: [],
             required: false
           }
@@ -2529,7 +2529,7 @@ const contentController = {
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
           'status', 'createdAt',
-          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
+          [sequelize.fn('COUNT', sequelize.col('contentWatchHistory.id')), 'viewCount']
         ],
         group: ['Content.id'],
         order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
@@ -2645,7 +2645,7 @@ const contentController = {
         include: [
           {
             model: WatchHistory,
-            as: 'watchHistory',
+            as: 'contentWatchHistory',
             attributes: [],
             required: false
           }
@@ -2655,7 +2655,7 @@ const contentController = {
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
           'status', 'createdAt',
-          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
+          [sequelize.fn('COUNT', sequelize.col('contentWatchHistory.id')), 'viewCount']
         ],
         group: ['Content.id'],
         order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
