@@ -159,25 +159,25 @@ const adminEndpoints = {
   deleteContentMapping: (id) => contentAPI.delete(`/mappings/${id}`),
 
   // FAQ Management Endpoints - using help-articles endpoint from routes
-  getFaqs: (params) => commonAPI.get('/admin/help-articles', { params: { ...params, isFAQ: true } }),
-  getFaqById: (id) => commonAPI.get(`/admin/help-articles/${id}`),
-  createFaq: (data) => commonAPI.post('/admin/help-articles', { ...data, isFAQ: true }),
-  updateFaq: (id, data) => commonAPI.put(`/admin/help-articles/${id}`, data),
-  deleteFaq: (id) => commonAPI.delete(`/admin/help-articles/${id}`),
+  getFaqs: (params) => commonAPI.get('/help-articles', { params: { ...params, isFAQ: true } }),
+  getFaqById: (id) => commonAPI.get(`/help-articles/${id}`),
+  createFaq: (data) => commonAPI.post('/help-articles', { ...data, isFAQ: true }),
+  updateFaq: (id, data) => commonAPI.put(`/help-articles/${id}`, data),
+  deleteFaq: (id) => commonAPI.delete(`/help-articles/${id}`),
 
   // Contact Us Management Endpoints
-  getContactUsEntries: (params) => commonAPI.get('/admin/contact-us', { params }),
-  getContactUsEntryById: (id) => commonAPI.get(`/admin/contact-us/${id}`),
-  updateContactUsEntry: (id, data) => commonAPI.put(`/admin/contact-us/${id}`, data),
-  deleteContactUsEntry: (id) => commonAPI.delete(`/admin/contact-us/${id}`),
+  getContactUsEntries: (params) => commonAPI.get('/contact-us', { params }),
+  getContactUsEntryById: (id) => commonAPI.get(`/contact-us/${id}`),
+  updateContactUsEntry: (id, data) => commonAPI.put(`/contact-us/${id}`, data),
+  deleteContactUsEntry: (id) => commonAPI.delete(`/contact-us/${id}`),
 
   // Privacy Policy Management Endpoints
-  getPrivacyPolicy: () => commonAPI.get('/admin/privacy-policies'),
-  updatePrivacyPolicy: (data) => commonAPI.put('/admin/privacy-policies', data),
+  getPrivacyPolicy: () => commonAPI.get('/privacy-policies'),
+  updatePrivacyPolicy: (data) => commonAPI.put('/privacy-policies', data),
 
   // Terms & Conditions Management Endpoints
-  getTermsConditions: () => commonAPI.get('/admin/terms-conditions-list'),
-  updateTermsAndConditions: (data) => commonAPI.put('/admin/terms-conditions', data),
+  getTermsConditions: () => commonAPI.get('/terms-conditions-list'),
+  updateTermsAndConditions: (data) => commonAPI.put('/terms-conditions', data),
 
 
   // Generic HTTP methods - using commonAPI as fallback
