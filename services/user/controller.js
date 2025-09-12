@@ -133,7 +133,7 @@ const controller = {
         res.json({
           success: true,
           message: 'Profile updated successfully',
-          profile: {
+          data: {
             id: profile.id,
             name: profile.name,
             isKidsProfile: profile.isKidsProfile,
@@ -163,7 +163,7 @@ const controller = {
         res.status(201).json({
           success: true,
           message: 'Profile created successfully',
-          profile: {
+          data: {
             id: profile.id,
             name: profile.name,
             isKidsProfile: profile.isKidsProfile,
