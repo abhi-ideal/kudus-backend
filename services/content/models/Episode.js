@@ -100,19 +100,19 @@ const Episode = sequelize.define('Episode', {
 
 // Define associations
 Episode.associate = (models) => {
-  // Season association
-  if (models.Season) {
-    Episode.belongsTo(models.Season, {
-      foreignKey: 'seasonId',
-      as: 'season'
-    });
-  }
-
-  // Content/Series association
+  // Series (Content) association
   if (models.Content) {
     Episode.belongsTo(models.Content, {
       foreignKey: 'seriesId',
       as: 'series'
+    });
+  }
+
+  // Season association
+  if (models.Season) {
+    Episode.belongsTo(models.Season, {
+      foreignKey: 'seasonId',
+      as: 'episodeSeason'
     });
   }
 

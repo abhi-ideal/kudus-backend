@@ -171,7 +171,7 @@ Content.associate = (models) => {
   if (models.WatchHistory) {
     Content.hasMany(models.WatchHistory, {
       foreignKey: 'contentId',
-      as: 'contentWatchHistory'
+      as: 'watchHistory'
     });
   }
 
@@ -179,7 +179,7 @@ Content.associate = (models) => {
   if (models.ContentLike) {
     Content.hasMany(models.ContentLike, {
       foreignKey: 'contentId',
-      as: 'contentLikes'
+      as: 'likes'
     });
   }
 };

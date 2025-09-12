@@ -1,4 +1,3 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -66,16 +65,27 @@ const Season = sequelize.define('Season', {
 
 // Define associations
 Season.associate = (models) => {
+  // Series (Content) association
   if (models.Content) {
     Season.belongsTo(models.Content, {
       foreignKey: 'seriesId',
-      as: 'series'
+      as: 'seasonSeries'
     });
   }
+
+  // Episodes association
   if (models.Episode) {
     Season.hasMany(models.Episode, {
       foreignKey: 'seasonId',
-      as: 'episodes'
+      as: 'seasonEpisodes'
+    });
+  }
+
+  // Watch history association
+  if (models.WatchHistory) {
+    Season.hasMany(models.WatchHistory, {
+      foreignKey: 'seasonId',
+      as: 'seasonWatchHistory'
     });
   }
 };

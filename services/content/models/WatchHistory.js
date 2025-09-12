@@ -63,11 +63,11 @@ WatchHistory.associate = (models) => {
     });
   }
 
-  // Profile association
+  // User profile association
   if (models.UserProfile) {
     WatchHistory.belongsTo(models.UserProfile, {
-      foreignKey: 'profileId', 
-      as: 'profile'
+      foreignKey: 'profileId',
+      as: 'userProfile'
     });
   }
 
@@ -75,7 +75,15 @@ WatchHistory.associate = (models) => {
   if (models.Content) {
     WatchHistory.belongsTo(models.Content, {
       foreignKey: 'contentId',
-      as: 'content'
+      as: 'watchedContent'
+    });
+  }
+
+  // Season association
+  if (models.Season) {
+    WatchHistory.belongsTo(models.Season, {
+      foreignKey: 'seasonId',
+      as: 'watchedSeason'
     });
   }
 
@@ -83,7 +91,7 @@ WatchHistory.associate = (models) => {
   if (models.Episode) {
     WatchHistory.belongsTo(models.Episode, {
       foreignKey: 'episodeId',
-      as: 'episode'
+      as: 'watchedEpisode'
     });
   }
 };
