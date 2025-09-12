@@ -167,6 +167,26 @@ const contentController = {
 
       const totalPages = Math.ceil(count / limit);
 
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+
+      if (req.activeProfile?.id) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId: req.activeProfile.id },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId: req.activeProfile.id },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
       // Add search highlights if search term is provided
       let processedContent = content;
       if (search && search.trim().length > 0) {
@@ -181,6 +201,17 @@ const contentController = {
           const contentData = item.toJSON();
           contentData.highlightedTitle = highlightText(contentData.title);
           contentData.highlightedDescription = highlightText(contentData.description);
+          // Add like and watchlist status
+          contentData.isLiked = req.activeProfile?.id ? userLikes.includes(contentData.id) : false;
+          contentData.isWatchlist = req.activeProfile?.id ? userWatchlist.includes(contentData.id) : false;
+          return contentData;
+        });
+      } else {
+        // Add like and watchlist status for non-search results
+        processedContent = content.map(item => {
+          const contentData = item.toJSON();
+          contentData.isLiked = req.activeProfile?.id ? userLikes.includes(contentData.id) : false;
+          contentData.isWatchlist = req.activeProfile?.id ? userWatchlist.includes(contentData.id) : false;
           return contentData;
         });
       }
