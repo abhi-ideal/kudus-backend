@@ -4,9 +4,9 @@ const sequelize = require('../config/database');
 
 const Content = sequelize.define('Content', {
   id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   title: {
     type: DataTypes.STRING,
@@ -22,112 +22,95 @@ const Content = sequelize.define('Content', {
   },
   genre: {
     type: DataTypes.JSON,
-    allowNull: true
+    defaultValue: []
   },
   duration: {
     type: DataTypes.INTEGER,
-    allowNull: true,
-    comment: 'Duration in minutes'
+    allowNull: true
   },
   releaseYear: {
     type: DataTypes.INTEGER,
     allowNull: true
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 1),
-    allowNull: true,
-    validate: {
-      min: 0,
-      max: 10
-    }
+    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17', 'U', '12A', '15', '18'),
+    defaultValue: 'PG'
   },
   ageRating: {
-    type: DataTypes.ENUM('G', 'PG', 'PG-13', 'R', 'NC-17', 'TV-Y', 'TV-Y7', 'TV-G', 'TV-PG', 'TV-14', 'TV-MA'),
-    allowNull: true
+    type: DataTypes.STRING,
+    defaultValue: 'PG'
   },
   language: {
     type: DataTypes.STRING,
-    allowNull: true
+    defaultValue: 'English'
   },
   subtitles: {
     type: DataTypes.JSON,
-    allowNull: true
+    defaultValue: []
   },
-  cast: {
+  characters: {
     type: DataTypes.JSON,
-    allowNull: true
-  },
-  director: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  producer: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  studio: {
-    type: DataTypes.STRING,
-    allowNull: true
+    defaultValue: []
   },
   thumbnailUrl: {
     type: DataTypes.JSON,
-    allowNull: true
+    allowNull: true,
+    defaultValue: {
+      "banner": null,      // 16:4 ratio (1920x480px)
+      "landscape": null,   // 16:9 ratio (1200x675px)
+      "portrait": null,    // 2:3 ratio (500x750px)
+      "square": null       // 1:1 ratio (500x500px)
+    }
   },
   posterImages: {
     type: DataTypes.JSON,
-    allowNull: true
+    defaultValue: {
+      thumbnail: null,
+      medium: null,
+      hd: null,
+      original: null
+    }
   },
+  
   trailerUrl: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true
   },
-  streamingUrl: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  downloadUrl: {
-    type: DataTypes.STRING,
+  videoUrl: {
+    type: DataTypes.TEXT,
     allowNull: true
   },
   s3Key: {
     type: DataTypes.STRING,
     allowNull: true
   },
-  videoQualities: {
-    type: DataTypes.JSON,
-    allowNull: true
+  status: {
+    type: DataTypes.ENUM('draft', 'processing', 'published', 'archived'),
+    defaultValue: 'draft'
   },
   availableCountries: {
     type: DataTypes.JSON,
-    allowNull: true
+    defaultValue: [],
+    comment: 'List of country codes where content is available. Empty array means available globally'
   },
   restrictedCountries: {
     type: DataTypes.JSON,
-    allowNull: true
+    defaultValue: [],
+    comment: 'List of country codes where content is restricted'
   },
   isGloballyAvailable: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  status: {
-    type: DataTypes.ENUM('draft', 'published', 'archived'),
-    defaultValue: 'draft'
+    defaultValue: true,
+    comment: 'If true, content is available globally unless restricted'
   },
   featuredAt: {
     type: DataTypes.DATE,
-    allowNull: true
-  },
-  showOnChildProfile: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    allowNull: true,
+    comment: 'When this content was featured. Null means unfeatured, date means featured'
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
-  },
-  characters: {
-    type: DataTypes.JSON,
-    allowNull: true
   }
 }, {
   tableName: 'content',
@@ -136,6 +119,15 @@ const Content = sequelize.define('Content', {
 
 // Define associations
 Content.associate = (models) => {
+  if (models.ContentItem && models.ContentItemMapping) {
+    Content.belongsToMany(models.ContentItem, {
+      through: models.ContentItemMapping,
+      foreignKey: 'contentId',
+      otherKey: 'itemId',
+      as: 'items'
+    });
+  }
+  
   // Direct association with ContentItemMapping
   if (models.ContentItemMapping) {
     Content.hasMany(models.ContentItemMapping, {
@@ -179,7 +171,7 @@ Content.associate = (models) => {
   if (models.ContentLike) {
     Content.hasMany(models.ContentLike, {
       foreignKey: 'contentId',
-      as: 'likes'
+      as: 'contentLikes'
     });
   }
 };

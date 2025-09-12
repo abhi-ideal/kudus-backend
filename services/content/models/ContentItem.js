@@ -4,13 +4,14 @@ const sequelize = require('../config/database');
 
 const ContentItem = sequelize.define('ContentItem', {
   id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true
   },
   slug: {
     type: DataTypes.STRING,
@@ -25,6 +26,11 @@ const ContentItem = sequelize.define('ContentItem', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+  showOnChildProfile: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    comment: 'Whether this content item should be shown to child profiles'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
@@ -36,7 +42,16 @@ const ContentItem = sequelize.define('ContentItem', {
 
 // Define associations
 ContentItem.associate = (models) => {
-  // Has many content item mappings
+  if (models.Content && models.ContentItemMapping) {
+    ContentItem.belongsToMany(models.Content, {
+      through: models.ContentItemMapping,
+      foreignKey: 'itemId',
+      otherKey: 'contentId',
+      as: 'content'
+    });
+  }
+  
+  // Direct association with ContentItemMapping
   if (models.ContentItemMapping) {
     ContentItem.hasMany(models.ContentItemMapping, {
       foreignKey: 'itemId',

@@ -1,3 +1,4 @@
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -100,27 +101,18 @@ const Episode = sequelize.define('Episode', {
 
 // Define associations
 Episode.associate = (models) => {
-  // Series (Content) association
-  if (models.Content) {
-    Episode.belongsTo(models.Content, {
-      foreignKey: 'seriesId',
-      as: 'series'
-    });
-  }
-
-  // Season association
-  if (models.Season) {
-    Episode.belongsTo(models.Season, {
-      foreignKey: 'seasonId',
-      as: 'episodeSeason'
-    });
-  }
-
-  // Watch history association
+  Episode.belongsTo(models.Season, {
+    foreignKey: 'seasonId',
+    as: 'season'
+  });
+  Episode.belongsTo(models.Content, {
+    foreignKey: 'seriesId',
+    as: 'series'
+  });
   if (models.WatchHistory) {
     Episode.hasMany(models.WatchHistory, {
       foreignKey: 'episodeId',
-      as: 'episodeWatchHistory'
+      as: 'watchHistory'
     });
   }
 };

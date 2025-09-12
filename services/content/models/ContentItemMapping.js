@@ -4,12 +4,12 @@ const sequelize = require('../config/database');
 
 const ContentItemMapping = sequelize.define('ContentItemMapping', {
   id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
   contentId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
       model: 'content',
@@ -17,7 +17,7 @@ const ContentItemMapping = sequelize.define('ContentItemMapping', {
     }
   },
   itemId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
       model: 'content_items',
@@ -47,15 +47,13 @@ const ContentItemMapping = sequelize.define('ContentItemMapping', {
 
 // Define associations
 ContentItemMapping.associate = (models) => {
-  // Belongs to Content
   if (models.Content) {
     ContentItemMapping.belongsTo(models.Content, {
       foreignKey: 'contentId',
       as: 'content'
     });
   }
-
-  // Belongs to ContentItem
+  
   if (models.ContentItem) {
     ContentItemMapping.belongsTo(models.ContentItem, {
       foreignKey: 'itemId',

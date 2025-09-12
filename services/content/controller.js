@@ -1,25 +1,21 @@
-const { Op, Sequelize } = require('sequelize');
-const { Content, ContentItem, ContentItemMapping, Watchlist, WatchHistory, ContentLike, Season, Episode } = require('./models');
-const adminEndpoints = require('./utils/adminRoutes');
+const { Op } = require('sequelize');
 const sequelize = require('./config/database');
 const logger = require('./utils/logger');
+const Content = require('./models/Content');
+const Season = require('./models/Season');
+const Episode = require('./models/Episode');
+const Watchlist = require('./models/Watchlist');
+const WatchHistory = require('./models/WatchHistory');
+const ContentItem = require('./models/ContentItem');
+const ContentItemMapping = require('./models/ContentItemMapping');
+const ContentLike = require('./models/ContentLike');
+const { Sequelize } = require('sequelize');
 
-// Initialize models and associations
-const models = {
-  Content,
-  ContentItem,
-  ContentItemMapping,
-  Season,
-  Episode,
-  Watchlist,
-  WatchHistory,
-  ContentLike
-};
-
-// Set up associations
-Object.values(models).forEach(model => {
-  if (model.associate) {
-    model.associate(models);
+// Initialize associations
+const models = { Content, ContentItem, ContentItemMapping, Episode, Season, Watchlist, WatchHistory, ContentLike };
+Object.keys(models).forEach(modelName => {
+  if (models[modelName].associate) {
+    models[modelName].associate(models);
   }
 });
 
@@ -45,7 +41,7 @@ const contentController = {
       // Apply child profile filtering based on token
       if (req.activeProfile && req.activeProfile.isChild === true) {
         whereClause.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-
+        
         // Add genre filter for child profiles
         const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
         const allowedGenreConditions = allowedGenres.map(g => 
@@ -62,7 +58,7 @@ const contentController = {
       // Add comprehensive search functionality with relevance
       if (search && search.trim().length > 0) {
         const searchTerm = search.trim();
-
+        
         const searchConditions = [
           { title: { [Op.like]: `%${searchTerm}%` } },
           { description: { [Op.like]: `%${searchTerm}%` } },
@@ -150,7 +146,7 @@ const contentController = {
             ELSE 0
           END
         `;
-
+        
         orderClause = [
           [sequelize.literal(relevanceScore), 'DESC'],
           [sortBy, sortOrder.toUpperCase()]
@@ -254,7 +250,7 @@ const contentController = {
                 include: req.activeProfile?.id ? [
                   {
                     model: models.WatchHistory,
-                    as: 'episodeWatchHistory',
+                    as: 'watchHistory',
                     where: {
                       profileId: req.activeProfile.id
                     },
@@ -689,7 +685,7 @@ const contentController = {
             include: req.activeProfile?.id ? [
               {
                 model: models.WatchHistory,
-                as: 'episodeWatchHistory',
+                as: 'watchHistory',
                 where: {
                   profileId: req.activeProfile.id
                 },
@@ -768,7 +764,7 @@ const contentController = {
           ...(req.activeProfile?.id ? [
             {
               model: models.WatchHistory,
-              as: 'episodeWatchHistory',
+              as: 'watchHistory',
               where: {
                 profileId: req.activeProfile.id,
                 episodeId: episodeId
@@ -2530,7 +2526,7 @@ const contentController = {
         include: [
           {
             model: WatchHistory,
-            as: 'contentWatchHistory',
+            as: 'watchHistory',
             attributes: [],
             required: false
           }
@@ -2540,7 +2536,7 @@ const contentController = {
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
           'status', 'createdAt',
-          [sequelize.fn('COUNT', sequelize.col('contentWatchHistory.id')), 'viewCount']
+          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
         ],
         group: ['Content.id'],
         order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
@@ -2656,7 +2652,7 @@ const contentController = {
         include: [
           {
             model: WatchHistory,
-            as: 'contentWatchHistory',
+            as: 'watchHistory',
             attributes: [],
             required: false
           }
@@ -2666,7 +2662,7 @@ const contentController = {
           'duration', 'releaseYear', 'rating', 'ageRating',
           'language', 'thumbnailUrl', 'posterImages', 'trailerUrl',
           'status', 'createdAt',
-          [sequelize.fn('COUNT', sequelize.col('contentWatchHistory.id')), 'viewCount']
+          [sequelize.fn('COUNT', sequelize.col('watchHistory.id')), 'viewCount']
         ],
         group: ['Content.id'],
         order: [[sequelize.literal('viewCount'), 'DESC'], ['rating', 'DESC'], ['createdAt', 'DESC']],
@@ -2844,7 +2840,7 @@ const contentController = {
               ELSE 0
             END
           `;
-
+          
           orderClause = [
             [sequelize.literal(relevanceScore), 'DESC'],
             [sequelize.col('Content.createdAt'), 'DESC']
@@ -3208,7 +3204,6 @@ const contentController = {
   },
 };
 
-// Export controller functions
 module.exports = {
   getAllContent: contentController.getAllContent,
   getContentById: contentController.getContentById,
@@ -3218,7 +3213,7 @@ module.exports = {
   getStreamingUrl: contentController.getStreamingUrl,
   getKidsContent: contentController.getKidsContent,
   getSeriesDetails: contentController.getSeriesDetails,
-  getSeasonEpisodes: contentController.getSeasonEpisodes, // Renamed from getSeasonEpisodes to avoid conflict
+  getSeasonEpisodes: contentController.getSeasonEpisodes,
   getEpisodeDetails: contentController.getEpisodeDetails,
   addToWatchlist: contentController.addToWatchlist,
   removeFromWatchlist: contentController.removeFromWatchlist,
@@ -3252,16 +3247,5 @@ module.exports = {
   likeContent: contentController.likeContent,
   unlikeContent: contentController.unlikeContent,
   getLikedContent: contentController.getLikedContent,
-  checkLikeStatus: contentController.checkLikeStatus,
-
-  // Seasons management
-  getSeriesSeasons: contentController.getSeriesSeasons,
-  createSeason: contentController.createSeason,
-  updateSeason: contentController.updateSeason,
-  deleteSeason: contentController.deleteSeason,
-
-  // Episodes management
-  createEpisode: contentController.createEpisode,
-  updateEpisode: contentController.updateEpisode,
-  deleteEpisode: contentController.deleteEpisode,
+  checkLikeStatus: contentController.checkLikeStatus
 };

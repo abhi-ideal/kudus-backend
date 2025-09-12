@@ -1,3 +1,4 @@
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -47,27 +48,10 @@ const ContentLike = sequelize.define('ContentLike', {
 
 // Define associations
 ContentLike.associate = (models) => {
-  // User association
-  if (models.User) {
-    ContentLike.belongsTo(models.User, {
-      foreignKey: 'userId',
-      as: 'likeUser'
-    });
-  }
-
-  // User profile association
-  if (models.UserProfile) {
-    ContentLike.belongsTo(models.UserProfile, {
-      foreignKey: 'profileId',
-      as: 'likeProfile'
-    });
-  }
-
-  // Content association
   if (models.Content) {
     ContentLike.belongsTo(models.Content, {
       foreignKey: 'contentId',
-      as: 'likedContent'
+      as: 'content'
     });
   }
 };

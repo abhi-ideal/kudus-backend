@@ -1,3 +1,4 @@
+
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -37,29 +38,10 @@ const Watchlist = sequelize.define('Watchlist', {
 
 // Define associations
 Watchlist.associate = (models) => {
-  // User association
-  if (models.User) {
-    Watchlist.belongsTo(models.User, {
-      foreignKey: 'userId',
-      as: 'watchlistUser'
-    });
-  }
-
-  // User profile association
-  if (models.UserProfile) {
-    Watchlist.belongsTo(models.UserProfile, {
-      foreignKey: 'profileId',
-      as: 'watchlistProfile'
-    });
-  }
-
-  // Content association
-  if (models.Content) {
-    Watchlist.belongsTo(models.Content, {
-      foreignKey: 'contentId',
-      as: 'watchlistContent'
-    });
-  }
+  Watchlist.belongsTo(models.Content, {
+    foreignKey: 'contentId',
+    as: 'content'
+  });
 };
 
 module.exports = Watchlist;
