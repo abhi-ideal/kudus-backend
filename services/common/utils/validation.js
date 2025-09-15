@@ -32,7 +32,8 @@ const schemas = {
     name: Joi.string().min(2).max(50).required(),
     slug: Joi.string().min(2).max(50).optional(),
     description: Joi.string().max(500).optional(),
-    isActive: Joi.boolean().optional().default(true)
+    isActive: Joi.boolean().optional().default(true),
+    showOnChildProfile: Joi.boolean().optional().default(false)
   }),
 
   genreUpdate: Joi.object({
@@ -41,6 +42,7 @@ const schemas = {
     slug: Joi.string().min(2).max(50).optional(),
     description: Joi.string().max(500).optional(),
     isActive: Joi.boolean().optional(),
+    showOnChildProfile: Joi.boolean().optional(),
     createdAt: Joi.date().optional(),
     updatedAt: Joi.date().optional()
   }).options({ stripUnknown: true }),

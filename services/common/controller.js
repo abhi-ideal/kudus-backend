@@ -57,7 +57,7 @@ const commonController = {
   // Genre CRUD Operations
   async createGenre(req, res) {
     try {
-      const { name, slug, description, isActive } = req.body;
+      const { name, slug, description, isActive, showOnChildProfile } = req.body;
 
       const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
@@ -65,7 +65,8 @@ const commonController = {
         name,
         slug: finalSlug,
         description,
-        isActive: isActive !== undefined ? isActive : true
+        isActive: isActive !== undefined ? isActive : true,
+        showOnChildProfile: showOnChildProfile !== undefined ? showOnChildProfile : false
       });
 
       res.status(201).json({
@@ -204,7 +205,7 @@ const commonController = {
   async updateGenre(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, isActive } = req.body;
+      const { name, description, isActive, showOnChildProfile } = req.body;
 
       const genre = await Genre.findByPk(id);
 
@@ -224,6 +225,7 @@ const commonController = {
 
       if (description !== undefined) updateData.description = description;
       if (isActive !== undefined) updateData.isActive = isActive;
+      if (showOnChildProfile !== undefined) updateData.showOnChildProfile = showOnChildProfile;
 
       await genre.update(updateData);
 
