@@ -785,6 +785,30 @@ const controller = {
         database: process.env.DB_NAME
       });
 
+      // Get detailed counts for comparison BEFORE the main query
+      const rawCounts = await sequelize.query(`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN isActive = 1 THEN 1 END) as active_users,
+          COUNT(CASE WHEN isActive = 0 THEN 1 END) as inactive_users,
+          COUNT(CASE WHEN emailVerified = 1 THEN 1 END) as verified_users,
+          COUNT(CASE WHEN emailVerified = 0 THEN 1 END) as unverified_users,
+          COUNT(CASE WHEN subscriptionType = 'free' THEN 1 END) as free_users,
+          COUNT(CASE WHEN subscriptionType != 'free' AND subscriptionType IS NOT NULL THEN 1 END) as paid_users,
+          COUNT(CASE WHEN createdAt > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_users
+        FROM users
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      // Get ORM count using the same where clause
+      const ormTotalCount = await User.count({ where: whereClause });
+      
+      logger.info('Count comparison before findAndCountAll:', {
+        rawSQLTotal: rawCounts[0].total_users,
+        ormCountWithFilter: ormTotalCount,
+        whereClause,
+        rawBreakdown: rawCounts[0]
+      });
+
       const { count, rows: users } = await User.findAndCountAll({
         where: whereClause,
         include: [{
@@ -798,31 +822,83 @@ const controller = {
         offset: parseInt(offset),
         order: [['createdAt', 'DESC']],
         logging: (sql, timing) => {
-          logger.info('SQL Query executed:', { sql, timing });
+          logger.info('findAndCountAll SQL Query executed:', { sql, timing });
         }
       });
 
-      // Log results for debugging
-      logger.info('getUsers results:', {
-        totalCount: count,
+      // Get manual count using raw SQL with same filters
+      let manualCountSQL = 'SELECT COUNT(*) as count FROM users WHERE 1=1';
+      const replacements = {};
+      
+      if (isActive !== undefined) {
+        manualCountSQL += ' AND isActive = :isActive';
+        replacements.isActive = isActive === 'true' ? 1 : 0;
+      }
+      if (subscription) {
+        manualCountSQL += ' AND subscriptionType = :subscription';
+        replacements.subscription = subscription;
+      }
+
+      const manualCount = await sequelize.query(manualCountSQL, { 
+        replacements,
+        type: sequelize.QueryTypes.SELECT 
+      });
+
+      // Log comprehensive debugging info
+      logger.info('getUsers count analysis:', {
+        findAndCountAllResult: count,
+        manualSQLCount: manualCount[0].count,
+        ormCountMethod: ormTotalCount,
+        rawSQLTotal: rawCounts[0].total_users,
         returnedUsers: users.length,
-        activeUsers: users.filter(u => u.isActive).length,
-        inactiveUsers: users.filter(u => !u.isActive).length
+        filters: { isActive, subscription },
+        whereClause,
+        countMismatch: count !== manualCount[0].count,
+        possibleIssues: [
+          count !== manualCount[0].count ? 'findAndCountAll vs manual SQL mismatch' : null,
+          count !== ormTotalCount ? 'findAndCountAll vs count() mismatch' : null,
+          rawCounts[0].inactive_users > 0 ? `${rawCounts[0].inactive_users} inactive users found` : null
+        ].filter(Boolean)
       });
 
       // Verify we're using the correct database
-      const dbInfo = await sequelize.query('SELECT DATABASE() as currentDB', { 
+      const dbInfo = await sequelize.query('SELECT DATABASE() as currentDB, CONNECTION_ID() as connectionId', { 
         type: sequelize.QueryTypes.SELECT 
       });
-      logger.info('Current database:', dbInfo[0]);
+      logger.info('Database connection info:', dbInfo[0]);
+
+      // Sample of users to check for patterns
+      const sampleUsers = await User.findAll({
+        limit: 5,
+        attributes: ['id', 'email', 'isActive', 'emailVerified', 'subscriptionType', 'createdAt', 'firebaseUid'],
+        order: [['createdAt', 'DESC']]
+      });
+      
+      logger.info('Sample users for pattern analysis:', sampleUsers.map(u => ({
+        id: u.id,
+        email: u.email?.substring(0, 10) + '...',
+        isActive: u.isActive,
+        emailVerified: u.emailVerified,
+        subscriptionType: u.subscriptionType,
+        hasFirebaseUid: !!u.firebaseUid
+      })));
+
+      // Use the manual count as the correct total since it matches raw SQL
+      const correctedCount = manualCount[0].count;
 
       res.json({
         success: true,
         data: {
           users,
+          counts: {
+            findAndCountAll: count,
+            manualSQL: correctedCount,
+            rawSQL: rawCounts[0].total_users,
+            breakdown: rawCounts[0]
+          },
           pagination: {
-            totalItems: count,
-            totalPages: Math.ceil(count / limit),
+            totalItems: correctedCount, // Use corrected count
+            totalPages: Math.ceil(correctedCount / limit),
             currentPage: parseInt(page),
             itemsPerPage: parseInt(limit)
           }
@@ -1175,7 +1251,10 @@ const controller = {
   // Get user activity summary
   async debugUserCounts(req, res) {
     try {
-      // Get raw SQL counts
+      // Test different counting methods to identify discrepancy
+      const testCounts = {};
+
+      // 1. Raw SQL count
       const rawCounts = await sequelize.query(`
         SELECT 
           COUNT(*) as total_users,
@@ -1184,62 +1263,116 @@ const controller = {
           COUNT(CASE WHEN emailVerified = 1 THEN 1 END) as verified_users,
           COUNT(CASE WHEN emailVerified = 0 THEN 1 END) as unverified_users,
           COUNT(CASE WHEN subscriptionType = 'free' THEN 1 END) as free_users,
-          COUNT(CASE WHEN subscriptionType != 'free' THEN 1 END) as paid_users,
-          COUNT(CASE WHEN createdAt > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_users
+          COUNT(CASE WHEN subscriptionType != 'free' AND subscriptionType IS NOT NULL THEN 1 END) as paid_users,
+          COUNT(CASE WHEN createdAt > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_users,
+          COUNT(CASE WHEN firebaseUid IS NULL OR firebaseUid = '' THEN 1 END) as no_firebase_uid,
+          COUNT(CASE WHEN deletedAt IS NOT NULL THEN 1 END) as soft_deleted
         FROM users
       `, { type: sequelize.QueryTypes.SELECT });
 
-      // Get ORM counts
-      const ormCounts = {
-        total: await User.count(),
-        active: await User.count({ where: { isActive: true } }),
-        inactive: await User.count({ where: { isActive: false } }),
-        verified: await User.count({ where: { emailVerified: true } }),
-        unverified: await User.count({ where: { emailVerified: false } })
-      };
+      // 2. ORM count methods
+      testCounts.ormBasic = await User.count();
+      testCounts.ormActive = await User.count({ where: { isActive: true } });
+      testCounts.ormInactive = await User.count({ where: { isActive: false } });
 
-      // Get database info
+      // 3. Test findAndCountAll with no includes
+      const findAndCountBasic = await User.findAndCountAll({
+        limit: 1,
+        logging: (sql) => logger.info('findAndCountAll basic SQL:', { sql })
+      });
+
+      // 4. Test findAndCountAll with includes (like in getUsers)
+      const findAndCountWithIncludes = await User.findAndCountAll({
+        include: [{
+          model: UserProfile,
+          as: 'profiles',
+          where: { isActive: true },
+          required: false,
+          attributes: ['id', 'name']
+        }],
+        limit: 1,
+        logging: (sql) => logger.info('findAndCountAll with includes SQL:', { sql })
+      });
+
+      // 5. Check for duplicate records
+      const duplicateCheck = await sequelize.query(`
+        SELECT 
+          email, 
+          firebaseUid,
+          COUNT(*) as count
+        FROM users 
+        WHERE email IS NOT NULL 
+        GROUP BY email, firebaseUid 
+        HAVING COUNT(*) > 1
+        ORDER BY count DESC
+        LIMIT 10
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      // 6. Get database info and table status
       const dbInfo = await sequelize.query('SELECT DATABASE() as currentDB, CONNECTION_ID() as connectionId', { 
         type: sequelize.QueryTypes.SELECT 
       });
 
-      // Sample of users to check for patterns
+      const tableStatus = await sequelize.query('SHOW TABLE STATUS LIKE "users"', {
+        type: sequelize.QueryTypes.SELECT
+      });
+
+      // 7. Sample users with various conditions
       const sampleUsers = await User.findAll({
         limit: 10,
-        attributes: ['id', 'email', 'isActive', 'emailVerified', 'subscriptionType', 'createdAt'],
+        attributes: ['id', 'email', 'isActive', 'emailVerified', 'subscriptionType', 'createdAt', 'firebaseUid'],
         order: [['createdAt', 'DESC']]
       });
 
-      logger.info('Debug user counts investigation:', {
-        rawCounts: rawCounts[0],
-        ormCounts,
-        dbInfo: dbInfo[0],
-        environment: process.env.NODE_ENV,
-        database: process.env.DB_NAME
-      });
+      const analysisResults = {
+        environment: {
+          nodeEnv: process.env.NODE_ENV,
+          database: process.env.DB_NAME,
+          dbConnection: dbInfo[0],
+          tableInfo: tableStatus[0]
+        },
+        counts: {
+          rawSQL: rawCounts[0],
+          ormBasic: testCounts.ormBasic,
+          findAndCountBasic: findAndCountBasic.count,
+          findAndCountWithIncludes: findAndCountWithIncludes.count
+        },
+        duplicates: duplicateCheck,
+        sampleUsers: sampleUsers.map(u => ({
+          id: u.id,
+          email: u.email?.substring(0, 15) + '...',
+          isActive: u.isActive,
+          emailVerified: u.emailVerified,
+          subscriptionType: u.subscriptionType,
+          hasFirebaseUid: !!u.firebaseUid,
+          createdAt: u.createdAt
+        })),
+        analysis: {
+          primaryIssue: findAndCountWithIncludes.count !== rawCounts[0].total_users ? 'findAndCountAll with includes causes count inflation' : 'No obvious issue',
+          countComparison: {
+            rawSQL: rawCounts[0].total_users,
+            ormBasic: testCounts.ormBasic,
+            findAndCountBasic: findAndCountBasic.count,
+            findAndCountWithIncludes: findAndCountWithIncludes.count
+          },
+          possibleCauses: [
+            findAndCountWithIncludes.count > rawCounts[0].total_users ? 'LEFT JOIN with profiles causing count multiplication' : null,
+            duplicateCheck.length > 0 ? `${duplicateCheck.length} duplicate email/firebase combinations found` : null,
+            rawCounts[0].inactive_users > 0 ? `${rawCounts[0].inactive_users} inactive users found` : null,
+            rawCounts[0].no_firebase_uid > 0 ? `${rawCounts[0].no_firebase_uid} users without Firebase UID` : null,
+            rawCounts[0].soft_deleted > 0 ? `${rawCounts[0].soft_deleted} soft deleted users found` : null
+          ].filter(Boolean),
+          recommendation: findAndCountWithIncludes.count > rawCounts[0].total_users 
+            ? 'Use separate count query without includes to get accurate total'
+            : 'Investigate other potential causes'
+        }
+      };
+
+      logger.info('Comprehensive user count debugging:', analysisResults);
 
       res.json({
         success: true,
-        data: {
-          environment: {
-            nodeEnv: process.env.NODE_ENV,
-            database: process.env.DB_NAME,
-            dbConnection: dbInfo[0]
-          },
-          counts: {
-            rawSQL: rawCounts[0],
-            ormCounts
-          },
-          sampleUsers,
-          analysis: {
-            sqlVsOrm: rawCounts[0].total_users === ormCounts.total ? 'MATCH' : 'MISMATCH',
-            possibleIssues: [
-              rawCounts[0].total_users !== ormCounts.total ? 'SQL vs ORM count mismatch' : null,
-              rawCounts[0].inactive_users > 0 ? `${rawCounts[0].inactive_users} inactive users found` : null,
-              rawCounts[0].unverified_users > 0 ? `${rawCounts[0].unverified_users} unverified users found` : null
-            ].filter(Boolean)
-          }
-        }
+        data: analysisResults
       });
     } catch (error) {
       logger.error('Debug user counts error:', error);
