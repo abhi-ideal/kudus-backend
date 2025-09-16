@@ -775,6 +775,16 @@ const controller = {
       if (isActive !== undefined) whereClause.isActive = isActive === 'true';
       if (subscription) whereClause.subscriptionType = subscription;
 
+      // Log the query details for debugging
+      logger.info('getUsers query details:', {
+        whereClause,
+        page,
+        limit,
+        offset,
+        environment: process.env.NODE_ENV,
+        database: process.env.DB_NAME
+      });
+
       const { count, rows: users } = await User.findAndCountAll({
         where: whereClause,
         include: [{
@@ -786,8 +796,25 @@ const controller = {
         }],
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        logging: (sql, timing) => {
+          logger.info('SQL Query executed:', { sql, timing });
+        }
       });
+
+      // Log results for debugging
+      logger.info('getUsers results:', {
+        totalCount: count,
+        returnedUsers: users.length,
+        activeUsers: users.filter(u => u.isActive).length,
+        inactiveUsers: users.filter(u => !u.isActive).length
+      });
+
+      // Verify we're using the correct database
+      const dbInfo = await sequelize.query('SELECT DATABASE() as currentDB', { 
+        type: sequelize.QueryTypes.SELECT 
+      });
+      logger.info('Current database:', dbInfo[0]);
 
       res.json({
         success: true,
@@ -952,6 +979,78 @@ const controller = {
     }
   },
 
+  async getActiveUsers(req, res) {
+    try {
+      const { page = 1, limit = 10, subscription } = req.query;
+      const offset = (page - 1) * limit;
+
+      // Default to only active users
+      const whereClause = { isActive: true };
+      if (subscription) whereClause.subscriptionType = subscription;
+
+      logger.info('getActiveUsers query details:', {
+        whereClause,
+        page,
+        limit,
+        offset
+      });
+
+      const { count, rows: users } = await User.findAndCountAll({
+        where: whereClause,
+        include: [{
+          model: UserProfile,
+          as: 'profiles',
+          where: { isActive: true },
+          required: false,
+          attributes: ['id', 'name', 'avatar', 'isKidsProfile', 'isOwner', 'createdAt', 'updatedAt']
+        }],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']],
+        logging: (sql, timing) => {
+          logger.info('getActiveUsers SQL Query:', { sql, timing });
+        }
+      });
+
+      // Get detailed counts for comparison
+      const totalUsers = await User.count();
+      const activeUsers = await User.count({ where: { isActive: true } });
+      const inactiveUsers = await User.count({ where: { isActive: false } });
+
+      logger.info('User counts comparison:', {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        returnedCount: count
+      });
+
+      res.json({
+        success: true,
+        data: {
+          users,
+          counts: {
+            total: totalUsers,
+            active: activeUsers,
+            inactive: inactiveUsers,
+            returned: count
+          },
+          pagination: {
+            totalItems: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: parseInt(page),
+            itemsPerPage: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Get active users error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to get active users'
+      });
+    }
+  },
+
   async getUserStatistics(req, res) {
     try {
       const totalUsers = await User.count();
@@ -1074,6 +1173,83 @@ const controller = {
   },
 
   // Get user activity summary
+  async debugUserCounts(req, res) {
+    try {
+      // Get raw SQL counts
+      const rawCounts = await sequelize.query(`
+        SELECT 
+          COUNT(*) as total_users,
+          COUNT(CASE WHEN isActive = 1 THEN 1 END) as active_users,
+          COUNT(CASE WHEN isActive = 0 THEN 1 END) as inactive_users,
+          COUNT(CASE WHEN emailVerified = 1 THEN 1 END) as verified_users,
+          COUNT(CASE WHEN emailVerified = 0 THEN 1 END) as unverified_users,
+          COUNT(CASE WHEN subscriptionType = 'free' THEN 1 END) as free_users,
+          COUNT(CASE WHEN subscriptionType != 'free' THEN 1 END) as paid_users,
+          COUNT(CASE WHEN createdAt > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_users
+        FROM users
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      // Get ORM counts
+      const ormCounts = {
+        total: await User.count(),
+        active: await User.count({ where: { isActive: true } }),
+        inactive: await User.count({ where: { isActive: false } }),
+        verified: await User.count({ where: { emailVerified: true } }),
+        unverified: await User.count({ where: { emailVerified: false } })
+      };
+
+      // Get database info
+      const dbInfo = await sequelize.query('SELECT DATABASE() as currentDB, CONNECTION_ID() as connectionId', { 
+        type: sequelize.QueryTypes.SELECT 
+      });
+
+      // Sample of users to check for patterns
+      const sampleUsers = await User.findAll({
+        limit: 10,
+        attributes: ['id', 'email', 'isActive', 'emailVerified', 'subscriptionType', 'createdAt'],
+        order: [['createdAt', 'DESC']]
+      });
+
+      logger.info('Debug user counts investigation:', {
+        rawCounts: rawCounts[0],
+        ormCounts,
+        dbInfo: dbInfo[0],
+        environment: process.env.NODE_ENV,
+        database: process.env.DB_NAME
+      });
+
+      res.json({
+        success: true,
+        data: {
+          environment: {
+            nodeEnv: process.env.NODE_ENV,
+            database: process.env.DB_NAME,
+            dbConnection: dbInfo[0]
+          },
+          counts: {
+            rawSQL: rawCounts[0],
+            ormCounts
+          },
+          sampleUsers,
+          analysis: {
+            sqlVsOrm: rawCounts[0].total_users === ormCounts.total ? 'MATCH' : 'MISMATCH',
+            possibleIssues: [
+              rawCounts[0].total_users !== ormCounts.total ? 'SQL vs ORM count mismatch' : null,
+              rawCounts[0].inactive_users > 0 ? `${rawCounts[0].inactive_users} inactive users found` : null,
+              rawCounts[0].unverified_users > 0 ? `${rawCounts[0].unverified_users} unverified users found` : null
+            ].filter(Boolean)
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Debug user counts error:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to debug user counts'
+      });
+    }
+  },
+
   async getUserActivity(req, res) {
     try {
       const { userId } = req.params;
@@ -1556,6 +1732,8 @@ module.exports = {
   unblockUser: controller.unblockUser,
   updateUserSubscription: controller.updateUserSubscription,
   getUserStatistics: controller.getUserStatistics,
+  getActiveUsers: controller.getActiveUsers,
+  debugUserCounts: controller.debugUserCounts,
   getUserActivity: controller.getUserActivity,
   logout: controller.logout,
   deleteAccount: controller.deleteAccount,

@@ -115,6 +115,8 @@ adminRouter.get('/stats', standardAdminEndpoints.stats);
 
 // Add user-specific admin endpoints
 adminRouter.get('/users', authAdmin, controller.getUsers);
+adminRouter.get('/users/active', authAdmin, controller.getActiveUsers);
+adminRouter.get('/users/debug-counts', authAdmin, controller.debugUserCounts);
 adminRouter.get('/users/statistics', authAdmin, controller.getUserStatistics);
 adminRouter.get('/users/:id', authAdmin, controller.getUserById);
 adminRouter.patch('/users/:id/block', authAdmin, controller.blockUser);
