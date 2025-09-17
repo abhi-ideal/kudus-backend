@@ -2501,13 +2501,42 @@ const contentController = {
         subQuery: false
       });
 
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+      const profileId = req.activeProfile?.id;
+
+      if (profileId) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
+      // Add isLiked and isWatchlist status to popular content
+      const popularContentWithStatus = rows.map(content => {
+        const contentData = content.toJSON();
+        contentData.isLiked = profileId ? userLikes.includes(content.id) : false;
+        contentData.isWatchlist = profileId ? userWatchlist.includes(content.id) : false;
+        return contentData;
+      });
+
       // Get total count separately to avoid GROUP BY issues with findAndCountAll
       const totalCount = await Content.count({ where });
 
       res.json({
         success: true,
         data: {
-          popularContent: rows,
+          popularContent: popularContentWithStatus,
           pagination: {
             currentPage: parseInt(page),
             totalPages: Math.ceil(totalCount / limit),
