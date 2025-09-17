@@ -40,19 +40,8 @@ const contentController = {
 
       // Apply child profile filtering based on token
       if (req.activeProfile && req.activeProfile.isChild === true) {
-        whereClause.ageRating = { [Op.in]: ['G', 'PG', 'PG-13'] };
-        
-        // Add genre filter for child profiles
-        const allowedGenres = ['Family', 'Animation', 'Comedy', 'Adventure', 'Fantasy'];
-        const allowedGenreConditions = allowedGenres.map(g => 
-          `JSON_CONTAINS(genre, JSON_QUOTE('${g}'))`
-        );
-
-        if (whereClause[Op.and]) {
-          whereClause[Op.and].push(sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`));
-        } else {
-          whereClause[Op.and] = [sequelize.literal(`(${allowedGenreConditions.join(' OR ')})`)];
-        }
+        // For child profiles, exclude G-rated content
+        whereClause.ageRating = { [Op.ne]: 'G' };
       }
 
       // Add comprehensive search functionality with relevance
