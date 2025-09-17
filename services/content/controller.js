@@ -1854,17 +1854,50 @@ const contentController = {
         ]
       });
 
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+      const profileId = req.activeProfile?.id;
+
+      if (profileId) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
+      // Add isLiked and isWatchlist to featured content
+      const featuredContentWithStatus = rows.map(content => {
+        const contentData = content.toJSON();
+        contentData.isLiked = profileId ? userLikes.includes(content.id) : false;
+        contentData.isWatchlist = profileId ? userWatchlist.includes(content.id) : false;
+        return contentData;
+      });
+
       res.json({
         success: true,
         data: {
-          featuredContent: rows,
+          featuredContent: featuredContentWithStatus,
           pagination: {
             currentPage: parseInt(page),
             totalPages: Math.ceil(count / limit),
             totalItems: count,
             itemsPerPage: parseInt(limit)
           }
-        }
+        },
+        profileContext: req.activeProfile ? {
+          profileId: req.activeProfile.id,
+          isChildProfile: req.activeProfile.isChild || false
+        } : null
       });
     } catch (error) {
       logger.error('Get featured content error:', error);
