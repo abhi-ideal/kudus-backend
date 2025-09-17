@@ -2724,10 +2724,33 @@ const contentController = {
         subQuery: false
       });
 
-      // Add ranking position
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+      const profileId = req.activeProfile?.id;
+
+      if (profileId) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
+      // Add ranking position and like/watchlist status
       const rankedMovies = moviesData.map((item, index) => ({
         rank: index + 1,
-        ...item.toJSON()
+        ...item.toJSON(),
+        isLiked: profileId ? userLikes.includes(item.id) : false,
+        isWatchlist: profileId ? userWatchlist.includes(item.id) : false
       }));
 
       res.json({
