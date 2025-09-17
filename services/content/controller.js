@@ -2575,6 +2575,27 @@ const contentController = {
         subQuery: false
       });
 
+      // Get user's liked content and watchlist if profile exists
+      let userLikes = [];
+      let userWatchlist = [];
+      const profileId = req.activeProfile?.id;
+
+      if (profileId) {
+        const [likes, watchlist] = await Promise.all([
+          ContentLike.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          }),
+          Watchlist.findAll({
+            where: { profileId },
+            attributes: ['contentId']
+          })
+        ]);
+
+        userLikes = likes.map(like => like.contentId);
+        userWatchlist = watchlist.map(item => item.contentId);
+      }
+
       // Fetch seasons and episodes separately for each series
       const rankedSeries = await Promise.all(
         seriesData.map(async (item, index) => {
@@ -2596,7 +2617,9 @@ const contentController = {
             ...item.toJSON(),
             totalSeasons: seasons.length,
             totalEpisodes: seasons.reduce((total, season) => total + (season.episodes?.length || 0), 0),
-            seasons: seasons
+            seasons: seasons,
+            isLiked: profileId ? userLikes.includes(item.id) : false,
+            isWatchlist: profileId ? userWatchlist.includes(item.id) : false
           };
         })
       );
